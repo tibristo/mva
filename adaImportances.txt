@@ -1,0 +1,13 @@
+Feature ranking:
+1. feature 6 (0.199654) m_ll
+2. feature 5 (0.169051) MET
+3. feature 7 (0.127824) m_Bb
+4. feature 1 (0.102624) pt_V
+5. feature 11 (0.100258) dPhi_VH
+6. feature 8 (0.059909) dR_Bb
+7. feature 0 (0.055136) pt_Bb
+8. feature 10 (0.048973) dEta_Bb
+9. feature 2 (0.045809) mv1_jet0
+10. feature 3 (0.036271) mv1_jet1
+11. feature 9 (0.032043) acop_Bb
+12. feature 4 (0.022449) ptImbalanceSignificance

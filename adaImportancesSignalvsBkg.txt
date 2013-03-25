@@ -1,0 +1,88 @@
+Feature ranking:
+1. feature 6 (0.367845) mBB
+2. feature 2 (0.137561) dPhiVBB
+3. feature 0 (0.104715) dRBB
+4. feature 7 (0.074849) HT
+5. feature 3 (0.069066) dPhiLMET
+6. feature 8 (0.049391) pTB1
+7. feature 5 (0.041262) pTV
+8. feature 13 (0.040311) MET
+9. feature 12 (0.028478) pTL
+10. feature 10 (0.028034) pTimbVH
+11. feature 9 (0.020741) pTB2
+12. feature 1 (0.017190) dEtaBB
+
+time taken for training: 1565.96
+
+
+
+TMVA
+
+
+--- BDT                      : Ranking result (top variable is best ranked)
+--- BDT                      : -------------------------------------------
+--- BDT                      : Rank : Variable  : Variable Importance
+--- BDT                      : -------------------------------------------
+--- BDT                      :    1 : mBB       : 2.336e-01
+--- BDT                      :    2 : dPhiVBB   : 1.045e-01
+--- BDT                      :    3 : dEtaBB    : 8.328e-02
+--- BDT                      :    4 : dRBB      : 8.060e-02
+--- BDT                      :    5 : dPhiLBMin : 6.454e-02
+--- BDT                      :    6 : pTL       : 6.306e-02
+--- BDT                      :    7 : HT        : 5.449e-02
+--- BDT                      :    8 : dPhiLMET  : 4.711e-02
+--- BDT                      :    9 : pTimbVH   : 4.710e-02
+--- BDT                      :   10 : pTB1      : 4.598e-02
+--- BDT                      :   11 : mTW       : 4.508e-02
+--- BDT                      :   12 : pTV       : 4.493e-02
+--- BDT                      :   13 : pTB2      : 4.451e-02
+--- BDT                      :   14 : MET       : 4.118e-02
+--- BDT                      : -------------------------------------------
+--- BDTD                     : Ranking result (top variable is best ranked)
+--- BDTD                     : -------------------------------------------
+--- BDTD                     : Rank : Variable  : Variable Importance
+--- BDTD                     : -------------------------------------------
+--- BDTD                     :    1 : mBB       : 2.188e-01
+--- BDTD                     :    2 : HT        : 8.576e-02
+--- BDTD                     :    3 : dPhiVBB   : 8.462e-02
+--- BDTD                     :    4 : dRBB      : 7.232e-02
+--- BDTD                     :    5 : MET       : 7.136e-02
+--- BDTD                     :    6 : dPhiLBMin : 6.430e-02
+--- BDTD                     :    7 : dPhiLMET  : 6.311e-02
+--- BDTD                     :    8 : pTB1      : 6.187e-02
+--- BDTD                     :    9 : mTW       : 5.835e-02
+--- BDTD                     :   10 : pTB2      : 5.504e-02
+--- BDTD                     :   11 : dEtaBB    : 4.830e-02
+--- BDTD                     :   12 : pTimbVH   : 4.159e-02
+--- BDTD                     :   13 : pTV       : 3.784e-02
+--- BDTD                     :   14 : pTL       : 3.676e-02
+--- BDTD                     : -------------------------------------------
+
+
+
+
+--- BDTG                     : Ranking result (top variable is best ranked)
+--- BDTG                     : -------------------------------------------
+--- BDTG                     : Rank : Variable  : Variable Importance
+--- BDTG                     : -------------------------------------------
+--- BDTG                     :    1 : dRBB      : 1.849e-01
+--- BDTG                     :    2 : mBB       : 1.276e-01
+--- BDTG                     :    3 : pTimbVH   : 8.073e-02
+--- BDTG                     :    4 : dPhiLBMin : 7.581e-02
+--- BDTG                     :    5 : pTB2      : 7.350e-02
+--- BDTG                     :    6 : pTV       : 6.354e-02
+--- BDTG                     :    7 : dPhiVBB   : 6.308e-02
+--- BDTG                     :    8 : MET       : 5.905e-02
+--- BDTG                     :    9 : dEtaBB    : 5.160e-02
+--- BDTG                     :   10 : pTL       : 5.059e-02
+--- BDTG                     :   11 : dPhiLMET  : 4.810e-02
+--- BDTG                     :   12 : pTB1      : 4.739e-02
+--- BDTG                     :   13 : HT        : 4.445e-02
+--- BDTG                     :   14 : mTW       : 2.972e-02
+--- BDTG                     : -------------------------------------------
+
+
+
+
+==> Time taken for training: 8.7376e+06
+==> Time taken for testing: 560900

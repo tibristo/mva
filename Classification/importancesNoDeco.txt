@@ -1,0 +1,33 @@
+--- BDT                      : ---------------------------------------------------------
+--- BDT                      : Rank : Variable                : Variable Importance
+--- BDT                      : ---------------------------------------------------------
+--- BDT                      :    1 : MET                     : 1.425e-01
+--- BDT                      :    2 : m_ll                    : 1.379e-01
+--- BDT                      :    3 : dPhi_VH                 : 8.676e-02
+--- BDT                      :    4 : pt_V                    : 8.600e-02
+--- BDT                      :    5 : ptImbalanceSignificance : 7.530e-02
+--- BDT                      :    6 : acop_Bb                 : 7.432e-02
+--- BDT                      :    7 : dEta_Bb                 : 7.112e-02
+--- BDT                      :    8 : dR_Bb                   : 6.905e-02
+--- BDT                      :    9 : m_Bb                    : 6.888e-02
+--- BDT                      :   10 : mv1_jet1                : 6.353e-02
+--- BDT                      :   11 : pt_Bb                   : 6.319e-02
+--- BDT                      :   12 : mv1_jet0                : 6.151e-02
+--- BDT                      : ---------------------------------------------------------
+--- BDTD                     : Ranking result (top variable is best ranked)
+--- BDTD                     : ---------------------------------------------------------
+--- BDTD                     : Rank : Variable                : Variable Importance
+--- BDTD                     : ---------------------------------------------------------
+--- BDTD                     :    1 : MET                     : 1.307e-01
+--- BDTD                     :    2 : m_ll                    : 1.246e-01
+--- BDTD                     :    3 : m_Bb                    : 9.704e-02
+--- BDTD                     :    4 : pt_V                    : 8.796e-02
+--- BDTD                     :    5 : pt_Bb                   : 8.611e-02
+--- BDTD                     :    6 : mv1_jet1                : 7.919e-02
+--- BDTD                     :    7 : dPhi_VH                 : 7.901e-02
+--- BDTD                     :    8 : dR_Bb                   : 6.679e-02
+--- BDTD                     :    9 : dEta_Bb                 : 6.617e-02
+--- BDTD                     :   10 : acop_Bb                 : 6.238e-02
+--- BDTD                     :   11 : ptImbalanceSignificance : 6.133e-02
+--- BDTD                     :   12 : mv1_jet0                : 5.871e-02
+--- BDTD                     : ---------------------------------------------------------
