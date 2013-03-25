@@ -142,6 +142,29 @@ def roc_curve_rej(y_true, y_score, pos_label=None):
 
     return fpr, tpr, thresholds[::-1], rej
 
+def readInLabels(fname):
+    f = open(fname)
+    labelcodes = []
+    labelcodesNum = []
+    for line in f.readLine():
+        l = line.split(',')
+        labelcodes.append(l[0])
+        labelcodesNum.append(int(l[1]))
+    f.close()
+    labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
+    return labelcodes
+
+def readInNames(fname):
+    f = open(fname)
+    namecodes = []
+    namecodesNum = []
+    for line in f.readLine():
+        l = line.split(',')
+        namecodes.append(l[0])
+        namecodesNum.append(int(l[1]))
+    f.close()
+    namecodesNum,namecodes = zip(*sorted(zip(namecodesNum,namecodes)))
+    return namecodes
 
 
 
@@ -214,8 +237,9 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
             outarr[rowcount][colcount] = row[col]
             colcount = colcount + 1
         rowcount = rowcount + 1
-        outweights.append(row[varWIdx['final_xs']]*lumi/nEntries)
-        outlabels.append(row[varWIdx['label']])
+        outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
+        outlabels.append(row[int(varWIdx['label_code'])])
+        #print row[int(varWIdx['label'])]
     return outarr, outweights, outlabels
 
 def onesInt(length):
@@ -364,6 +388,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 sigtemp1A = cutTree(sig,False,len(sig)/2,'A')
 bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
 
+print sigtemp1A
+
 sigTestA, weightsSigTestA, labelsSigTestA = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
 bkgTestA, weightsBkgTestA, labelsBkgTestA = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
 
@@ -392,8 +418,8 @@ from rootpy.interactive import wait
 from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
 from rootpy.io import root_open as ropen, DoesNotExist
 from rootpy.plotting import HistStack
-#import ROOT
-gROOT.SetBatch(True)
+import ROOT
+ROOT.gROOT.SetBatch(True)
 c1 = Canvas()
 count = 0
 cols = []
@@ -404,6 +430,8 @@ hist = []
 histidx = 0
 hist2 = []
 hist2idx = 0
+histstack = []
+histstack2 = []
 maxi = []
 mini = []
 
@@ -412,18 +440,23 @@ mini = []
 f = ropen('output.root','update')
 c1.cd()
 testAStack = HistStack('sigtest','signalstack')
-coloursForStack = [kBlue, kGreen, kRed, kYellow, kBlack, kPink, kMagenta, kCyan]
+coloursForStack = ['kBlue', 'kGreen', 'kRed', 'kYellow', 'kBlack', 'kPink', 'kMagenta', 'kCyan']
 colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
+labelCodes = readInLabels(typeOfSample)#typeOfSample should be signal or bkg
+#nameCodes = readInCodes(typeOfSample)
+#print 'labelsSigTestA'
+#print labelsSigTestA
 for c in sigTestA:
     maxi.append(c[argmax(c)])
     mini.append(c[argmin(c)])
     hist.append(Hist(20,mini[histidx],maxi[histidx]))
     hist[histidx].fill_array(c)
-    cc = c.Clone()
-    cc.scale(weightsSigTestA[histidx])
-    cc.fillcolor = coloursForStack[colourDict[labelsSigTestA[histidx]]]
-    cc.fillstyle = 'solid'
-    testAStack.Add(cc)
+    histstack.append(Hist(20,mini[histidx],maxi[histidx]))
+    histstack[histidx].fill_array(c)
+    histstack[histidx].scale(weightsSigTestA[histidx])
+    histstack[histidx].fillcolor = coloursForStack[int(colourDict[labelCodes[labelsSigTestA[histidx]]])]
+    histstack[histidx].fillstyle = 'solid'
+    testAStack.Add(histstack[histidx])
 #    hist[histidx].rebin(
     hist[histidx].scale(1.0/hist[histidx].integral())
 
@@ -442,11 +475,12 @@ for c in sigTestA:
 for d in bkgTestA:
     maxi2 = argmax(d)
     mini2 = argmin(d)
-    dd = d.Clone()
-    dd.scale(weightsBkgTestA[hist2idx])
-    dd.fillcolor = coloursForStack[colourDict[labelsBkgTestA[hist2idx]]]
-    dd.fillstyle = 'solid'
-    testAStack.Add(dd)
+    histstack2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
+    histstack2[hist2idx].fill_array(d)
+    histstack2[hist2idx].scale(weightsBkgTestA[hist2idx])
+    histstack2[hist2idx].fillcolor = coloursForStack[colourDict[labelsBkgTestA[hist2idx]]]
+    histstack2[hist2idx].fillstyle = 'solid'
+    testAStack.Add(histstack2[hist2idx])
     hist2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
     hist2[hist2idx].fill_array(d)
     hist2[hist2idx].scale(1.0/hist2[hist2idx].integral())
