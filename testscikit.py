@@ -1,8 +1,10 @@
 from numpy import *
 from root_numpy import *
-
+import sys
 # used to shuffle multiple arrays at once
-
+if len(sys.argv) < 2:
+    print 'not enough arguments supplied, need argument for type of sample'
+    sys.exit("not enough args supplied")
 
 def roc_curve_rej(y_true, y_score, pos_label=None):
     """Compute Receiver operating characteristic (ROC)
@@ -143,10 +145,10 @@ def roc_curve_rej(y_true, y_score, pos_label=None):
     return fpr, tpr, thresholds[::-1], rej
 
 def readInLabels(fname):
-    f = open(fname)
+    f = open('Labels'+fname+'.txt')
     labelcodes = []
     labelcodesNum = []
-    for line in f.readLine():
+    for line in f:
         l = line.split(',')
         labelcodes.append(l[0])
         labelcodesNum.append(int(l[1]))
@@ -155,10 +157,10 @@ def readInLabels(fname):
     return labelcodes
 
 def readInNames(fname):
-    f = open(fname)
+    f = open('Names'+fname+'.txt')
     namecodes = []
     namecodesNum = []
-    for line in f.readLine():
+    for line in f:
         l = line.split(',')
         namecodes.append(l[0])
         namecodesNum.append(int(l[1]))
@@ -166,6 +168,26 @@ def readInNames(fname):
     namecodesNum,namecodes = zip(*sorted(zip(namecodesNum,namecodes)))
     return namecodes
 
+def sortMultiple(ind, arr1, arr2, arr3 = []):
+    if len(arr1) > len(arr2):
+        return -1
+    for x in xrange(1,len(arr1)-1):
+        val = arr1[ind][x]
+        val2 = arr2[ind][x]
+        if not arr3 = []:
+            val3 = arr3[ind][x]
+        hole = x
+        while hole > 0 and val < arr[ind][hole-1]:
+            arr1[ind][hole] = arr1[ind][hole-1]
+            arr2[ind][hole] = arr2[ind][hole-1]
+            if not arr3 == []:
+                arr3[ind][hole] = arr3[ind][hole-1]
+            hole -= 1
+        arr1[hole] = val
+        arr2[hole] = val2
+        arr3[hole] = val3
+        
+    return arr1,arr2,arr3
 
 
 def shuffle_in_unison(a, b, c):
@@ -311,7 +333,7 @@ varIdx = []
 varWIdx = []
 #variableNames = ['m_ll','m_Bb','MET','dPhi_VH', 'ptImbalanceSignificance', 'pt_V', 'pt_Bb', 'dR_Bb', 'acop_Bb', 'dEta_Bb', 'mv1_jet0', 'mv1_jet1']
 variableNames = ['dRBB','dEtaBB','dPhiVBB','dPhiLMET','dPhiLBMin','pTV','mBB','HT','pTB1','pTB2','pTimbVH','mTW','pTL','MET']#,'mLL']
-varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'name':-1}
+varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
 foundVariables = []
 
 
@@ -391,7 +413,19 @@ bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
 print sigtemp1A
 
 sigTestA, weightsSigTestA, labelsSigTestA = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
+t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigtestA,sigTestA,weightsSigTestA)))
+sigTestA= list(t_sigTestA)
+weightsSigTestA = list(t_weightsSigTestA)
+labelsSigTestA= list(t_labelsSigTestA)
+
+#labelsSigTestA, sigTestA, weightsSigTestA = sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
 bkgTestA, weightsBkgTestA, labelsBkgTestA = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
+t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgtestA,bkgTestA,weightsBkgTestA)))
+bkgTestA= list(t_bkgTestA)
+weightsBkgTestA = list(t_weightsBkgTestA)
+labelsBkgTestA= list(t_labelsBkgTestA)
+
+
 
 x1A = vstack((sigTestA, bkgTestA))
 y1A = hstack((onesInt(len(sigTestA)), zerosInt(len(bkgTestA))))
@@ -404,7 +438,18 @@ sigtemp1B = cutTree(sig,False,len(sig)/2,'B')
 bkgtemp1B = cutTree(bkg,False,len(bkg)/2,'B')
 
 sigTestB, weightsSigTestB, labelsSigTestB = cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigtestB,sigTestB,weightsSigTestB)))
+sigTestB= list(t_sigTestB)
+weightsSigTestB = list(t_weightsSigTestB)
+labelsSigTestB= list(t_labelsSigTestB)
+
 bkgTestB, weightsBkgTestB, labelsBkgTestB = cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgtestB,bkgTestB,weightsBkgTestB)))
+bkgTestB= list(t_bkgTestB)
+weightsBkgTestB = list(t_weightsBkgTestB)
+labelsBkgTestB= list(t_labelsBkgTestB)
+
+
 
 x1B = vstack((sigTestB, bkgTestB))
 y1B = hstack((onesInt(len(sigTestB)), zerosInt(len(bkgTestB))))
@@ -440,9 +485,19 @@ mini = []
 f = ropen('output.root','update')
 c1.cd()
 testAStack = HistStack('sigtest','signalstack')
-coloursForStack = ['kBlue', 'kGreen', 'kRed', 'kYellow', 'kBlack', 'kPink', 'kMagenta', 'kCyan']
+
+histW = []
+histZ = []
+histWW = []
+histZZ = []
+histst = []
+histttbar = []
+histWZ = []
+histWH125 = []
+
+coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
 colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
-labelCodes = readInLabels(typeOfSample)#typeOfSample should be signal or bkg
+labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 #nameCodes = readInCodes(typeOfSample)
 #print 'labelsSigTestA'
 #print labelsSigTestA
@@ -454,7 +509,7 @@ for c in sigTestA:
     histstack.append(Hist(20,mini[histidx],maxi[histidx]))
     histstack[histidx].fill_array(c)
     histstack[histidx].scale(weightsSigTestA[histidx])
-    histstack[histidx].fillcolor = coloursForStack[int(colourDict[labelCodes[labelsSigTestA[histidx]]])]
+    histstack[histidx].fillcolor = coloursForStack[int(colourDict[labelCodes[int(labelsSigTestA[histidx])]])]
     histstack[histidx].fillstyle = 'solid'
     testAStack.Add(histstack[histidx])
 #    hist[histidx].rebin(
@@ -478,7 +533,7 @@ for d in bkgTestA:
     histstack2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
     histstack2[hist2idx].fill_array(d)
     histstack2[hist2idx].scale(weightsBkgTestA[hist2idx])
-    histstack2[hist2idx].fillcolor = coloursForStack[colourDict[labelsBkgTestA[hist2idx]]]
+    histstack2[hist2idx].fillcolor = coloursForStack[int(colourDict[labelCodes[int(labelsBkgTestA[hist2idx])]])]
     histstack2[hist2idx].fillstyle = 'solid'
     testAStack.Add(histstack2[hist2idx])
     hist2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
@@ -507,7 +562,7 @@ for d in bkgTestA:
     hist2idx += 1
 c2 = Canvas()
 c2.cd()
-testAStack.draw()
+testAStack.Draw()
 testAStack.Write()
 c2.Write()
 f.close()
