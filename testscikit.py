@@ -174,7 +174,7 @@ def sortMultiple(ind, arr1, arr2, arr3 = []):
     for x in xrange(1,len(arr1)-1):
         val = arr1[ind][x]
         val2 = arr2[ind][x]
-        if not arr3 = []:
+        if not arr3 == []:
             val3 = arr3[ind][x]
         hole = x
         while hole > 0 and val < arr[ind][hole-1]:
@@ -431,6 +431,30 @@ x1A = vstack((sigTestA, bkgTestA))
 y1A = hstack((onesInt(len(sigTestA)), zerosInt(len(bkgTestA))))
 y1A = transpose(y1A)
 
+
+  
+f = ropen('output.root','update')
+c1.cd()
+
+histDictSigA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
+histDictBkgA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
+
+
+coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
+colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
+labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
+lblcount = 0
+for a in sigTestA:
+    lbl = labelsSigTestA[lblcount]
+    histDictSigA[lbl].append(Hist(20,mini[histidx],maxi[histidx]))
+    lblcount += 1
+
+lblcount = 0
+for a in bkgTestA:
+    lbl = labelsBkgTestA[lblcount]
+    histDictBkgA[lbl].append()
+    lblcount += 1
+
 sigTestA = transpose(sigTestA)
 bkgTestA = transpose(bkgTestA)
 
@@ -482,9 +506,7 @@ mini = []
 
 
 
-f = ropen('output.root','update')
-c1.cd()
-testAStack = HistStack('sigtest','signalstack')
+#testAStack = 
 
 histW = []
 histZ = []
@@ -495,9 +517,6 @@ histttbar = []
 histWZ = []
 histWH125 = []
 
-coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
-colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
-labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 #nameCodes = readInCodes(typeOfSample)
 #print 'labelsSigTestA'
 #print labelsSigTestA
@@ -506,12 +525,8 @@ for c in sigTestA:
     mini.append(c[argmin(c)])
     hist.append(Hist(20,mini[histidx],maxi[histidx]))
     hist[histidx].fill_array(c)
-    histstack.append(Hist(20,mini[histidx],maxi[histidx]))
-    histstack[histidx].fill_array(c)
-    histstack[histidx].scale(weightsSigTestA[histidx])
-    histstack[histidx].fillcolor = coloursForStack[int(colourDict[labelCodes[int(labelsSigTestA[histidx])]])]
-    histstack[histidx].fillstyle = 'solid'
-    testAStack.Add(histstack[histidx])
+
+
 #    hist[histidx].rebin(
     hist[histidx].scale(1.0/hist[histidx].integral())
 
@@ -522,20 +537,35 @@ for c in sigTestA:
     hist[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
     hist[histidx].SetTitle("signal")
     hist[histidx].fillstyle='solid'
-
+    lblcount = 0
+    initdict = False
+    for i in c:
+        lbl = labelCodes[int(labelsSigTestA[lblcount])]
+        if histDictSigA[lbl][histidx] == []:
+            histDictSigA[lbl].append(Hist(20,mini[histidx],maxi[histidx]))
+            histDictSigA[lbl][histidx].fillcolor = coloursForStack[int(colourDict[lbl])]
+            histDictSigA[lbl][histidx].fillstyle = 'solid'
+        histDictSigA[lbl][histidx].fill(i)
+        lblcount += 1
+    
     histidx+=1
+rwcount = 0
+testAStack = {'W':HistStack('Wtest','Wstack'),'Z':HistStack('Ztest','Zstack'),'WW':HistStack('WWtest','WWstack'),'ZZ':HistStack('ZZtest','ZZstack'),'st':HistStack('sttest','ststack'),'ttbar':HistStack('ttbartest','ttbarstack'),'WZ':HistStack('WZtest','WZstack'),'WH125':HistStack('WH125test','WH125stack')}
+for rw in histDictSigA.keys():
+    for lblcount in xrange(0,len(weightsSigTestA)):
+        histDictSigA[rw][rwcount].scale(weightsSigTestA[rwcount])
+    testAStack[rw].Add(histDictSigA[rw][rwcount])
+    rwcount+=1
     #wait(True)
+
+
+
 
 #testABkgStack = HistStack('bkgtest','bkgstack')
 for d in bkgTestA:
     maxi2 = argmax(d)
     mini2 = argmin(d)
-    histstack2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
-    histstack2[hist2idx].fill_array(d)
-    histstack2[hist2idx].scale(weightsBkgTestA[hist2idx])
-    histstack2[hist2idx].fillcolor = coloursForStack[int(colourDict[labelCodes[int(labelsBkgTestA[hist2idx])]])]
-    histstack2[hist2idx].fillstyle = 'solid'
-    testAStack.Add(histstack2[hist2idx])
+
     hist2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
     hist2[hist2idx].fill_array(d)
     hist2[hist2idx].scale(1.0/hist2[hist2idx].integral())
@@ -559,11 +589,34 @@ for d in bkgTestA:
     legend.Draw('same')
     c1.Write()
     c1.SaveAs(foundVariables[hist2idx]+".png")
+
+    for i in d:
+        lbl = labelCodes[int(labelsBkgTestA[lblcount])]
+        if histDictBkgA[lbl][hist2idx] == []:
+            histDictBkgA[lbl].append(Hist(20,mini[hist2idx],maxi[hist2idx]))
+            histDictBkgA[lbl][hist2idx].fillcolor = coloursForStack[int(colourDict[lbl])]
+            histDictBkgA[lbl][hist2idx].fillstyle = 'solid'
+        histDictBkgA[lbl][hist2idx].fill(i)
+        lblcount += 1
+
+
     hist2idx += 1
+
+
+for rw in histDictBkgA.keys():
+    for lblcount in xrange(0,len(weightsBkgTestA)):
+        histDictBkgA[rw][rwcount].scale(weightsBkgTestA[rwcount])
+    testAStack[rw].Add(histDictBkgA[rw][rwcount])
+    rwcount+=1
+    #wait(True)
+
 c2 = Canvas()
 c2.cd()
-testAStack.Draw()
-testAStack.Write()
+
+for x in testAStack.keys():
+    testAStack[x].Draw()
+    testAStack[x].Write()
+
 c2.Write()
 f.close()
 #testABkgStack.draw()
