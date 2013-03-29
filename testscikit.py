@@ -413,17 +413,19 @@ bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
 print sigtemp1A
 
 sigTestA, weightsSigTestA, labelsSigTestA = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
-t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
-sigTestA= list(t_sigTestA)
-weightsSigTestA = list(t_weightsSigTestA)
-labelsSigTestA= list(t_labelsSigTestA)
+sortPerm = labelsSigTestA.argsort()
+#t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
+sigTestA= sigTestA[sortPerm]#list(t_sigTestA)
+weightsSigTestA = weightsSigTestA[sortPerm]#list(t_weightsSigTestA)
+labelsSigTestA= labelsSigTestA[sortPerm]#list(t_labelsSigTestA)
 
 #labelsSigTestA, sigTestA, weightsSigTestA = sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
 bkgTestA, weightsBkgTestA, labelsBkgTestA = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
-t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgTestA,bkgTestA,weightsBkgTestA)))
-bkgTestA= list(t_bkgTestA)
-weightsBkgTestA = list(t_weightsBkgTestA)
-labelsBkgTestA= list(t_labelsBkgTestA)
+sortPermBkg = labelsBkgTestA.argsort()
+#t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgTestA,bkgTestA,weightsBkgTestA)))
+bkgTestA= bkgTestA[sortPermBkg]#list(t_bkgTestA)
+weightsBkgTestA = weightsBkgTestA[sortPermBkg]#list(t_weightsBkgTestA)
+labelsBkgTestA= labelsBkgTestA[sortPermBkg]#list(t_labelsBkgTestA)
 
 
 
@@ -462,16 +464,18 @@ sigtemp1B = cutTree(sig,False,len(sig)/2,'B')
 bkgtemp1B = cutTree(bkg,False,len(bkg)/2,'B')
 
 sigTestB, weightsSigTestB, labelsSigTestB = cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigTestB,sigTestB,weightsSigTestB)))
-sigTestB= list(t_sigTestB)
-weightsSigTestB = list(t_weightsSigTestB)
-labelsSigTestB= list(t_labelsSigTestB)
+sortPermB = labelsSigTestB.argsort()
+#t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigTestB,sigTestB,weightsSigTestB)))
+sigTestB= sigTestB[sortPermB]#list(t_sigTestB)
+weightsSigTestB = weightsSigTestB[sortPermB]#list(t_weightsSigTestB)
+labelsSigTestB= labelsSigTestB[sortPermB]#list(t_labelsSigTestB)
 
 bkgTestB, weightsBkgTestB, labelsBkgTestB = cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgTestB,bkgTestB,weightsBkgTestB)))
-bkgTestB= list(t_bkgTestB)
-weightsBkgTestB = list(t_weightsBkgTestB)
-labelsBkgTestB= list(t_labelsBkgTestB)
+sortPermBkgB = labelsBkgTestB.argsort()
+#t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgTestB,bkgTestB,weightsBkgTestB)))
+bkgTestB= bkgTestB[sortPermBkgB]#list(t_bkgTestB)
+weightsBkgTestB = weightsBkgTestB[sortPermBkgB]#list(t_weightsBkgTestB)
+labelsBkgTestB= labelsBkgTestB[sortPermB]#list(t_labelsBkgTestB)
 
 
 
