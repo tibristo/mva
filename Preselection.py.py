@@ -3,9 +3,9 @@
 # Author:      T. Bristow (Edinburgh) <Timothy.Michael.Bristow@cern.ch>
 
 # Usage:
-#  python Preselection.py.py file1.root type
+#  python Preselection.py.py file1.root sampleType
 
-
+import copy
 import ROOT
 import math
 import warnings
@@ -13,31 +13,100 @@ import numpy as np
 warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 def readBkg(bkgFile):
-	filename = 'SampleInfo'+bkgFile+'.txt'
+	filename = 'SampleInfo'+bkgFile+'.csv'
+	labelfilename = 'Labels'+bkgFile+'.txt'
+	namesfilename = 'Names'+bkgFile+'.txt'
+	labelfile = open(labelfilename,'w')
+	namesfile = open(namesfilename,'w')
 	f = open(filename)
 	ids = []
+	labelcodes = {}
+	namescodes = {}
 	genericBkg = (bkgFile == 'bkg')
 	for line in f:
 		if genericBkg:
-			ids.append(line.split('\t'))
+			linearr = line.split(',')
+			ids.append(linearr)
+			if (linearr[5] not in labelcodes.keys()):
+				label = linearr[5].strip()
+				labelcodes[label] = len(labelcodes)
+				labelfile.write(label+','+str(labelcodes[label]))
+			if (linearr[6] not in namescodes.keys()):
+				name = linearr[6].strip()
+				namescodes[name] = len(namescodes)
+				namesfile.write(name+','+str(namescodes[name]))
 		else:
-			linearr = line.split('\t')
+			linearr = line.split(',')
 			if linearr[5] == bkgFile:
 				ids.append(linearr)
+			if (linearr[5] not in labelcodes.keys()):
+				label = linearr[5].strip()
+				labelcodes[label] = len(labelcodes)
+				labelfile.write(label+','+str(labelcodes[label]))
+			if (linearr[6] not in namescodes.keys()):
+				name = linearr[6].strip()
+				namescodes[name] = len(namescodes)
+				namesfile.write(name+','+str(namescodes[name]))
+	labelfile.close()
+	namesfile.close()
 	f.close()
-	return ids
+	return ids, labelcodes, namescodes
+
+def readAllLabels():
+	f = open('SampleInfo.csv')
+	labelfilename = 'Labels.txt'
+	namesfilename = 'Names.txt'
+	labelfile = open(labelfilename,'w')
+	namesfile = open(namesfilename,'w')
+	namescodes = {}
+	labelcodes = {}
+	for line in f:
+		linearr = line.split(',')
+		if (linearr[5] not in labelcodes.keys()):
+			label = linearr[5].strip()
+			labelcodes[label] = len(labelcodes)
+			labelfile.write(label+','+str(labelcodes[label]))
+		if (linearr[6] not in namescodes.keys()):
+			name = linearr[6].strip()
+			namescodes[name] = len(namescodes)
+			namesfile.write(name+','+str(namescodes[name]))
+	f.close()
+	labelfile.close()
+	namesfile.close()
+	return labelcodes, namescodes
+
 
 def readSig():
-	f = open('SampleInfoSig.txt')
+	f = open('SampleInfoSig.csv')
+	labelfilename = 'LabelsSig.txt'
+	namesfilename = 'NamesSig.txt'
+	labelfile = open(labelfilename,'w')
+	namesfile = open(namesfilename,'w')
 	ids = []
+	namescodes = {}
+	labelcodes = {}
 	for line in f:
-		ids.append(line.split('\t'))
+		linearr = line.split(',')
+		ids.append(linearr)
+		if (linearr[5] not in labelcodes.keys()):
+			label = linearr[5].strip()
+			labelcodes[label] = len(labelcodes)
+			labelfile.write(label+','+str(labelcodes[label]))
+		if (linearr[6] not in namescodes.keys()):
+			name = linearr[6].strip()
+			namescodes[name] = len(namescodes)
+			namesfile.write(name+','+str(namescodes[name]))
 	f.close()
-	return ids
+	labelfile.close()
+	namesfile.close()
+	return ids,labelcodes, namescodes
 
 def getIndexOfSample(mc, sample):
 	for x in xrange(0,len(sample)):
-		if sample[x] == mc:
+		#print int(sample[x][0])
+		#print 'mc ' + str(mc)
+		if int(sample[x][0]) == int(mc):
+			#print 'found'
 			return x
 	return -1
 
@@ -188,6 +257,8 @@ maxEntries = -1
 #maxEntries = 100
 
 if (maxEntries!=-1 and nEntries>maxEntries):  nEntries = maxEntries
+entryNtuple = TVectorD(1)
+entryNtuple[0] = nEntries
 
 ch_new = ch.CloneTree(0)
 gROOT.ProcessLine(\
@@ -207,13 +278,12 @@ gROOT.ProcessLine(\
     Float_t pTL ;\
     Float_t MET;\
     Float_t mLL;\
-    Int_t category;\
+    Float_t category;\
     Float_t xs;\
     Float_t xscorr1;\
     Float_t xscorr2;\
     Float_t final_xs;\
-    TString label;\
-    TString name;\
+    Float_t label_code;\
     };")
 
 '''
@@ -270,23 +340,34 @@ ch_new.Branch('pTL',AddressOf(varStruct,'pTL'),'pT(l)')#1 lep only
 ch_new.Branch('MET',AddressOf(varStruct,'MET'),'MET')#same as pTV for 0 lep
 ch_new.Branch('mLL',AddressOf(varStruct,'mLL'),'m(ll)')#2 lep only
 ch_new.Branch('category',AddressOf(varStruct,'category'),'type of event')#0, 1 or 2 lep
-ch_new.Branch('xs',AddressOf(varStruct,'xs'),'Initial Cross-Section');
-ch_new.Branch('xscorr1',AddressOf(varStruct,'xscorr1'),'Cross-Section Corr 1');
-ch_new.Branch('xscorr2',AddressOf(varStruct,'xscorr2'),'Cross-Section Corr 2');
-ch_new.Branch('final_xs',AddressOf(varStruct,'final_xs'),'Final Cross-Section');
-ch_new.Branch('label',AddressOf(varStruct,'label'),'Label');
-ch_new.Branch('name',AddressOf(varStruct,'name'),'Name');
+
+data = (sys.argv[2] == 'data')
+#if (data == False):
+ch_new.Branch('xs',AddressOf(varStruct,'xs'),'Initial Cross-Section')
+ch_new.Branch('xscorr1',AddressOf(varStruct,'xscorr1'),'Cross-Section Corr 1')
+ch_new.Branch('xscorr2',AddressOf(varStruct,'xscorr2'),'Cross-Section Corr 2')
+ch_new.Branch('final_xs',AddressOf(varStruct,'final_xs'),'Final Cross-Section')
+	#ch_new.Branch('label',AddressOf(varStruct,'label'),'Label')
+ch_new.Branch('label_code',AddressOf(varStruct,'label_code'),'Label Code')
+	#ch_new.Branch('name',AddressOf(varStruct,'name'),'Name');
+	#ch_new.Branch('name_code',AddressOf(varStruct,'name_code'),'Name Code');
+print 'data is false'
 
 
 typeCodes = [0,1,2]
 if sys.argv[2] == 'bkg':
-	samples = readBkg('bkg')
+	samples,labelcodes,namecodes = readBkg('bkg')
 elif sys.argv[2] == 'ttbar' or sys.argv[2] == 'test':
-	samples = readBkg('ttbar')
+	samples,labelcodes,namecodes = readBkg('ttbar')
 elif sys.argv[2] == 'top':
-	samples = readBkg('st')
+	samples,labelcodes,namecodes = readBkg('st')
+elif sys.argv[2] == 'data':
+	samples = []
+	labelcodes = {}
+	namecodes = {}
 else:
-	samples = readSig()
+	samples,labelcodes, namecodes = readSig()
+labelcodesAll, namecodesAll = readAllLabels();
 
 #print samples
 debug = False
@@ -294,15 +375,19 @@ print 'type of Sample: ' + sys.argv[2]
 totalFound = 0
 tightLeptons = 0
 tightLeptonsPlusLoose = 0
-
-
+log = open('presel'+sys.argv[2]+'Log.txt','w')
+entryNtuple.Write("numEntries")
+print 'start looop'
 for i in range(nEntries):
 	foundevent = False
 	ch.GetEntry(i)
+	
 	cutNum = 0
-	ind = getIndexOfSample(ch.mc_channel_number, samples)
-	if ind == -1:
-		continue
+	if (data == False):
+		ind = getIndexOfSample(ch.mc_channel_number, samples)
+		
+		if ind == -1:
+			continue
 	
 	addCut(cutNum)
 	cutNum = cutNum + 1
@@ -621,16 +706,16 @@ for i in range(nEntries):
 	if eventType[0] or eventType[1] or eventType[2]:
 		foundevent = True
 	if eventType[0]:
-		varStruct.category = 0	
+		varStruct.category = 0.0
 		ptv = ptvArr[0]
 	elif eventType[1]:
-		varStruct.category = 1	
+		varStruct.category = 1.0
 		ptv = ptvArr[1]
 	elif eventType[2]:
-		varStruct.category = 2	
+		varStruct.category = 2.0
 		ptv = ptvArr[2]
 	else:
-		varStruct.category = -1
+		varStruct.category = -1.0
 		ptv = 0
 		
 	if noEvent(eventType):
@@ -641,6 +726,8 @@ for i in range(nEntries):
 		print 'should be an event!!!!!!'
 
 	varStruct.dRBB = dR(jet1.Eta(),jet1.Phi(),jet2.Eta(),jet2.Phi())
+	if debug:
+		print 'set drBB'
 	varStruct.dEtaBB = math.fabs(jet1.Eta()-jet2.Eta())
 	bb_phi = (jet1+jet2).Phi()
 	# do we use MET_phi for vbb for 0 lepton???
@@ -677,7 +764,8 @@ for i in range(nEntries):
 	varStruct.pTB2 = jet2.Pt()
 	pTBB = (jet1+jet2).Pt()
 	varStruct.pTimbVH = (pTBB-ptv)/(pTBB+ptv)
-
+	if debug:
+		print 'set pTimbVH'
 	varStruct.MET = met
 	if eventType[2]:
 		varStruct.mLL = mll
@@ -693,24 +781,37 @@ for i in range(nEntries):
 	else:
 		category[0] = -1
         '''
-	varStruct.xs = samples[ind][1]
-	varStruct.xscorr1 = samples[ind][2]
-	varStruct.xscorr2 = samples[ind][3]
-	varStruct.final_xs = samples[ind][4]
-	varStruct.label = samples[ind][5]
-	varStruct.name = samples[ind][6]
+	#print samples[ind][1]
+	#if (data == False):
+	varStruct.xs = float(samples[ind][1])
+	varStruct.xscorr1 = float(samples[ind][2])
+	varStruct.xscorr2 = float(samples[ind][3])
+	varStruct.final_xs = float(samples[ind][4])
+	label = copy.deepcopy(samples[ind][5])
+		#varStruct.label = label
+		#print 'samples[ind][5].strip():' + label
+	label_code = float(labelcodesAll[label])
+	varStruct.label_code = copy.deepcopy(label_code)
+		#print 'labelcodesAll[samples[ind][5].strip()]: ' + str(labelcodesAll[samples[ind][5]])
+		#print str(varStruct.label_code)
+		#varStruct.name = samples[ind][6].strip()
+		#varStruct.name_code = namecodesAll[samples[ind][6].strip()]
 	if eventType[0] or eventType[2]:
-		print '0 or 1 lep event found ***********************************************'
+		if debug:
+			print '0 or 1 lep event found ***********************************************'
 	if eventType[1]:
 		foundevent = True
-		#print 'found event!'
+		if debug:
+			print 'found event!'
 	else:
 		foundevent = False
 	if(foundevent==True):
+		#print 'found eventType[1]'
 		nEventsPassedSkim = nEventsPassedSkim + 1
 		totalFound = totalFound + 1
+		log.write(label+' ' +str(varStruct.label_code)+'\n')
 		ch_new.Fill()
-
+log.close()
 	#print 'passed event!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
 #    # Check to see if it passes the vertex requirements
