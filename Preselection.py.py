@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 
-# Author:      E. Feng (Chicago) <Eric.Feng@cern.ch>
-# Modified:    B. Samset (UiO) <b.h.samset@fys.uio.no> for use with SUSYD3PDs
-# Modified:    K. Leney (Witwatersrand) for use with TauWGD3PDs
+# Author:      T. Bristow (Edinburgh) <Timothy.Michael.Bristow@cern.ch>
 
 # Usage:
-#  ./SlimD3PD.py file1.root,file2.root,...
-# with panda:
-# prun --exec "SlimD3PD.py %IN" --athenaTag=16.0.3.3.3,TopPhys --outputs THIS_DATASET_NAME --inDS FULL_NAME_OF_INPUT_DATASET --outDS user.kleney.THIS_DATASET_NAME.SlimD3PD_itr_THIS_ITERATOR --nGBPerJob=MAX
+#  python Preselection.py.py file1.root type
+
 
 import ROOT
 import math

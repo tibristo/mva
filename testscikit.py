@@ -2,6 +2,11 @@ from numpy import *
 from root_numpy import *
 import sys
 # used to shuffle multiple arrays at once
+
+def argsortlist(seq):
+    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+    return sorted(range(len(seq)), key = seq.__getitem__)
+
 if len(sys.argv) < 2:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
@@ -145,7 +150,7 @@ def roc_curve_rej(y_true, y_score, pos_label=None):
     return fpr, tpr, thresholds[::-1], rej
 
 def readInLabels(fname):
-    f = open('Labels'+fname+'.txt')
+    f = open('Labels.txt')#+fname+'.txt')
     labelcodes = []
     labelcodesNum = []
     for line in f:
@@ -154,10 +159,11 @@ def readInLabels(fname):
         labelcodesNum.append(int(l[1]))
     f.close()
     labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
+    print labelcodes
     return labelcodes
 
 def readInNames(fname):
-    f = open('Names'+fname+'.txt')
+    f = open('Names.txt')
     namecodes = []
     namecodesNum = []
     for line in f:
@@ -260,9 +266,12 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
             colcount = colcount + 1
         rowcount = rowcount + 1
         outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
-        outlabels.append(row[int(varWIdx['label_code'])])
-        #print row[int(varWIdx['label'])]
-    return outarr, outweights, outlabels
+        outlabels.append(int(row[int(varWIdx['label_code'])]))
+        if (int(row[int(varWIdx['label_code'])]) > 0):
+            print 'not 0!!!!!!'
+            print row[int(varWIdx['label_code'])]
+                      
+    return outarr, array(outweights), array(outlabels)
 
 def onesInt(length):
     arr = []
@@ -350,6 +359,7 @@ for x in sig.dtype.names:
         evNum = xcount
     xcount = xcount + 1
 
+
 #print sig.dtype.names
 #print varIdx
 #print foundVariables
@@ -391,7 +401,6 @@ weightsSigB = setWeights(len(sigTrainB),sigWeightB)
 weightstB = hstack((weightsSigB,weightsBkgB))
 weightstB = transpose(weightstB)
 
-# shuffle won't work if there are objects in the numpy array!!!!!!!!
 x =xtA
 y = ytA
 weights = weightstA
@@ -434,8 +443,15 @@ y1A = hstack((onesInt(len(sigTestA)), zerosInt(len(bkgTestA))))
 y1A = transpose(y1A)
 
 
+from rootpy.interactive import wait
+from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
+from rootpy.io import root_open as ropen, DoesNotExist
+from rootpy.plotting import HistStack
+import ROOT
+ROOT.gROOT.SetBatch(True)
   
-f = ropen('output.root','update')
+f = ropen('output.root','recreate')
+c1 = Canvas()
 c1.cd()
 
 histDictSigA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
@@ -446,16 +462,6 @@ coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta',
 colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
 labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 lblcount = 0
-for a in sigTestA:
-    lbl = labelsSigTestA[lblcount]
-    histDictSigA[lbl].append(Hist(20,mini[histidx],maxi[histidx]))
-    lblcount += 1
-
-lblcount = 0
-for a in bkgTestA:
-    lbl = labelsBkgTestA[lblcount]
-    histDictBkgA[lbl].append()
-    lblcount += 1
 
 sigTestA = transpose(sigTestA)
 bkgTestA = transpose(bkgTestA)
@@ -487,13 +493,7 @@ print 'starting testing'
 sigTestB = transpose(sigTestB)
 bkgTestB = transpose(bkgTestB)
 
-from rootpy.interactive import wait
-from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
-from rootpy.io import root_open as ropen, DoesNotExist
-from rootpy.plotting import HistStack
-import ROOT
-ROOT.gROOT.SetBatch(True)
-c1 = Canvas()
+
 count = 0
 cols = []
 for i in variableNames:
@@ -510,20 +510,12 @@ mini = []
 
 
 
-#testAStack = 
-
-histW = []
-histZ = []
-histWW = []
-histZZ = []
-histst = []
-histttbar = []
-histWZ = []
-histWH125 = []
 
 #nameCodes = readInCodes(typeOfSample)
 #print 'labelsSigTestA'
 #print labelsSigTestA
+log = open('log.txt','w')
+log.write('############################# Signal #############################\n')
 for c in sigTestA:
     maxi.append(c[argmax(c)])
     mini.append(c[argmin(c)])
@@ -542,30 +534,36 @@ for c in sigTestA:
     hist[histidx].SetTitle("signal")
     hist[histidx].fillstyle='solid'
     lblcount = 0
-    initdict = False
+    for k in histDictSigA.keys():
+        histDictSigA[k].append(Hist(20,mini[histidx],maxi[histidx]))
+        histDictSigA[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
+        histDictSigA[k][histidx].fillstyle = 'solid'
+        histDictSigA[k][histidx].SetOption('hist')
     for i in c:
         lbl = labelCodes[int(labelsSigTestA[lblcount])]
-        if histDictSigA[lbl][histidx] == []:
-            histDictSigA[lbl].append(Hist(20,mini[histidx],maxi[histidx]))
-            histDictSigA[lbl][histidx].fillcolor = coloursForStack[int(colourDict[lbl])]
-            histDictSigA[lbl][histidx].fillstyle = 'solid'
-        histDictSigA[lbl][histidx].fill(i)
+        #if len(histDictSigA[lbl]) >= histidx and histDictSigA[lbl][histidx] == []:
+        # weight i
+        weighted_i = i#*weightsSigTestA[lblcount]
+        histDictSigA[lbl][histidx].fill(weighted_i)
         lblcount += 1
+        #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
     
     histidx+=1
-rwcount = 0
-testAStack = {'W':HistStack('Wtest','Wstack'),'Z':HistStack('Ztest','Zstack'),'WW':HistStack('WWtest','WWstack'),'ZZ':HistStack('ZZtest','ZZstack'),'st':HistStack('sttest','ststack'),'ttbar':HistStack('ttbartest','ttbarstack'),'WZ':HistStack('WZtest','WZstack'),'WH125':HistStack('WH125test','WH125stack')}
+
+#testAStack = {'W':HistStack('Wtest','Wstack'),'Z':HistStack('Ztest','Zstack'),'WW':HistStack('WWtest','WWstack'),'ZZ':HistStack('ZZtest','ZZstack'),'st':HistStack('sttest','ststack'),'ttbar':HistStack('ttbartest','ttbarstack'),'WZ':HistStack('WZtest','WZstack'),'WH125':HistStack('WH125test','WH125stack')}
+testAStack = []#HistStack('dRBB','dRBB'),HistStack('dEtaBB','dEtaBB'),HistStack('dPhiVBB','dPhiVBB'),HistStack('dPhiLMET','dPhiLMET'),HistStack('dPhiLBMin','dPhiLBMin'),HistStack('pTV','pTV'),HistStack('mBB','mBB'),HistStack('HT','HT'),HistStack('pTB1','pTB1'),HistSTack('pTB2','pTB2'),HistStack('pTimbVH','pTimbVH'),HistStack('mTW','mTW'),HistStack('pTL','pTL'),HistStack('MET','MET')]#,'mLL']
+for st in foundVariables:
+    testAStack.append(HistStack(st,st))
+
 for rw in histDictSigA.keys():
-    for lblcount in xrange(0,len(weightsSigTestA)):
-        histDictSigA[rw][rwcount].scale(weightsSigTestA[rwcount])
-    testAStack[rw].Add(histDictSigA[rw][rwcount])
-    rwcount+=1
-    #wait(True)
-
-
-
-
+    log.write(rw + ' length: '+str(len(histDictSigA[rw]))+'\n')
+    for rwcount in xrange(0,len(histDictSigA[rw])):
+        testAStack[rwcount].Add(histDictSigA[rw][rwcount])
+        histDictSigA[rw][rwcount].draw('hist')
+        c1.SaveAs("histDictSigA"+str(rwcount)+".png")
+        log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictSigA[rw][rwcount].GetEntries())+'\n')
 #testABkgStack = HistStack('bkgtest','bkgstack')
+log.write('########################### Background ###########################\n')
 for d in bkgTestA:
     maxi2 = argmax(d)
     mini2 = argmin(d)
@@ -594,34 +592,54 @@ for d in bkgTestA:
     c1.Write()
     c1.SaveAs(foundVariables[hist2idx]+".png")
 
+    for k in histDictBkgA.keys():
+        histDictBkgA[k].append(Hist(20,mini[hist2idx],maxi[hist2idx]))
+        histDictBkgA[k][hist2idx].fillcolor = coloursForStack[int(colourDict[k])]
+        histDictBkgA[k][hist2idx].fillstyle = 'solid'
+        histDictBkgA[k][hist2idx].SetOption('hist')
+    lblcount = 0
     for i in d:
         lbl = labelCodes[int(labelsBkgTestA[lblcount])]
-        if histDictBkgA[lbl][hist2idx] == []:
-            histDictBkgA[lbl].append(Hist(20,mini[hist2idx],maxi[hist2idx]))
-            histDictBkgA[lbl][hist2idx].fillcolor = coloursForStack[int(colourDict[lbl])]
-            histDictBkgA[lbl][hist2idx].fillstyle = 'solid'
-        histDictBkgA[lbl][hist2idx].fill(i)
+        #if len(histDictBkgA[lbl]) >= hist2idx and histDictBkgA[lbl][hist2idx] == []:
+        #weight 
+        weighted_i = i#*weightsBkgTestA[lblcount]
+        histDictBkgA[lbl][hist2idx].fill(weighted_i)
         lblcount += 1
+        #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
 
 
     hist2idx += 1
 
+testAStackBkg = []#HistStack('dRBB','dRBB'),HistStack('dEtaBB','dEtaBB'),HistStack('dPhiVBB','dPhiVBB'),HistStack('dPhiLMET','dPhiLMET'),HistStack('dPhiLBMin','dPhiLBMin'),HistStack('pTV','pTV'),HistStack('mBB','mBB'),HistStack('HT','HT'),HistStack('pTB1','pTB1'),HistSTack('pTB2','pTB2'),HistStack('pTimbVH','pTimbVH'),HistStack('mTW','mTW'),HistStack('pTL','pTL'),HistStack('MET','MET')]#,'mLL']
+for st in foundVariables:
+    testAStackBkg.append(HistStack(st,st))
+
 
 for rw in histDictBkgA.keys():
-    for lblcount in xrange(0,len(weightsBkgTestA)):
-        histDictBkgA[rw][rwcount].scale(weightsBkgTestA[rwcount])
-    testAStack[rw].Add(histDictBkgA[rw][rwcount])
-    rwcount+=1
-    #wait(True)
-
+    log.write(rw + ' length: '+str(len(histDictBkgA[rw]))+'\n')
+    for rwcount in xrange(0,len(histDictBkgA[rw])):
+        testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
+        histDictBkgA[rw][rwcount].draw('hist')
+        c1.SaveAs("histDictBkgA"+str(rwcount)+".png")
+        log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictBkgA[rw][rwcount].GetEntries())+'\n')
+log.close()
 c2 = Canvas()
 c2.cd()
+xcount = 0
+for x in testAStack:
+    x.Draw('hist')
+    x.Write()
+    c2.SaveAs(foundVariables[xcount]+'SigStack.png')
+    c2.Write()
+    xcount +=1 
+xcount = 0
+for x in testAStackBkg:
+    x.Draw('hist')
+    x.Write()
+    c2.SaveAs(foundVariables[xcount]+'BkgStack.png')
+    c2.Write()
+    xcount+=1
 
-for x in testAStack.keys():
-    testAStack[x].Draw()
-    testAStack[x].Write()
-
-c2.Write()
 f.close()
 #testABkgStack.draw()
 
@@ -637,14 +655,14 @@ from sklearn.tree import DecisionTreeClassifier
 
 print 'starting training on AdaBoostClassifier'
 #class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)
-
+'''
 
 from sklearn.ensemble import AdaBoostClassifier
 from time import clock
 # Build a forest and compute the feature importances
 ada = AdaBoostClassifier(DecisionTreeClassifier(compute_importances=True,max_depth=4,min_samples_split=2,min_samples_leaf=100),n_estimators=400, learning_rate=0.5, algorithm="SAMME",compute_importances=True)
 start = clock()
-ada.fit(x, y)
+ada.fit(xtA, ytA)
 elapsed = clock()-start
 print 'time taken for training: ' + str(elapsed)
 importancesada = ada.feature_importances_
@@ -666,6 +684,11 @@ for f in xrange(12):
 
 
 # Plot the feature importances of the forest
+# We need this to run in batch because it complains about not being able to open display
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import numpy as np
+import matplotlib.pyplot as plt
+from pylab import * 
 
 import pylab as pl
 
@@ -684,6 +707,7 @@ class_names = "AB"
 
 pl.figure(figsize=(15, 5))
 '''
+'''
 # Plot the decision boundaries
 pl.subplot(131)
 x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
@@ -699,6 +723,7 @@ Z = ada.predict(c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 pl.axis("tight")
+'''
 '''
 
 
@@ -775,3 +800,4 @@ for i in range(1):
     endIdx = len(xt)
 
 pl.show()
+'''
