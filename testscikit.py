@@ -265,7 +265,7 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
             outarr[rowcount][colcount] = row[col]
             colcount = colcount + 1
         rowcount = rowcount + 1
-        outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
+        outweights.append(float(row[int(varWIdx['final_xs'])]*lumi/nEntries))
         outlabels.append(int(row[int(varWIdx['label_code'])]))
         if (int(row[int(varWIdx['label_code'])]) > 0):
             print 'not 0!!!!!!'
@@ -364,7 +364,7 @@ for x in sig.dtype.names:
 #print varIdx
 #print foundVariables
 #create the training trees/ arrays
-nEntries = 14443742
+nEntries = 14443742.0
 lumi = 20300.0
 sigTrainA,weightsSigTrainA, labelsSigTrainA = cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
 bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
@@ -519,6 +519,7 @@ log.write('############################# Signal #############################\n'
 
 #TODO: need to write generic method to do the loop of sigTestA and bkgTestA, will need to do it over B sets too
 legendsForSigStack = {}
+
 for c in sigTestA:
     maxi.append(c[argmax(c)])
     mini.append(c[argmin(c)])
@@ -555,20 +556,26 @@ for c in sigTestA:
 
 #testAStack = {'W':HistStack('Wtest','Wstack'),'Z':HistStack('Ztest','Zstack'),'WW':HistStack('WWtest','WWstack'),'ZZ':HistStack('ZZtest','ZZstack'),'st':HistStack('sttest','ststack'),'ttbar':HistStack('ttbartest','ttbarstack'),'WZ':HistStack('WZtest','WZstack'),'WH125':HistStack('WH125test','WH125stack')}
 testAStack = []#HistStack('dRBB','dRBB'),HistStack('dEtaBB','dEtaBB'),HistStack('dPhiVBB','dPhiVBB'),HistStack('dPhiLMET','dPhiLMET'),HistStack('dPhiLBMin','dPhiLBMin'),HistStack('pTV','pTV'),HistStack('mBB','mBB'),HistStack('HT','HT'),HistStack('pTB1','pTB1'),HistSTack('pTB2','pTB2'),HistStack('pTimbVH','pTimbVH'),HistStack('mTW','mTW'),HistStack('pTL','pTL'),HistStack('MET','MET')]#,'mLL']
-
+allStack = []
 legendSigStack = []
+legendAllStack = []
 for st in foundVariables:
     testAStack.append(HistStack(st,st))
+    allStack.append(HistStack(st,st))
     legendSigStack.append(Legend(7))
+    legendAllStack.append(Legend(7))
 
 for rw in histDictSigA.keys():
     log.write(rw + ' length: '+str(len(histDictSigA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictSigA[rw])):
-        testAStack[rwcount].Add(histDictSigA[rw][rwcount])
-        histDictSigA[rw][rwcount].draw('hist')
-        legendSigStack[rwcount].AddEntry( histDictSigA[rw][rwcount], 'F')
-        c1.SaveAs("histDictSigA"+str(rwcount)+".png")
-        log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictSigA[rw][rwcount].GetEntries())+'\n')
+        if histDictSigA[rw][rwcount].GetEntries() > 0:
+            testAStack[rwcount].Add(histDictSigA[rw][rwcount])
+            allStack[rwcount].Add(histDictSigA[rw][rwcount])
+            histDictSigA[rw][rwcount].draw('hist')
+            legendSigStack[rwcount].AddEntry( histDictSigA[rw][rwcount], 'F')
+            legendAllStack[rwcount].AddEntry( histDictSigA[rw][rwcount], 'F')
+            c1.SaveAs("histDictSigA"+str(rwcount)+".png")
+            log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictSigA[rw][rwcount].GetEntries())+'\n')
 #testABkgStack = HistStack('bkgtest','bkgstack')
 log.write('########################### Background ###########################\n')
 for d in bkgTestA:
@@ -628,11 +635,13 @@ for st in foundVariables:
 for rw in histDictBkgA.keys():
     log.write(rw + ' length: '+str(len(histDictBkgA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictBkgA[rw])):
-        testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
-        legendBkgStack[rwcount].AddEntry(histDictBkgA[rw][rwcount], 'F')
-        histDictBkgA[rw][rwcount].draw('hist')
-        c1.SaveAs("histDictBkgA"+str(rwcount)+".png")
-        log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictBkgA[rw][rwcount].GetEntries())+'\n')
+        if histDictBkgA[rw][rwcount].GetEntries() > 0:
+            testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
+            allStack[rwcount].Add(histDictBkgA[rw][rwcount])
+            legendBkgStack[rwcount].AddEntry(histDictBkgA[rw][rwcount], 'F')
+            histDictBkgA[rw][rwcount].draw('hist')
+            c1.SaveAs("histDictBkgA"+str(rwcount)+".png")
+            log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictBkgA[rw][rwcount].GetEntries())+'\n')
 log.close()
 c2 = Canvas()
 c2.cd()
@@ -652,6 +661,16 @@ for x in testAStackBkg:
     c2.SaveAs(foundVariables[xcount]+'BkgStack.png')
     c2.Write()
     xcount+=1
+
+xcount = 0
+for x in allStack:
+    x.Draw('hist')
+    legendAllStack[xcount].Draw('same')
+    x.Write()
+    c2.SaveAs(foundVariables[xcount]+'AllStack.png')
+    c2.Write()
+    xcount+=1
+
 
 f.close()
 #testABkgStack.draw()
