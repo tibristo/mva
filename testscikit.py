@@ -253,25 +253,34 @@ def oddArr(arr, evNum):
 
 # take out only the variables we want to train on
 # if sampleVersion = A, only use even EventNumbers, B odd
-def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
+def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSample = False, labels = []):
     rowcount = 0
     #initialise a basic numpy array that we will return
     outarr = ones((int(rows),int(cols)))
     outweights = []
     outlabels = []
+    weightsPerSample = {}
     for row in arr:
         colcount = 0
         for col in varIdx:
             outarr[rowcount][colcount] = row[col]
             colcount = colcount + 1
         rowcount = rowcount + 1
-        outweights.append(float(row[int(varWIdx['final_xs'])]*lumi/nEntries))
-        outlabels.append(int(row[int(varWIdx['label_code'])]))
+        weight = float(row[int(varWIdx['final_xs'])]*lumi/nEntries)
+        outweights.append(weight)
+        key = row[int(varWIdx['label_code'])]
+        outlabels.append(int(key))
+        # there is a better way to do this, need to do it once, rather than many times since it'll be the same
+        
+        if calcWeightPerSample and (str(key) not in weightsPerSample):
+            weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
         if (int(row[int(varWIdx['label_code'])]) > 0):
             print 'not 0!!!!!!'
             print row[int(varWIdx['label_code'])]
-                      
-    return outarr, array(outweights), array(outlabels)
+    if calcWeightsPerSample:
+        return outarr, array(outweights), array(outlabels), weightsPerSample
+    else:
+        return outarr, array(outweights), array(outlabels)
 
 def onesInt(length):
     arr = []
@@ -366,6 +375,7 @@ for x in sig.dtype.names:
 #create the training trees/ arrays
 nEntries = 14443742.0
 lumi = 20300.0
+
 sigTrainA,weightsSigTrainA, labelsSigTrainA = cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
 bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
 sigTrainB,weightsSigTrainB, labelsSigTrainB = cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntries, lumi)
@@ -420,8 +430,9 @@ sigtemp1A = cutTree(sig,False,len(sig)/2,'A')
 bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
 
 print sigtemp1A
-
-sigTestA, weightsSigTestA, labelsSigTestA = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
+labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
+#find weightsPerSample on first run
+sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSample = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
 sortPerm = labelsSigTestA.argsort()
 #t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
 sigTestA= sigTestA[sortPerm]#list(t_sigTestA)
@@ -460,7 +471,7 @@ histDictBkgA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125'
 
 coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
 colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
-labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
+
 lblcount = 0
 
 sigTestA = transpose(sigTestA)
@@ -547,7 +558,7 @@ for c in sigTestA:
         lbl = labelCodes[int(labelsSigTestA[lblcount])]
         #if len(histDictSigA[lbl]) >= histidx and histDictSigA[lbl][histidx] == []:
         # weight i
-        weighted_i = i*weightsSigTestA[lblcount]
+        weighted_i = i#*weightsSigTestA[lblcount]
         histDictSigA[lbl][histidx].fill(weighted_i)
         lblcount += 1
         #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
@@ -569,6 +580,7 @@ for rw in histDictSigA.keys():
     log.write(rw + ' length: '+str(len(histDictSigA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictSigA[rw])):
         if histDictSigA[rw][rwcount].GetEntries() > 0:
+            histDictSigA[rw][rwcount].scale(weightsPerSample[rw])
             testAStack[rwcount].Add(histDictSigA[rw][rwcount])
             allStack[rwcount].Add(histDictSigA[rw][rwcount])
             histDictSigA[rw][rwcount].draw('hist')
@@ -636,6 +648,7 @@ for rw in histDictBkgA.keys():
     log.write(rw + ' length: '+str(len(histDictBkgA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictBkgA[rw])):
         if histDictBkgA[rw][rwcount].GetEntries() > 0:
+            histDictBkgA[rw][rwcount].scale(weightsPerSample[rw])
             testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
             allStack[rwcount].Add(histDictBkgA[rw][rwcount])
             legendBkgStack[rwcount].AddEntry(histDictBkgA[rw][rwcount], 'F')
