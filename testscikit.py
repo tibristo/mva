@@ -274,10 +274,10 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
         
         if calcWeightPerSample and (str(key) not in weightsPerSample):
             weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
-        if (int(row[int(varWIdx['label_code'])]) > 0):
-            print 'not 0!!!!!!'
-            print row[int(varWIdx['label_code'])]
-    if calcWeightsPerSample:
+        #if (int(row[int(varWIdx['label_code'])]) > 0):
+        #    print 'not 0!!!!!!'
+        #    print row[int(varWIdx['label_code'])]
+    if calcWeightPerSample:
         return outarr, array(outweights), array(outlabels), weightsPerSample
     else:
         return outarr, array(outweights), array(outlabels)
@@ -432,7 +432,8 @@ bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
 print sigtemp1A
 labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 #find weightsPerSample on first run
-sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSample = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+
 sortPerm = labelsSigTestA.argsort()
 #t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
 sigTestA= sigTestA[sortPerm]#list(t_sigTestA)
@@ -440,13 +441,19 @@ weightsSigTestA = weightsSigTestA[sortPerm]#list(t_weightsSigTestA)
 labelsSigTestA= labelsSigTestA[sortPerm]#list(t_labelsSigTestA)
 
 #labelsSigTestA, sigTestA, weightsSigTestA = sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
-bkgTestA, weightsBkgTestA, labelsBkgTestA = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi)
+bkgTestA, weightsBkgTestA, labelsBkgTestA, weightsPerBkgSample = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+weightsPerSample = dict(weightsPerSigSample.items() + weightsPerBkgSample.items())
+#for python 3 and greater use
+#weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 sortPermBkg = labelsBkgTestA.argsort()
 #t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgTestA,bkgTestA,weightsBkgTestA)))
 bkgTestA= bkgTestA[sortPermBkg]#list(t_bkgTestA)
 weightsBkgTestA = weightsBkgTestA[sortPermBkg]#list(t_weightsBkgTestA)
 labelsBkgTestA= labelsBkgTestA[sortPermBkg]#list(t_labelsBkgTestA)
 
+
+print 'weightsPerSample'
+print weightsPerSample
 
 
 x1A = vstack((sigTestA, bkgTestA))
@@ -580,7 +587,8 @@ for rw in histDictSigA.keys():
     log.write(rw + ' length: '+str(len(histDictSigA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictSigA[rw])):
         if histDictSigA[rw][rwcount].GetEntries() > 0:
-            histDictSigA[rw][rwcount].scale(weightsPerSample[rw])
+            if rw in weightsPerSample:
+                histDictSigA[rw][rwcount].scale(weightsPerSample[rw])
             testAStack[rwcount].Add(histDictSigA[rw][rwcount])
             allStack[rwcount].Add(histDictSigA[rw][rwcount])
             histDictSigA[rw][rwcount].draw('hist')
@@ -629,7 +637,7 @@ for d in bkgTestA:
         lbl = labelCodes[int(labelsBkgTestA[lblcount])]
         #if len(histDictBkgA[lbl]) >= hist2idx and histDictBkgA[lbl][hist2idx] == []:
         #weight 
-        weighted_i = i*weightsBkgTestA[lblcount]
+        weighted_i = i#*weightsBkgTestA[lblcount]
         histDictBkgA[lbl][hist2idx].fill(weighted_i)
         lblcount += 1
         #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
@@ -648,10 +656,12 @@ for rw in histDictBkgA.keys():
     log.write(rw + ' length: '+str(len(histDictBkgA[rw]))+'\n')
     for rwcount in xrange(0,len(histDictBkgA[rw])):
         if histDictBkgA[rw][rwcount].GetEntries() > 0:
-            histDictBkgA[rw][rwcount].scale(weightsPerSample[rw])
+            if rw in weightsPerSample:
+                histDictBkgA[rw][rwcount].scale(weightsPerSample[rw])
             testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
             allStack[rwcount].Add(histDictBkgA[rw][rwcount])
             legendBkgStack[rwcount].AddEntry(histDictBkgA[rw][rwcount], 'F')
+            legendAllStack[rwcount].AddEntry( histDictBkgA[rw][rwcount], 'F')
             histDictBkgA[rw][rwcount].draw('hist')
             c1.SaveAs("histDictBkgA"+str(rwcount)+".png")
             log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictBkgA[rw][rwcount].GetEntries())+'\n')

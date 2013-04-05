@@ -342,13 +342,13 @@ ch_new.Branch('mLL',AddressOf(varStruct,'mLL'),'m(ll)')#2 lep only
 ch_new.Branch('category',AddressOf(varStruct,'category'),'type of event')#0, 1 or 2 lep
 
 data = (sys.argv[2] == 'data')
-#if (data == False):
-ch_new.Branch('xs',AddressOf(varStruct,'xs'),'Initial Cross-Section')
-ch_new.Branch('xscorr1',AddressOf(varStruct,'xscorr1'),'Cross-Section Corr 1')
-ch_new.Branch('xscorr2',AddressOf(varStruct,'xscorr2'),'Cross-Section Corr 2')
-ch_new.Branch('final_xs',AddressOf(varStruct,'final_xs'),'Final Cross-Section')
+if (data == False):
+	ch_new.Branch('xs',AddressOf(varStruct,'xs'),'Initial Cross-Section')
+	ch_new.Branch('xscorr1',AddressOf(varStruct,'xscorr1'),'Cross-Section Corr 1')
+	ch_new.Branch('xscorr2',AddressOf(varStruct,'xscorr2'),'Cross-Section Corr 2')
+	ch_new.Branch('final_xs',AddressOf(varStruct,'final_xs'),'Final Cross-Section')
 	#ch_new.Branch('label',AddressOf(varStruct,'label'),'Label')
-ch_new.Branch('label_code',AddressOf(varStruct,'label_code'),'Label Code')
+	ch_new.Branch('label_code',AddressOf(varStruct,'label_code'),'Label Code')
 	#ch_new.Branch('name',AddressOf(varStruct,'name'),'Name');
 	#ch_new.Branch('name_code',AddressOf(varStruct,'name_code'),'Name Code');
 print 'data is false'
@@ -782,16 +782,17 @@ for i in range(nEntries):
 		category[0] = -1
         '''
 	#print samples[ind][1]
-	#if (data == False):
-	varStruct.xs = float(samples[ind][1])
-	varStruct.xscorr1 = float(samples[ind][2])
-	varStruct.xscorr2 = float(samples[ind][3])
-	varStruct.final_xs = float(samples[ind][4])
-	label = copy.deepcopy(samples[ind][5])
+	label = ''
+	if (data == False):
+		varStruct.xs = float(samples[ind][1])
+		varStruct.xscorr1 = float(samples[ind][2])
+		varStruct.xscorr2 = float(samples[ind][3])
+		varStruct.final_xs = float(samples[ind][4])
+		label = copy.deepcopy(samples[ind][5])
 		#varStruct.label = label
 		#print 'samples[ind][5].strip():' + label
-	label_code = float(labelcodesAll[label])
-	varStruct.label_code = copy.deepcopy(label_code)
+		label_code = float(labelcodesAll[label])
+		varStruct.label_code = copy.deepcopy(label_code)
 		#print 'labelcodesAll[samples[ind][5].strip()]: ' + str(labelcodesAll[samples[ind][5]])
 		#print str(varStruct.label_code)
 		#varStruct.name = samples[ind][6].strip()
