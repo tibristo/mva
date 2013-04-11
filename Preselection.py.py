@@ -12,218 +12,15 @@ import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
-def readBkg(bkgFile):
-	filename = 'SampleInfo'+bkgFile+'.csv'
-	labelfilename = 'Labels'+bkgFile+'.txt'
-	namesfilename = 'Names'+bkgFile+'.txt'
-	labelfile = open(labelfilename,'w')
-	namesfile = open(namesfilename,'w')
-	f = open(filename)
-	ids = []
-	labelcodes = {}
-	namescodes = {}
-	genericBkg = (bkgFile == 'bkg')
-	for line in f:
-		if genericBkg:
-			linearr = line.split(',')
-			ids.append(linearr)
-			if (linearr[5] not in labelcodes.keys()):
-				label = linearr[5].strip()
-				labelcodes[label] = len(labelcodes)
-				labelfile.write(label+','+str(labelcodes[label]))
-			if (linearr[6] not in namescodes.keys()):
-				name = linearr[6].strip()
-				namescodes[name] = len(namescodes)
-				namesfile.write(name+','+str(namescodes[name]))
-		else:
-			linearr = line.split(',')
-			if linearr[5] == bkgFile:
-				ids.append(linearr)
-			if (linearr[5] not in labelcodes.keys()):
-				label = linearr[5].strip()
-				labelcodes[label] = len(labelcodes)
-				labelfile.write(label+','+str(labelcodes[label]))
-			if (linearr[6] not in namescodes.keys()):
-				name = linearr[6].strip()
-				namescodes[name] = len(namescodes)
-				namesfile.write(name+','+str(namescodes[name]))
-	labelfile.close()
-	namesfile.close()
-	f.close()
-	return ids, labelcodes, namescodes
+import readMethods as read
+import cutTypes as cut
+#define dataType as MC or DATA
+if sys.argv[2].upper == 'DATA':
+	dataType = 'data'
+else:
+	dataType = 'mc'
 
-def readAllLabels():
-	f = open('SampleInfo.csv')
-	labelfilename = 'Labels.txt'
-	namesfilename = 'Names.txt'
-	labelfile = open(labelfilename,'w')
-	namesfile = open(namesfilename,'w')
-	namescodes = {}
-	labelcodes = {}
-	for line in f:
-		linearr = line.split(',')
-		if (linearr[5] not in labelcodes.keys()):
-			label = linearr[5].strip()
-			labelcodes[label] = len(labelcodes)
-			labelfile.write(label+','+str(labelcodes[label]))
-		if (linearr[6] not in namescodes.keys()):
-			name = linearr[6].strip()
-			namescodes[name] = len(namescodes)
-			namesfile.write(name+','+str(namescodes[name]))
-	f.close()
-	labelfile.close()
-	namesfile.close()
-	return labelcodes, namescodes
-
-
-def readSig():
-	f = open('SampleInfoSig.csv')
-	labelfilename = 'LabelsSig.txt'
-	namesfilename = 'NamesSig.txt'
-	labelfile = open(labelfilename,'w')
-	namesfile = open(namesfilename,'w')
-	ids = []
-	namescodes = {}
-	labelcodes = {}
-	for line in f:
-		linearr = line.split(',')
-		ids.append(linearr)
-		if (linearr[5] not in labelcodes.keys()):
-			label = linearr[5].strip()
-			labelcodes[label] = len(labelcodes)
-			labelfile.write(label+','+str(labelcodes[label]))
-		if (linearr[6] not in namescodes.keys()):
-			name = linearr[6].strip()
-			namescodes[name] = len(namescodes)
-			namesfile.write(name+','+str(namescodes[name]))
-	f.close()
-	labelfile.close()
-	namesfile.close()
-	return ids,labelcodes, namescodes
-
-def getIndexOfSample(mc, sample):
-	for x in xrange(0,len(sample)):
-		#print int(sample[x][0])
-		#print 'mc ' + str(mc)
-		if int(sample[x][0]) == int(mc):
-			#print 'found'
-			return x
-	return -1
-
-def dPhi(phi1, phi2):
-	if phi1 > math.pi:
-		phi1 = phi1 - 2*math.pi
-	if phi2 > math.pi:
-		phi2 = phi2 - 2*math.pi
-	dphi = math.fabs(phi1 - phi2)
-	if (dphi > math.pi):
-		dphi = 2*math.pi - dphi
-	return dphi
-	
-def dR(eta1, phi1, eta2, phi2):
-	dphi = dPhi(phi1, phi2)
-	deta = math.fabs(eta1 - eta2)
-	dr = math.sqrt(deta*deta + dphi*dphi)
-	return dr
-	
-def enum(*sequential, **named):
-	enums = dict(zip(sequential, range(len(sequential))), **named)
-	return type('Enum', (), enums)
-
-
-leptonTypes = enum('Sign','WHsignal','ZHsignal','WHsignal_MJ','lepton_type_bitset_max')
-	
-def leptonType(ltype, trkIso, caloIso):
-	isLoose   = bool( trkIso < 0.1 )
-	isZHTight = bool( ltype & (1 << leptonTypes.ZHsignal ) )
-	isWHTight = bool( ltype & (1 << leptonTypes.WHsignal ) )
-	isWHMJ    = bool(bool( ltype & (1 << leptonTypes.WHsignal_MJ ) ) and ( trkIso >= 0.1 and trkIso < 0.6 and  caloIso < 0.14))
-	type = [isLoose,isZHTight,isWHTight,isWHMJ]
-	return type
-
-def noEvent(eventArr):
-	eventBool = False
-	for x in eventArr:
-		if x == True:
-			return False
-	return True
-
-cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
-
-def addCut(cutNum):
-	global cuts
-	cuts[cutNum][1] = cuts[cutNum][1]+1
-
-def writeCuts():
-	global cuts
-	outCutFile = open("%s.txt" % (treename+sys.argv[2]),'w')
-	for i in cuts:
-		outCutFile.write(i[0] + ': '+str(i[1])+'\n')
-	outCutFile.close()
-
-
-
-treename = 'Ntuple'
-branches = [ # Run Information
-    'EventNumber',
-'datastream',
-'VpT_truth',
-'MET_et',
-'MET_phi',
-'MET_et_noMuon',
-'MET_sumet',
-'MET_Track_sumet',
-'MET_Track_et',
-'MET_Track_phi',
-'Trigger',
-'trigger_met',
-'trigger_el',
-'trigger_mu',
-'RunNumber',
-'vxp_n_selected',
-'mu_pt',
-'mu_eta',
-'mu_phi',
-'mu_type',
-'mu_triggermatched',
-'mu_trackIso',
-'mu_caloIso',
-'el_pt',
-'el_eta',
-'el_phi',
-'el_type',
-'el_triggermatched',
-'el_trackIso',
-'el_caloIso',
-'jet_pt',
-'jet_eta',
-'jet_phi',
-'jet_E',
-'jet_corrected_pt',
-'jet_corrected_eta',
-'jet_corrected_phi',
-'jet_corrected_E',
-'jet_jvtxf',
-'jet_flavor_weight_MV1',
-'jet_flavor_truth_label',
-'jet_flavor_truth_hadron_label',
-'jetBTAGproperties',
-'weight_total',
-'weight_PU',
-'weight_MC',
-'weight_zvtx',
-'weight_MET',
-'weight_lepton1',
-'weight_lepton2',
-'weight_lepton1_var',
-'weight_lepton2_var',
-'weight1or2Tag',
-'weight2Tag',
-'weightbTagDT',
-'mc_channel_number',
-
-            ]
-
+treename,branches = read.readXml(dataType)
 
 from ROOT import *
 import sys
@@ -356,18 +153,18 @@ print 'data is false'
 
 typeCodes = [0,1,2]
 if sys.argv[2] == 'bkg':
-	samples,labelcodes,namecodes = readBkg('bkg')
+	samples,labelcodes,namecodes = read.readBkg('bkg')
 elif sys.argv[2] == 'ttbar' or sys.argv[2] == 'test':
-	samples,labelcodes,namecodes = readBkg('ttbar')
+	samples,labelcodes,namecodes = read.readBkg('ttbar')
 elif sys.argv[2] == 'top':
-	samples,labelcodes,namecodes = readBkg('st')
+	samples,labelcodes,namecodes = read.readBkg('st')
 elif sys.argv[2] == 'data':
 	samples = []
 	labelcodes = {}
 	namecodes = {}
 else:
-	samples,labelcodes, namecodes = readSig()
-labelcodesAll, namecodesAll = readAllLabels();
+	samples,labelcodes, namecodes = read.readSig()
+labelcodesAll, namecodesAll = read.readAllLabels();
 
 #print samples
 debug = False
@@ -384,12 +181,12 @@ for i in range(nEntries):
 	
 	cutNum = 0
 	if (data == False):
-		ind = getIndexOfSample(ch.mc_channel_number, samples)
+		ind = cut.getIndexOfSample(ch.mc_channel_number, samples)
 		
 		if ind == -1:
 			continue
 	
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if i%1000==0:
 		print "Processing event nr. %i of %i" % (i,nEntries)
@@ -415,7 +212,7 @@ for i in range(nEntries):
 	#get all muons
 	for x in xrange(0,numMuons):
 		type = ch.mu_type[x]
-		typeFull = leptonType(type, ch.mu_trackIso[x], ch.mu_caloIso[x])
+		typeFull = cut.leptonType(type, ch.mu_trackIso[x], ch.mu_caloIso[x])
 		pt = ch.mu_pt[x]/1000.0
 		eta = ch.mu_eta[x]
 		phi = ch.mu_phi[x]
@@ -448,7 +245,7 @@ for i in range(nEntries):
 	#get all electrons
 	for x in xrange(0,numElectrons):
 		type = ch.el_type[x]
-		typeFull = leptonType(type, ch.el_trackIso[x], ch.el_caloIso[x])
+		typeFull = cut.leptonType(type, ch.el_trackIso[x], ch.el_caloIso[x])
 		#print 'typeFullElectrons ' + str(typeFull)
 		pt = ch.el_pt[x]/1000.0
 		#print 'pt: ' + str(pt)
@@ -523,9 +320,9 @@ for i in range(nEntries):
 	eventType[2] = False
 
 
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed lepton veto'
@@ -602,9 +399,9 @@ for i in range(nEntries):
 		#eventType[2] = False
 
 
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed jet cuts'
@@ -636,7 +433,7 @@ for i in range(nEntries):
 	# is ptv for 0 lep case correct????
 	ptvArr = [met, m_Wpt, m_Zpt]
 
-	jetdR = dR(jet1.Eta(), jet1.Phi(), jet2.Eta(), jet2.Phi())
+	jetdR = cut.dR(jet1.Eta(), jet1.Phi(), jet2.Eta(), jet2.Phi())
 	for pti in xrange(1,2):
 		if (eventType[pti]):
 			if ptvArr[pti] <= 200 and jetdR <= 0.7:
@@ -645,9 +442,9 @@ for i in range(nEntries):
 		eventType[0] = False
 
 
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed dR cuts'
@@ -656,9 +453,9 @@ for i in range(nEntries):
 	pymiss = -(totalJetPy + lep1.Py() + lep2.Py())
 	ptmiss = math.sqrt(pxmiss*pxmiss + pymiss*pymiss)
 	ptmiss_phi = TMath.ATan2(pymiss, pxmiss)
-	dphi_met_ptmiss = dPhi(ch.MET_phi, ptmiss_phi)
-	dphi_met_jet1 = dPhi(ch.MET_phi, jet1.Phi())
-	dphi_met_jet2 = dPhi(ch.MET_phi, jet2.Phi())
+	dphi_met_ptmiss = cut.dPhi(ch.MET_phi, ptmiss_phi)
+	dphi_met_jet1 = cut.dPhi(ch.MET_phi, jet1.Phi())
+	dphi_met_jet2 = cut.dPhi(ch.MET_phi, jet2.Phi())
 	if eventType[0] and (met <= 120 or ptmiss <= 30 or dphi_met_ptmiss >= math.pi or min(dphi_met_jet1, dphi_met_jet2 )< 1.5):
 		eventType[0] = False
 	if eventType[1] and met <= 25:
@@ -666,9 +463,9 @@ for i in range(nEntries):
 
 
 
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed dphi cuts'
@@ -690,9 +487,9 @@ for i in range(nEntries):
 		if mll <= 71 or mll >= 121:
 			eventType[2] = False
 
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 
 	if debug:
@@ -718,31 +515,31 @@ for i in range(nEntries):
 		varStruct.category = -1.0
 		ptv = 0
 		
-	if noEvent(eventType):
+	if cut.noEvent(eventType):
 		continue
-	addCut(cutNum)
+	cut.addCut(cutNum)
 	cutNum = cutNum + 1
 	if debug:
 		print 'should be an event!!!!!!'
 
-	varStruct.dRBB = dR(jet1.Eta(),jet1.Phi(),jet2.Eta(),jet2.Phi())
+	varStruct.dRBB = cut.dR(jet1.Eta(),jet1.Phi(),jet2.Eta(),jet2.Phi())
 	if debug:
 		print 'set drBB'
 	varStruct.dEtaBB = math.fabs(jet1.Eta()-jet2.Eta())
 	bb_phi = (jet1+jet2).Phi()
 	# do we use MET_phi for vbb for 0 lepton???
 	if eventType[0]:
-		varStruct.dPhiVBB = dPhi(MET_phi,bb_phi)
+		varStruct.dPhiVBB = cut.dPhi(MET_phi,bb_phi)
 	elif eventType[1]:
-		varStruct.dPhiVBB = dPhi(m_Wphi,bb_phi)
+		varStruct.dPhiVBB = cut.dPhi(m_Wphi,bb_phi)
 	elif eventType[2]:
-		varStruct.dPhiVBB = dPhi(m_Zphi,bb_phi)
+		varStruct.dPhiVBB = cut.dPhi(m_Zphi,bb_phi)
 	else:
 		varStruct.dPhiVBB= -9999
 	if eventType[1]:
-		varStruct.dPhiLMET = dPhi(lep1.Phi(),ch.MET_phi)
-		dPhiLB1 = dPhi(lep1.Phi(),jet1.Phi())
-		dPhiLB2 = dPhi(lep1.Phi(),jet2.Phi())
+		varStruct.dPhiLMET = cut.dPhi(lep1.Phi(),ch.MET_phi)
+		dPhiLB1 = cut.dPhi(lep1.Phi(),jet1.Phi())
+		dPhiLB2 = cut.dPhi(lep1.Phi(),jet2.Phi())
 		varStruct.dPhiLBMin = min(dPhiLB1, dPhiLB2)
 		varStruct.mTW = mtw
 		varStruct.pTL  = lep1.Pt()
@@ -840,7 +637,7 @@ log.close()
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()
 ch_new.GetCurrentFile().Close()
-writeCuts()
+cut.writeCuts()
 
 print 'nEntries: ' + str(nEntries)
 print 'totalFound: ' + str(totalFound)
