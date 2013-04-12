@@ -58,6 +58,7 @@ entryNtuple = TVectorD(1)
 entryNtuple[0] = nEntries
 
 ch_new = ch.CloneTree(0)
+# need to figure out a way to do this from another module
 gROOT.ProcessLine(\
     "struct Vars{\
     Float_t dRBB;\
@@ -83,44 +84,9 @@ gROOT.ProcessLine(\
     Float_t label_code;\
     };")
 
-'''
-dRBB = np.zeros(1, dtype=float)
-dEtaBB = np.zeros(1, dtype=float)
-dPhiVBB = np.zeros(1, dtype=float)
-dPhiLMET = np.zeros(1, dtype=float)
-dPhiLBMin = np.zeros(1, dtype=float)
-pTV = np.zeros(1, dtype=float)
-mBB = np.zeros(1, dtype=float)
-HT = np.zeros(1, dtype=float)
-pTB1 = np.zeros(1, dtype=float)
-pTB2 = np.zeros(1, dtype=float)
-pTimbVH = np.zeros(1, dtype=float)
-mTW = np.zeros(1, dtype=float)
-pTL  = np.zeros(1, dtype=float)
-MET = np.zeros(1, dtype=float)
-mLL = np.zeros(1, dtype=float)
-category = np.zeros(1, dtype=float)
-category[0] = -1
-'''
+
 varStruct = Vars()
-'''
-ch_new.Branch('dRBB',dRBB,'dR(bb)')
-ch_new.Branch('dEtaBB',dEtaBB,'dEta(bb)')
-ch_new.Branch('dPhiVBB',dPhiVBB,'dPhi(V,bb)')
-ch_new.Branch('dPhiLMET',dPhiLMET,'dPhi(l,MET)')#1 lep only
-ch_new.Branch('dPhiLBMin',dPhiLBMin,'min dPhi(l,b)')#1 lep only, closest b
-ch_new.Branch('pTV',pTV,'pT(V)')
-ch_new.Branch('mBB',mBB,'mbb')
-ch_new.Branch('HT',HT,'HT')
-ch_new.Branch('pTB1',pTB1,'pT(b1)')
-ch_new.Branch('pTB2',pTB2,'pT(b2)')
-ch_new.Branch('pTimbVH',pTimbVH,'pT imbalance VH')#[pt(bb)-pT(V)]/[pT(bb)+pT(V)]
-ch_new.Branch('mTW',mTW,'mT(W)')#1 lep only
-ch_new.Branch('pTL',pTL,'pT(l)')#1 lep only
-ch_new.Branch('MET',MET,'MET')#same as pTV for 0 lep
-ch_new.Branch('mLL',mLL,'m(ll)')#2 lep only
-ch_new.Branch('category',category,'type of event')#0, 1 or 2 lep
-'''
+
 ch_new.Branch('dRBB',AddressOf(varStruct,'dRBB'),'dR(bb)')
 ch_new.Branch('dEtaBB',AddressOf(varStruct,'dEtaBB'),'dEta(bb)')
 ch_new.Branch('dPhiVBB',AddressOf(varStruct,'dPhiVBB'),'dPhi(V,bb)')
