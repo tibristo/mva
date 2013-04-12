@@ -1,3 +1,5 @@
+__all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultiple','shuffle_in_unison','cutTree','evenArr','oddArr','cutCols','onesInt','zerosInt','setWeights']
+
 from numpy import *
 from root_numpy import *
 import sys
@@ -269,6 +271,20 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
                       
     return outarr, array(outweights), array(outlabels)
 
+def cutColsData(arr, varIdx, rows, cols, nEntries, lumi):
+    rowcount = 0
+    #initialise a basic numpy array that we will return
+    outarr = ones((int(rows),int(cols)))
+    for row in arr:
+        colcount = 0
+        for col in varIdx:
+            outarr[rowcount][colcount] = row[col]
+            colcount = colcount + 1
+        rowcount = rowcount + 1
+                      
+    return outarr
+
+
 def onesInt(length):
     arr = []
     for i in xrange(0,length):
@@ -287,3 +303,17 @@ def setWeights(length, weight):
     for i in xrange(0,length):
         weights.append(weight)
     return weights
+
+def getVariableIndices(dataset, foundVariables, varIdx, varWeightsHash, name):
+    xcount = 0
+    evNum = 0
+#store the variables we find and their indices
+    for x in dataset.dtype.names:
+        if x in variableNames:
+            varIdx.append(xcount)
+            foundVariables.append(x)
+        if name.Upper()=='MC' and x in varWeightsHash.keys():
+            varWeightsHash[x]= xcount
+        if x == 'EventNumber':
+            evNum = xcount
+        xcount = xcount + 1

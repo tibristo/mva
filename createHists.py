@@ -11,6 +11,7 @@ ROOT.gROOT.SetBatch(True)
 
 def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSample, foundVariables, allHistStack, createLog = False):
 
+    #TODO: These should really be read in from a settings file
     histDict = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
 
     coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']

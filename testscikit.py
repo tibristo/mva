@@ -1,305 +1,12 @@
-from numpy import *
+numpy from import *
 from root_numpy import *
 import sys
 # used to shuffle multiple arrays at once
-
-def argsortlist(seq):
-    # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
-    return sorted(range(len(seq)), key = seq.__getitem__)
+import sortAndCut as sc
 
 if len(sys.argv) < 2:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
-
-def roc_curve_rej(y_true, y_score, pos_label=None):
-    """Compute Receiver operating characteristic (ROC)
-
-    Note: this implementation is restricted to the binary classification task.
-
-    Parameters
-    ----------
-
-    y_true : array, shape = [n_samples]
-        True binary labels in range {0, 1} or {-1, 1}.  If labels are not
-        binary, pos_label should be explictly given.
-
-    y_score : array, shape = [n_samples]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
-
-    pos_label : int
-        Label considered as positive and others are considered negative.
-
-    Returns
-    -------
-    fpr : array, shape = [>2]
-        False Positive Rates.
-
-    tpr : array, shape = [>2]
-        True Positive Rates.
-
-    thresholds : array, shape = [>2]
-        Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
-
-    Notes
-    -----
-    Since the thresholds are sorted from low to high values, they
-    are reversed upon returning them to ensure they correspond to both ``fpr``
-    and ``tpr``, which are sorted in reversed order during their calculation.
-
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn import metrics
-    >>> y = np.array([1, 1, 2, 2])
-    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
-    >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
-
-    """
-    y_true = ravel(y_true)
-    y_score = ravel(y_score)
-    classes = unique(y_true)
-
-    # ROC only for binary classification if pos_label not given
-    if (pos_label is None and
-        not (all(classes == [0, 1]) or
-             all(classes == [-1, 1]) or
-             all(classes == [0]) or
-             all(classes == [-1]) or
-             all(classes == [1]))):
-        raise ValueError("ROC is defined for binary classification only or "
-                         "pos_label should be explicitly given")
-    elif pos_label is None:
-        pos_label = 1.
-
-    # y_true will be transformed into a boolean vector
-    y_true = (y_true == pos_label)
-    n_pos = float(y_true.sum())
-    n_neg = y_true.shape[0] - n_pos
-    '''
-    if n_pos == 0:
-        warnings.warn("No positive samples in y_true, "
-                      "true positve value should be meaningless")
-        n_pos = nan
-    if n_neg == 0:
-        warnings.warn("No negative samples in y_true, "
-                      "false positve value should be meaningless")
-        n_neg = nan
-    '''
-    thresholds = unique(y_score)
-    neg_value, pos_value = False, True
-
-    tpr = empty(thresholds.size, dtype=float)  # True positive rate
-    tnr = empty(thresholds.size, dtype=float)  # True negative rate
-    fpr = empty(thresholds.size, dtype=float)  # False positive rate
-    fnr = empty(thresholds.size, dtype=float)  # False negative rate
-    rej = empty(thresholds.size, dtype=float)  # Bkg rejection rate
-    # Build tpr/fpr vector
-    current_pos_count = current_neg_count = sum_pos = sum_neg = idx = 0
-
-    signal = c_[y_score, y_true]
-    sorted_signal = signal[signal[:, 0].argsort(), :][::-1]
-    last_score = sorted_signal[0][0]
-    for score, value in sorted_signal:
-        if score == last_score:
-            if value == pos_value:
-                current_pos_count += 1
-            else:
-                current_neg_count += 1
-        else:
-            tpr[idx] = (sum_pos + current_pos_count) / n_pos
-            #tnr[idx] = (sum_neg + current_pos_count) / n_neg
-            fpr[idx] = (sum_neg + current_neg_count) / n_neg
-            #fnr[idx] = (sum_neg + current_neg_count) / n_pos
-            rej[idx] = 1 - fpr[idx]
-            sum_pos += current_pos_count
-            sum_neg += current_neg_count
-            current_pos_count = 1 if value == pos_value else 0
-            current_neg_count = 1 if value == neg_value else 0
-            idx += 1
-            last_score = score
-    else:
-        tpr[-1] = (sum_pos + current_pos_count) / n_pos
-        fpr[-1] = (sum_neg + current_neg_count) / n_neg
-        rej[-1] = 1 - ((sum_neg + current_neg_count) / n_neg)
-
-    # hard decisions, add (0,0)
-    if fpr.shape[0] == 2:
-        fpr = array([0.0, fpr[0], fpr[1]])
-        tpr = array([0.0, tpr[0], tpr[1]])
-        rej = array([0.0, rej[0], rej[1]])
-    # trivial decisions, add (0,0) and (1,1)
-    elif fpr.shape[0] == 1:
-        fpr = array([0.0, fpr[0], 1.0])
-        tpr = array([0.0, tpr[0], 1.0])
-        rej = array([0.0, rej[0], 1.0])
-
-    if n_pos is nan:
-        tpr[0] = nan
-
-    if n_neg is nan:
-        fpr[0] = nan
-        rej[0] = nan
-
-    return fpr, tpr, thresholds[::-1], rej
-
-def readInLabels(fname):
-    f = open('Labels.txt')#+fname+'.txt')
-    labelcodes = []
-    labelcodesNum = []
-    for line in f:
-        l = line.split(',')
-        labelcodes.append(l[0])
-        labelcodesNum.append(int(l[1]))
-    f.close()
-    labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
-    print labelcodes
-    return labelcodes
-
-def readInNames(fname):
-    f = open('Names.txt')
-    namecodes = []
-    namecodesNum = []
-    for line in f:
-        l = line.split(',')
-        namecodes.append(l[0])
-        namecodesNum.append(int(l[1]))
-    f.close()
-    namecodesNum,namecodes = zip(*sorted(zip(namecodesNum,namecodes)))
-    return namecodes
-
-def sortMultiple(ind, arr1, arr2, arr3 = []):
-    if len(arr1) > len(arr2):
-        return -1
-    for x in xrange(1,len(arr1)-1):
-        val = arr1[ind][x]
-        val2 = arr2[ind][x]
-        if not arr3 == []:
-            val3 = arr3[ind][x]
-        hole = x
-        while hole > 0 and val < arr[ind][hole-1]:
-            arr1[ind][hole] = arr1[ind][hole-1]
-            arr2[ind][hole] = arr2[ind][hole-1]
-            if not arr3 == []:
-                arr3[ind][hole] = arr3[ind][hole-1]
-            hole -= 1
-        arr1[hole] = val
-        arr2[hole] = val2
-        arr3[hole] = val3
-        
-    return arr1,arr2,arr3
-
-
-def shuffle_in_unison(a, b, c):
-    assert len(a) == len(b)
-    shuffled_a = empty(a.shape, dtype=a.dtype)
-    shuffled_b = empty(b.shape, dtype=b.dtype)
-    shuffled_c = empty(c.shape, dtype=c.dtype)
-    permutation = random.permutation(len(a))
-    for old_index, new_index in enumerate(permutation):
-        shuffled_a[new_index] = a[old_index]
-        shuffled_b[new_index] = b[old_index]
-        shuffled_c[new_index] = c[old_index]
-    return shuffled_a, shuffled_b, shuffled_c
-
-# return a part of the array
-def cutTree(arr, training, pos, evNum, sampleVersion = 'Any' ):
-    lenarr = len(arr)
-
-
-    if pos > lenarr:
-        pos = lenarr-1
-    if training == True:
-        print 'true'
-        if (sampleVersion == 'Any'):
-            return arr[:pos]
-        elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum)
-        elif sampleVersion == 'B':
-            return oddArr(arr, evNum)
-
-    else:
-        print 'false'
-        if (sampleVersion == 'Any'):
-            return arr[lenarr-pos:]
-        elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum)
-        elif sampleVersion == 'B':
-            return oddArr(arr, evNum)
-
-def evenArr(arr, evNum):
-    tempArr = []
-    counter = 0
-    for x in arr:
-        if x %2 == 0:
-            tempArr.append(x)
-        counter += 1
-    return array(tempArr)
-def oddArr(arr, evNum):
-    tempArr = []
-    counter = 0
-    for x in arr:
-        if x[evNum] %2 == 1:
-            tempArr.append(x)
-        counter += 1
-    return array(tempArr)
-
-
-# take out only the variables we want to train on
-# if sampleVersion = A, only use even EventNumbers, B odd
-def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSample = False, labels = []):
-    rowcount = 0
-    #initialise a basic numpy array that we will return
-    outarr = ones((int(rows),int(cols)))
-    outweights = []
-    outlabels = []
-    weightsPerSample = {}
-    for row in arr:
-        colcount = 0
-        for col in varIdx:
-            outarr[rowcount][colcount] = row[col]
-            colcount = colcount + 1
-        rowcount = rowcount + 1
-        weight = float(row[int(varWIdx['final_xs'])]*lumi/nEntries)
-        outweights.append(weight)
-        key = row[int(varWIdx['label_code'])]
-        outlabels.append(int(key))
-        # there is a better way to do this, need to do it once, rather than many times since it'll be the same
-        
-        if calcWeightPerSample and (str(key) not in weightsPerSample):
-            weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
-        #if (int(row[int(varWIdx['label_code'])]) > 0):
-        #    print 'not 0!!!!!!'
-        #    print row[int(varWIdx['label_code'])]
-    if calcWeightPerSample:
-        return outarr, array(outweights), array(outlabels), weightsPerSample
-    else:
-        return outarr, array(outweights), array(outlabels)
-
-def onesInt(length):
-    arr = []
-    for i in xrange(0,length):
-        arr.append(1)
-    return arr
-
-def zerosInt(length):
-    arr = []
-    for i in xrange(0,length):
-        arr.append(0)
-    return arr
-
-# set the weights for training
-def setWeights(length, weight):
-    weights = []
-    for i in xrange(0,length):
-        weights.append(weight)
-    return weights
 
 # convert to numpy arrays, then randomise
 #sig = root2array('BonnTMVATrainingSample_ZH125.root','TrainTree')
@@ -333,88 +40,91 @@ if npyBkgFileExists:
     bkg = load('./Ntuplebkg.npy')
 else:
     bkg = root2array('./Ntuplebkg.root','Ntuple')
+
+dataSample = root2array('./NtupledataAll.root','Ntuple')
     #save('./Ntuplebkg.npy',bkg)
 #random.shuffle(bkg)
+print 'len of sig: ' + str(len(sig))
 print 'len of bkg: ' + str(len(bkg))
+print 'len of data: ' +str(len(data))
 
 #cut in half for training and testing, remove unwanted variables not for training
-#sigtemp = cutTree(sig,True,len(sig)/2)
-sigtempA = cutTree(sig,True,len(sig)/2,'A')
-sigtempB = cutTree(sig,True,len(sig)/2,'B')
+sigtempA = sc.cutTree(sig,True,len(sig)/2,'A')
+sigtempB = sc.cutTree(sig,True,len(sig)/2,'B')
 #print len(sigtemp)
-#bkgtemp = cutTree(bkg,True,len(bkg)/2)
-bkgtempA = cutTree(bkg,True,len(bkg)/2,'A')
-bkgtempB = cutTree(bkg,True,len(bkg)/2,'B')
+bkgtempA = sc.cutTree(bkg,True,len(bkg)/2,'A')
+bkgtempB = sc.cutTree(bkg,True,len(bkg)/2,'B')
 #print len(bkgtemp)
+
+# don't want to cut the data... we want it all
+#datatempA = sc.cutTree(data,True,len(data/2),'A')
+#datatempB = sc.cutTree(data,True,len(data/2),'B')
+
+
 #keep indices of variables we want
 varIdx = []
+varIdxData = []
 varWIdx = []
 #variableNames = ['m_ll','m_Bb','MET','dPhi_VH', 'ptImbalanceSignificance', 'pt_V', 'pt_Bb', 'dR_Bb', 'acop_Bb', 'dEta_Bb', 'mv1_jet0', 'mv1_jet1']
 variableNames = ['dRBB','dEtaBB','dPhiVBB','dPhiLMET','dPhiLBMin','pTV','mBB','HT','pTB1','pTB2','pTimbVH','mTW','pTL','MET']#,'mLL']
 varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
 foundVariables = []
+foundVariablesData = []
 
+#get all of the indices of the variables in the dataset
+#foundVariables, varIdx and varWeightsHash are mutable and changed in the method
+sc.getVariableIndices(sig, foundVariables, varIdx, varWeightsHash, 'mc')
+# we need to do this for data separately because of different branches
+sc.getVariableIndices(data, foundVariablesData, varIdxData, blah={}, 'data')
 
-xcount = 0
-evNum = 0
-#store the variables we find and their indices
-for x in sig.dtype.names:
-    if x in variableNames:
-        varIdx.append(xcount)
-        foundVariables.append(x)
-    if x in varWeightsHash.keys():
-        varWeightsHash[x]= xcount
-    if x == 'EventNumber':
-        evNum = xcount
-    xcount = xcount + 1
-
-
-#print sig.dtype.names
-#print varIdx
-#print foundVariables
 #create the training trees/ arrays
+#TODO: these should be stored in the xml settings file
 nEntries = 14443742.0
 lumi = 20300.0
 
-sigTrainA,weightsSigTrainA, labelsSigTrainA = cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
-bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
-sigTrainB,weightsSigTrainB, labelsSigTrainB = cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntries, lumi)
-bkgTrainB,weightsBkgTrainB, labelsBkgTrainB = cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntries, lumi)
+sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
+bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
+sigTrainB,weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntries, lumi)
+bkgTrainB,weightsBkgTrainB, labelsBkgTrainB = sc.cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntries, lumi)
+
+dataCut = sc.cutColsData(dataSample, varIdxData, len(dataSample),len(variableNames), nEntries, lumi)
+
+
 
 #add the training trees together, keeping track of which entries are signal and background
 xtA = vstack((sigTrainA, bkgTrainA))
-y11A = onesInt(len(sigTrainA))
-y21A = zerosInt(len(bkgTrainA))
+y11A = sc.onesInt(len(sigTrainA))
+y21A = sc.zerosInt(len(bkgTrainA))
 ytA = hstack((y11A, y21A))
 ytA = transpose(ytA)
 sigWeightA = 1.0#float(1/float(len(sigTrain)))
-print 'sigWeight ' + str(sigWeightA)
+#print 'sigWeight ' + str(sigWeightA)
 bkgWeightA = float(len(sigTrainA))/float(len(bkgTrainA))
-print 'bkgWeight ' + str(bkgWeightA)
-weightsBkgA = setWeights(len(bkgTrainA),bkgWeightA)
-weightsSigA = setWeights(len(sigTrainA),sigWeightA)
+#print 'bkgWeight ' + str(bkgWeightA)
+weightsBkgA = sc.setWeights(len(bkgTrainA),bkgWeightA)
+weightsSigA = sc.setWeights(len(sigTrainA),sigWeightA)
 weightstA = hstack((weightsSigA,weightsBkgA))
 weightstA = transpose(weightstA)
 
 #add the training trees together, keeping track of which entries are signal and background
 xtB = vstack((sigTrainB, bkgTrainB))
-y11B = onesInt(len(sigTrainB))
-y21B = zerosInt(len(bkgTrainB))
+y11B = sc.onesInt(len(sigTrainB))
+y21B = sc.zerosInt(len(bkgTrainB))
 ytB = hstack((y11B, y21B))
 ytB = transpose(ytB)
 sigWeightB = 1.0#float(1/float(len(sigTrain)))
-print 'sigWeight ' + str(sigWeightB)
+#print 'sigWeight ' + str(sigWeightB)
 bkgWeightB = float(len(sigTrainB))/float(len(bkgTrainB))
-print 'bkgWeight ' + str(bkgWeightB)
-weightsBkgB = setWeights(len(bkgTrainB),bkgWeightB)
-weightsSigB = setWeights(len(sigTrainB),sigWeightB)
+#print 'bkgWeight ' + str(bkgWeightB)
+weightsBkgB = sc.setWeights(len(bkgTrainB),bkgWeightB)
+weightsSigB = sc.setWeights(len(sigTrainB),sigWeightB)
 weightstB = hstack((weightsSigB,weightsBkgB))
 weightstB = transpose(weightstB)
 
 x =xtA
 y = ytA
 weights = weightstA
-#x,y,weights = shuffle_in_unison(xt,yt,weightst)
+#x,y,weights = sc.shuffle_in_unison(xt,yt,weightst)
 
 #print 'starting training on GradientBoostingClassifier'
 
@@ -426,13 +136,13 @@ from sklearn.ensemble import GradientBoostingClassifier
 #gb = GradientBoostingClassifier().fit(x,y)
 
 #Test the fit on the other half of the data
-sigtemp1A = cutTree(sig,False,len(sig)/2,'A')
-bkgtemp1A = cutTree(bkg,False,len(bkg)/2,'A')
+sigtemp1A = sc.cutTree(sig,False,len(sig)/2,'A')
+bkgtemp1A = sc.cutTree(bkg,False,len(bkg)/2,'A')
 
 print sigtemp1A
-labelCodes = readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
+labelCodes = sc.readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 #find weightsPerSample on first run
-sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = sc.cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
 
 sortPerm = labelsSigTestA.argsort()
 #t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
@@ -440,8 +150,8 @@ sigTestA= sigTestA[sortPerm]#list(t_sigTestA)
 weightsSigTestA = weightsSigTestA[sortPerm]#list(t_weightsSigTestA)
 labelsSigTestA= labelsSigTestA[sortPerm]#list(t_labelsSigTestA)
 
-#labelsSigTestA, sigTestA, weightsSigTestA = sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
-bkgTestA, weightsBkgTestA, labelsBkgTestA, weightsPerBkgSample = cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+#labelsSigTestA, sigTestA, weightsSigTestA = sc.sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
+bkgTestA, weightsBkgTestA, labelsBkgTestA, weightsPerBkgSample = sc.cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
 weightsPerSample = dict(weightsPerSigSample.items() + weightsPerBkgSample.items())
 #for python 3 and greater use
 #weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
@@ -457,7 +167,7 @@ print weightsPerSample
 
 
 x1A = vstack((sigTestA, bkgTestA))
-y1A = hstack((onesInt(len(sigTestA)), zerosInt(len(bkgTestA))))
+y1A = hstack((sc.onesInt(len(sigTestA)), sc.zerosInt(len(bkgTestA))))
 y1A = transpose(y1A)
 
 
@@ -472,39 +182,35 @@ f = ropen('output.root','recreate')
 c1 = Canvas()
 c1.cd()
 
-histDictSigA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
-histDictBkgA = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
-
-
-coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
-colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
-
 lblcount = 0
 
 sigTestA = transpose(sigTestA)
 bkgTestA = transpose(bkgTestA)
 
-sigtemp1B = cutTree(sig,False,len(sig)/2,'B')
-bkgtemp1B = cutTree(bkg,False,len(bkg)/2,'B')
+sigtemp1B = sc.cutTree(sig,False,len(sig)/2,'B')
+bkgtemp1B = sc.cutTree(bkg,False,len(bkg)/2,'B')
 
-sigTestB, weightsSigTestB, labelsSigTestB = cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+sigTestB, weightsSigTestB, labelsSigTestB = sc.cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+#get the reordered, sorted index
 sortPermB = labelsSigTestB.argsort()
 #t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigTestB,sigTestB,weightsSigTestB)))
-sigTestB= sigTestB[sortPermB]#list(t_sigTestB)
-weightsSigTestB = weightsSigTestB[sortPermB]#list(t_weightsSigTestB)
-labelsSigTestB= labelsSigTestB[sortPermB]#list(t_labelsSigTestB)
+#sort all of the arrays using the sorted index
+sigTestB= sigTestB[sortPermB]
+weightsSigTestB = weightsSigTestB[sortPermB]
+labelsSigTestB= labelsSigTestB[sortPermB]
 
-bkgTestB, weightsBkgTestB, labelsBkgTestB = cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+bkgTestB, weightsBkgTestB, labelsBkgTestB = sc.cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
+#do the ordering for the background
 sortPermBkgB = labelsBkgTestB.argsort()
 #t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgTestB,bkgTestB,weightsBkgTestB)))
-bkgTestB= bkgTestB[sortPermBkgB]#list(t_bkgTestB)
-weightsBkgTestB = weightsBkgTestB[sortPermBkgB]#list(t_weightsBkgTestB)
-labelsBkgTestB= labelsBkgTestB[sortPermB]#list(t_labelsBkgTestB)
+bkgTestB= bkgTestB[sortPermBkgB]
+weightsBkgTestB = weightsBkgTestB[sortPermBkgB]
+labelsBkgTestB= labelsBkgTestB[sortPermB]
 
 
 
 x1B = vstack((sigTestB, bkgTestB))
-y1B = hstack((onesInt(len(sigTestB)), zerosInt(len(bkgTestB))))
+y1B = hstack((sc.onesInt(len(sigTestB)), sc.zerosInt(len(bkgTestB))))
 y1B = transpose(y1B)
 print 'starting testing'
 
@@ -520,7 +226,7 @@ for i in variableNames:
 
 allStack = []
 legendAllStack = []
-import CreateHists.py
+import CreateHists
 # get sigA histograms
 hist,histDictSigA,testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 # get bkgA histograms
@@ -706,7 +412,7 @@ endIdx = len(xt)#/2
 for i in range(1):
     probas_ = ada.predict_proba(xt[beginIdx:endIdx])
     # Compute ROC curve and area the curve
-    fpr, tpr, thresholds, rej = roc_curve_rej(yt[beginIdx:endIdx], probas_[:,1])
+    fpr, tpr, thresholds, rej = sc.roc_curve_rej(yt[beginIdx:endIdx], probas_[:,1])
     #mean_tpr += interp(mean_fpr, fpr, tpr)
     #mean_tpr[0] = 0.0
     roc_auc = auc(tpr,rej)#auc(fpr, tpr)
