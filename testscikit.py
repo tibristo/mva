@@ -1,4 +1,4 @@
-numpy from import *
+from numpy import *
 from root_numpy import *
 import sys
 # used to shuffle multiple arrays at once
@@ -46,7 +46,7 @@ dataSample = root2array('./NtupledataAll.root','Ntuple')
 #random.shuffle(bkg)
 print 'len of sig: ' + str(len(sig))
 print 'len of bkg: ' + str(len(bkg))
-print 'len of data: ' +str(len(data))
+print 'len of data: ' +str(len(dataSample))
 
 #cut in half for training and testing, remove unwanted variables not for training
 sigtempA = sc.cutTree(sig,True,len(sig)/2,'A')
@@ -73,9 +73,10 @@ foundVariablesData = []
 
 #get all of the indices of the variables in the dataset
 #foundVariables, varIdx and varWeightsHash are mutable and changed in the method
-sc.getVariableIndices(sig, foundVariables, varIdx, varWeightsHash, 'mc')
+sc.getVariableIndices(sig, variableNames, foundVariables, varIdx, varWeightsHash, 'mc')
 # we need to do this for data separately because of different branches
-sc.getVariableIndices(data, foundVariablesData, varIdxData, blah={}, 'data')
+blah = {}
+sc.getVariableIndices(dataSample, variableNames, foundVariablesData, varIdxData, blah, 'data')
 
 #create the training trees/ arrays
 #TODO: these should be stored in the xml settings file

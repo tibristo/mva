@@ -1,4 +1,4 @@
-__all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultiple','shuffle_in_unison','cutTree','evenArr','oddArr','cutCols','onesInt','zerosInt','setWeights']
+__all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultiple','shuffle_in_unison','cutTree','evenArr','oddArr','cutCols','cutColsData','onesInt','zerosInt','setWeights','getVariableIndices']
 
 from numpy import *
 from root_numpy import *
@@ -265,9 +265,9 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
         rowcount = rowcount + 1
         outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
         outlabels.append(int(row[int(varWIdx['label_code'])]))
-        if (int(row[int(varWIdx['label_code'])]) > 0):
-            print 'not 0!!!!!!'
-            print row[int(varWIdx['label_code'])]
+        #if (int(row[int(varWIdx['label_code'])]) > 0):
+        #    print 'not 0!!!!!!'
+        #    print row[int(varWIdx['label_code'])]
                       
     return outarr, array(outweights), array(outlabels)
 
@@ -304,15 +304,16 @@ def setWeights(length, weight):
         weights.append(weight)
     return weights
 
-def getVariableIndices(dataset, foundVariables, varIdx, varWeightsHash, name):
+def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeightsHash, name):
     xcount = 0
     evNum = 0
 #store the variables we find and their indices
     for x in dataset.dtype.names:
+        # TODO: read in variableNames from settings xml
         if x in variableNames:
             varIdx.append(xcount)
             foundVariables.append(x)
-        if name.Upper()=='MC' and x in varWeightsHash.keys():
+        if name.upper()=='MC' and x in varWeightsHash.keys():
             varWeightsHash[x]= xcount
         if x == 'EventNumber':
             evNum = xcount
