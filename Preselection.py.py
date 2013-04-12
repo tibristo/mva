@@ -14,6 +14,7 @@ warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 import readMethods as read
 import cutTypes as cut
+cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 #define dataType as MC or DATA
 if sys.argv[2].upper == 'DATA':
 	dataType = 'data'
@@ -152,7 +153,7 @@ for i in range(nEntries):
 		if ind == -1:
 			continue
 	
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if i%1000==0:
 		print "Processing event nr. %i of %i" % (i,nEntries)
@@ -288,7 +289,7 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed lepton veto'
@@ -367,7 +368,7 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed jet cuts'
@@ -410,7 +411,7 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed dR cuts'
@@ -431,7 +432,7 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed dphi cuts'
@@ -455,7 +456,7 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 
 	if debug:
@@ -483,7 +484,7 @@ for i in range(nEntries):
 		
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum)
+	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'should be an event!!!!!!'
@@ -603,7 +604,7 @@ log.close()
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()
 ch_new.GetCurrentFile().Close()
-cut.writeCuts()
+cut.writeCuts(cuts)
 
 print 'nEntries: ' + str(nEntries)
 print 'totalFound: ' + str(totalFound)

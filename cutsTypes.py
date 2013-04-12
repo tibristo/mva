@@ -48,17 +48,16 @@ def noEvent(eventArr):
 
 #going to need another way of making sure that cuts gets passed through.... this isn't oop yet!
 
-cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 
-def addCut(cutNum):
-	global cuts
+
+def addCut(cutNum, cuts):
 	cuts[cutNum][1] = cuts[cutNum][1]+1
+	return cuts
 
-def writeCuts():
-	global cuts
+def writeCuts(cuts):
 	outCutFile = open("%s.txt" % (treename+sys.argv[2]),'w')
 	for i in cuts:
 		outCutFile.write(i[0] + ': '+str(i[1])+'\n')
 	outCutFile.close()
-
+	
 

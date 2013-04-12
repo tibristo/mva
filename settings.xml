@@ -64,7 +64,6 @@
     <treeName>Ntuple</treeName>
     <branch name='EventNumber'/>
     <branch name='datastream'/>
-    <branch name='VpT_truth'/>
     <branch name='MET_et'/>
     <branch name='MET_phi'/>
     <branch name='MET_et_noMuon'/>
@@ -102,8 +101,6 @@
     <branch name='jet_corrected_E'/>
     <branch name='jet_jvtxf'/>
     <branch name='jet_flavor_weight_MV1'/>
-    <branch name='jet_flavor_truth_label'/>
-    <branch name='jet_flavor_truth_hadron_label'/>
     <branch name='jetBTAGproperties'/>
     <branch name='weight_total'/>
     <branch name='weight_PU'/>
@@ -117,7 +114,6 @@
     <branch name='weight1or2Tag'/>
     <branch name='weight2Tag'/>
     <branch name='weightbTagDT'/>
-    <branch name='mc_channel_number'/>
   </sampleType>
 
 
