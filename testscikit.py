@@ -517,182 +517,43 @@ cols = []
 for i in variableNames:
     cols.append(ones(len(sigTestA)))
 
-hist = []
-histidx = 0
-hist2 = []
-hist2idx = 0
-histstack = []
-histstack2 = []
-maxi = []
-mini = []
 
-
-
-
-#nameCodes = readInCodes(typeOfSample)
-#print 'labelsSigTestA'
-#print labelsSigTestA
-log = open('log.txt','w')
-log.write('############################# Signal #############################\n')
-
-#TODO: need to write generic method to do the loop of sigTestA and bkgTestA, will need to do it over B sets too
-legendsForSigStack = {}
-
-for c in sigTestA:
-    maxi.append(c[argmax(c)])
-    mini.append(c[argmin(c)])
-    hist.append(Hist(20,mini[histidx],maxi[histidx]))
-    hist[histidx].fill_array(c)
-
-
-    hist[histidx].scale(1.0/hist[histidx].integral())
-
-    hist[histidx].fillcolor='blue'
-    hist[histidx].linecolor='blue'
-
-    hist[histidx].GetXaxis().SetTitle(foundVariables[histidx])
-    hist[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
-    hist[histidx].SetTitle("signal")
-    hist[histidx].fillstyle='solid'
-    lblcount = 0
-    for k in histDictSigA.keys():
-        histDictSigA[k].append(Hist(20,mini[histidx],maxi[histidx]))
-        histDictSigA[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
-        histDictSigA[k][histidx].fillstyle = 'solid'
-        histDictSigA[k][histidx].SetOption('hist')
-        histDictSigA[k][histidx].SetTitle(k)
-    for i in c:
-        lbl = labelCodes[int(labelsSigTestA[lblcount])]
-        #if len(histDictSigA[lbl]) >= histidx and histDictSigA[lbl][histidx] == []:
-        # weight i
-        weighted_i = i#*weightsSigTestA[lblcount]
-        histDictSigA[lbl][histidx].fill(weighted_i)
-        lblcount += 1
-        #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
-    
-    histidx+=1
-
-#testAStack = {'W':HistStack('Wtest','Wstack'),'Z':HistStack('Ztest','Zstack'),'WW':HistStack('WWtest','WWstack'),'ZZ':HistStack('ZZtest','ZZstack'),'st':HistStack('sttest','ststack'),'ttbar':HistStack('ttbartest','ttbarstack'),'WZ':HistStack('WZtest','WZstack'),'WH125':HistStack('WH125test','WH125stack')}
-testAStack = []#HistStack('dRBB','dRBB'),HistStack('dEtaBB','dEtaBB'),HistStack('dPhiVBB','dPhiVBB'),HistStack('dPhiLMET','dPhiLMET'),HistStack('dPhiLBMin','dPhiLBMin'),HistStack('pTV','pTV'),HistStack('mBB','mBB'),HistStack('HT','HT'),HistStack('pTB1','pTB1'),HistSTack('pTB2','pTB2'),HistStack('pTimbVH','pTimbVH'),HistStack('mTW','mTW'),HistStack('pTL','pTL'),HistStack('MET','MET')]#,'mLL']
 allStack = []
-legendSigStack = []
 legendAllStack = []
-for st in foundVariables:
-    testAStack.append(HistStack(st,st))
-    allStack.append(HistStack(st,st))
-    legendSigStack.append(Legend(7))
-    legendAllStack.append(Legend(7))
+import CreateHists.py
+# get sigA histograms
+hist,histDictSigA,testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
+# get bkgA histograms
+# how to fix legends????
+hist2,histDictBkgA,testAStackBkg,legendBkgStack  = createHists.createHists(bkgTestA, labelCodes, 'bkg', labelsBkgTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 
-for rw in histDictSigA.keys():
-    log.write(rw + ' length: '+str(len(histDictSigA[rw]))+'\n')
-    for rwcount in xrange(0,len(histDictSigA[rw])):
-        if histDictSigA[rw][rwcount].GetEntries() > 0:
-            if rw in weightsPerSample:
-                histDictSigA[rw][rwcount].scale(weightsPerSample[rw])
-            testAStack[rwcount].Add(histDictSigA[rw][rwcount])
-            allStack[rwcount].Add(histDictSigA[rw][rwcount])
-            histDictSigA[rw][rwcount].draw('hist')
-            legendSigStack[rwcount].AddEntry( histDictSigA[rw][rwcount], 'F')
-            legendAllStack[rwcount].AddEntry( histDictSigA[rw][rwcount], 'F')
-            c1.SaveAs("histDictSigA"+str(rwcount)+".png")
-            log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictSigA[rw][rwcount].GetEntries())+'\n')
-#testABkgStack = HistStack('bkgtest','bkgstack')
-log.write('########################### Background ###########################\n')
-for d in bkgTestA:
-    maxi2 = argmax(d)
-    mini2 = argmin(d)
-
-    hist2.append(Hist(20,mini[hist2idx],maxi[hist2idx]))
-    hist2[hist2idx].fill_array(d)
-    hist2[hist2idx].scale(1.0/hist2[hist2idx].integral())
-    hist2[hist2idx].GetXaxis().SetTitle(foundVariables[hist2idx])
-    hist2[hist2idx].GetYaxis().SetTitle('# Events Normalised to 1')
-    hist2[hist2idx].fillcolor='red'
-    hist2[hist2idx].fillstyle='/'
-    hist2[hist2idx].linecolor='red'
-    hist2[hist2idx].SetTitle("bkg")
+histData,histDictDataA,testAStackData, legendDataStack = createHists.createHistsData(dataTestA, foundVariables, allStack, legendAllStack, True)
 
 
-    #hist[histidx].GetYaxis().SetRangeUser(0.0,1.2*max(hist[hist2idx].GetBinContent(hist[hist2idx].GetMaximumBin()),hist2[hist2idx].GetBinContent(hist2[hist2idx].GetMaximumBin())   ))
-    hist[hist2idx].draw('hist')
-    hist[hist2idx].Write()
-    legend = Legend(2)
+for hist2idx in xrange(0,len(hist)):
+
+
+    legend = Legend(3)
     legend.AddEntry(hist[hist2idx],'F')
     legend.AddEntry(hist2[hist2idx],'F')
-#    hist[histidx].
+    legend.AddEntry(histData[hist2idx],'F')
+
+    hist[hist2idx].draw('hist')
+    hist[hist2idx].Write()
     hist2[hist2idx].draw('histsame')
     hist2[hist2idx].Write()
+    histData[hist2idx].draw('same')
+    histData[hist2idx].Write()
+
     legend.Draw('same')
     c1.Write()
     c1.SaveAs(foundVariables[hist2idx]+".png")
+    hist2idx+=1
 
-    for k in histDictBkgA.keys():
-        histDictBkgA[k].append(Hist(20,mini[hist2idx],maxi[hist2idx]))
-        histDictBkgA[k][hist2idx].fillcolor = coloursForStack[int(colourDict[k])]
-        histDictBkgA[k][hist2idx].fillstyle = 'solid'
-        histDictBkgA[k][hist2idx].SetOption('hist')
-        histDictBkgA[k][hist2idx].SetTitle(k)
-    lblcount = 0
-    for i in d:
-        lbl = labelCodes[int(labelsBkgTestA[lblcount])]
-        #if len(histDictBkgA[lbl]) >= hist2idx and histDictBkgA[lbl][hist2idx] == []:
-        #weight 
-        weighted_i = i#*weightsBkgTestA[lblcount]
-        histDictBkgA[lbl][hist2idx].fill(weighted_i)
-        lblcount += 1
-        #log.write(lbl + '['+str(histidx)+']: '+str(weighted_i)+'\n')
-
-
-    hist2idx += 1
-
-testAStackBkg = []#HistStack('dRBB','dRBB'),HistStack('dEtaBB','dEtaBB'),HistStack('dPhiVBB','dPhiVBB'),HistStack('dPhiLMET','dPhiLMET'),HistStack('dPhiLBMin','dPhiLBMin'),HistStack('pTV','pTV'),HistStack('mBB','mBB'),HistStack('HT','HT'),HistStack('pTB1','pTB1'),HistSTack('pTB2','pTB2'),HistStack('pTimbVH','pTimbVH'),HistStack('mTW','mTW'),HistStack('pTL','pTL'),HistStack('MET','MET')]#,'mLL']
-legendBkgStack = []
-for st in foundVariables:
-    testAStackBkg.append(HistStack(st,st))
-    legendBkgStack.append(Legend(7))
-
-
-for rw in histDictBkgA.keys():
-    log.write(rw + ' length: '+str(len(histDictBkgA[rw]))+'\n')
-    for rwcount in xrange(0,len(histDictBkgA[rw])):
-        if histDictBkgA[rw][rwcount].GetEntries() > 0:
-            if rw in weightsPerSample:
-                histDictBkgA[rw][rwcount].scale(weightsPerSample[rw])
-            testAStackBkg[rwcount].Add(histDictBkgA[rw][rwcount])
-            allStack[rwcount].Add(histDictBkgA[rw][rwcount])
-            legendBkgStack[rwcount].AddEntry(histDictBkgA[rw][rwcount], 'F')
-            legendAllStack[rwcount].AddEntry( histDictBkgA[rw][rwcount], 'F')
-            histDictBkgA[rw][rwcount].draw('hist')
-            c1.SaveAs("histDictBkgA"+str(rwcount)+".png")
-            log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDictBkgA[rw][rwcount].GetEntries())+'\n')
-log.close()
-c2 = Canvas()
-c2.cd()
-xcount = 0
-for x in testAStack:
-    x.Draw('hist')
-    legendSigStack[xcount].Draw('same')
-    x.Write()
-    c2.SaveAs(foundVariables[xcount]+'SigStack.png')
-    c2.Write()
-    xcount +=1 
-xcount = 0
-for x in testAStackBkg:
-    x.Draw('hist')
-    legendBkgStack[xcount].Draw('same')
-    x.Write()
-    c2.SaveAs(foundVariables[xcount]+'BkgStack.png')
-    c2.Write()
-    xcount+=1
-
-xcount = 0
-for x in allStack:
-    x.Draw('hist')
-    legendAllStack[xcount].Draw('same')
-    x.Write()
-    c2.SaveAs(foundVariables[xcount]+'AllStack.png')
-    c2.Write()
-    xcount+=1
+createHists.drawStack(testAStack, legendSigStack, 'Sig')
+createHists.drawStack(testAStackBkg, legendBkgStack, 'Bkg')
+createHists.drawStack(allStack, legendAllStack, 'Data', histData)
+createHists.drawStack(allStack, legendAllStack, 'All')
 
 
 f.close()
