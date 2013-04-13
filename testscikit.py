@@ -81,7 +81,12 @@ sc.getVariableIndices(dataSample, variableNames, foundVariablesData, varIdxData,
 #create the training trees/ arrays
 #TODO: these should be stored in the xml settings file
 nEntries = 14443742.0
-lumi = 20300.0
+#lumi for 2011+2012
+#lumi = 20300.0
+#lumi for 2011
+#lumi = 4700.00
+#lumi for 2012
+lumi = 14000.0
 
 sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
 bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
@@ -163,8 +168,8 @@ weightsBkgTestA = weightsBkgTestA[sortPermBkg]#list(t_weightsBkgTestA)
 labelsBkgTestA= labelsBkgTestA[sortPermBkg]#list(t_labelsBkgTestA)
 
 
-print 'weightsPerSample'
-print weightsPerSample
+#print 'weightsPerSample'
+#print weightsPerSample
 
 
 x1A = vstack((sigTestA, bkgTestA))
@@ -217,7 +222,7 @@ print 'starting testing'
 
 sigTestB = transpose(sigTestB)
 bkgTestB = transpose(bkgTestB)
-
+dataCut = transpose(dataCut)
 
 count = 0
 cols = []
@@ -227,16 +232,18 @@ for i in variableNames:
 
 allStack = []
 legendAllStack = []
-import CreateHists
+import createHists
 # get sigA histograms
 hist,histDictSigA,testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 # get bkgA histograms
 # how to fix legends????
 hist2,histDictBkgA,testAStackBkg,legendBkgStack  = createHists.createHists(bkgTestA, labelCodes, 'bkg', labelsBkgTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 
-histData,histDictDataA,testAStackData, legendDataStack = createHists.createHistsData(dataTestA, foundVariables, allStack, legendAllStack, True)
-
-
+histData,histDictDataA,testAStackData, legendDataStack = createHists.createHistsData(dataCut, foundVariables, allStack, legendAllStack, True)
+print 'len sigTestA: ' + str(len(hist))
+print 'len bkgTestA: ' + str(len(hist2))
+print 'len dataCut: ' + str(len(histData))
+print 'len allStack: ' + str(len(allStack))
 for hist2idx in xrange(0,len(hist)):
 
 
@@ -257,10 +264,10 @@ for hist2idx in xrange(0,len(hist)):
     c1.SaveAs(foundVariables[hist2idx]+".png")
     hist2idx+=1
 
-createHists.drawStack(testAStack, legendSigStack, 'Sig')
-createHists.drawStack(testAStackBkg, legendBkgStack, 'Bkg')
-createHists.drawStack(allStack, legendAllStack, 'Data', histData)
-createHists.drawStack(allStack, legendAllStack, 'All')
+createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig')
+createHists.drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg')
+createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictData)
+createHists.drawStack(allStack, legendAllStack, foundVariables, 'All')
 
 
 f.close()

@@ -249,8 +249,38 @@ def oddArr(arr, evNum):
     return array(tempArr)
 
 
+
+
+def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSample = False, labels = []):
+    rowcount = 0
+    #initialise a basic numpy array that we will return
+    outarr = ones((int(rows),int(cols)))
+    outweights = []
+    outlabels = []
+    weightsPerSample = {}
+    for row in arr:
+        colcount = 0
+        for col in varIdx:
+            outarr[rowcount][colcount] = row[col]
+            colcount = colcount + 1
+        rowcount = rowcount + 1
+        weight = float(row[int(varWIdx['final_xs'])]*lumi/nEntries)
+        outweights.append(weight)
+        key = row[int(varWIdx['label_code'])]
+        outlabels.append(int(key))
+        # there is a better way to do this, need to do it once, rather than many times since it'll be the same                      
+        if calcWeightPerSample and (str(key) not in weightsPerSample):
+            weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
+    if calcWeightPerSample:
+        return outarr, array(outweights), array(outlabels), weightsPerSample
+    else:
+        return outarr, array(outweights), array(outlabels)
+
+
+
 # take out only the variables we want to train on
 # if sampleVersion = A, only use even EventNumbers, B odd
+'''
 def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
     rowcount = 0
     #initialise a basic numpy array that we will return
@@ -265,12 +295,9 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
         rowcount = rowcount + 1
         outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
         outlabels.append(int(row[int(varWIdx['label_code'])]))
-        #if (int(row[int(varWIdx['label_code'])]) > 0):
-        #    print 'not 0!!!!!!'
-        #    print row[int(varWIdx['label_code'])]
-                      
+        
     return outarr, array(outweights), array(outlabels)
-
+'''
 def cutColsData(arr, varIdx, rows, cols, nEntries, lumi):
     rowcount = 0
     #initialise a basic numpy array that we will return
