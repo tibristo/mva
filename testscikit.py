@@ -82,16 +82,18 @@ sc.getVariableIndices(dataSample, variableNames, foundVariablesData, varIdxData,
 #TODO: these should be stored in the xml settings file
 nEntries = 14443742.0
 #lumi for 2011+2012
-#lumi = 20300.0
+lumi = 20300.0
 #lumi for 2011
 #lumi = 4700.00
 #lumi for 2012
-lumi = 14000.0
+#lumi = 14000.0
 
-sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntries, lumi)
-bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntries, lumi)
-sigTrainB,weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntries, lumi)
-bkgTrainB,weightsBkgTrainB, labelsBkgTrainB = sc.cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntries, lumi)
+#need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
+nEntriesA = nEntries*(float((len(sigtempA)+len(bkgtempA)))/float((len(sig)+len(bkg))))
+sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
+bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
+sigTrainB,weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntriesA, lumi)
+bkgTrainB,weightsBkgTrainB, labelsBkgTrainB = sc.cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntriesA, lumi)
 
 dataCut = sc.cutColsData(dataSample, varIdxData, len(dataSample),len(variableNames), nEntries, lumi)
 
@@ -266,7 +268,7 @@ for hist2idx in xrange(0,len(hist)):
 
 createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig')
 createHists.drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg')
-createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictData)
+createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictDataA)
 createHists.drawStack(allStack, legendAllStack, foundVariables, 'All')
 
 

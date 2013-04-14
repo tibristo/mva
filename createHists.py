@@ -88,6 +88,15 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
                 if rw in weightsPerSample:
                     histDict[rw][rwcount].scale(weightsPerSample[rw])
                 histStack[rwcount].Add(histDict[rw][rwcount].Clone())
+                if initStack == False:
+                    #stupid - you must draw the stack before getting x axis
+                    allHistStack[rwcount].Draw()
+                    # for some reason it returns numbers like 5... this is wrong!!!!
+                    # maybe need to set user range for stack when init?
+                    maxInStack = allHistStack[rwcount].GetXaxis().GetXmax()
+                    maxInDict = histDict[rw][rwcount].GetXaxis().GetXmax()
+                    minInStack = allHistStack[rwcount].GetXaxis().GetXmin()
+                    histDict[rw][rwcount].GetXaxis().SetRangeUser(minInStack, argmax(maxInStack, maxInDict))
                 allHistStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 histDict[rw][rwcount].draw('hist')
                 legendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
@@ -102,9 +111,21 @@ def drawStack(stack, legends, foundVariables, sampleType,  dataHist = []):
     c2.cd()
     xcount = 0
     for x in stack:
-        x.Draw('hist')
+
         if len(dataHist) > 0:
+            #x.SetMaximum(dataHist['data'][xcount].GetMaximum())
+            maxInStack = x.GetXaxis().GetXmax()
+            maxInDict = dataHist[xcount].GetXaxis().GetXmax()
+            minInStack = x.GetXaxis().GetXmin()
+            dataHist[xcount].GetXaxis().SetRangeUser(minInStack, argmax(maxInStack, maxInDict))
+            # need to resize this to remove discrep in hist bin widths
+            #di = dataHist['data'][xcount].GetXaxis().GetXmin()
+            #df = dataHist['data'][xcount].GetXaxis().GetXmax()
+            #x.GetXaxis().SetRange(di, df)
+            x.Draw('hist')
             dataHist['data'][xcount].Draw('same')
+        else:
+            x.Draw('hist')
         legends[xcount].Draw('same')
         
         #x.Write()
