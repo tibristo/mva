@@ -157,7 +157,7 @@ def readInLabels(fname):
         labelcodesNum.append(int(l[1]))
     f.close()
     labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
-    print labelcodes
+    #print labelcodes
     return labelcodes
 
 def readInNames(fname):
@@ -214,7 +214,6 @@ def cutTree(arr, training, pos, evNum, sampleVersion = 'Any' ):
     if pos > lenarr:
         pos = lenarr-1
     if training == True:
-        print 'true'
         if (sampleVersion == 'Any'):
             return arr[:pos]
         elif (sampleVersion == 'A'):
@@ -223,7 +222,6 @@ def cutTree(arr, training, pos, evNum, sampleVersion = 'Any' ):
             return oddArr(arr, evNum)
 
     else:
-        print 'false'
         if (sampleVersion == 'Any'):
             return arr[lenarr-pos:]
         elif (sampleVersion == 'A'):

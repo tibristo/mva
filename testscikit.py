@@ -9,41 +9,14 @@ if len(sys.argv) < 2:
     sys.exit("not enough args supplied")
 
 # convert to numpy arrays, then randomise
-#sig = root2array('BonnTMVATrainingSample_ZH125.root','TrainTree')
+
 from tempfile import TemporaryFile
 
-npyFileExists = False
-try:
-   with open('./Ntuplesignal.npy'): pass
-   #close('./Ntuplesignal.npy')
-   npyFileExists = True
-except IOError:
-   print 'Oh dear.'
-
-if npyFileExists:
-    sig = load('./Ntuplesignal.npy')
-else:
-    sig = root2array('./Ntuplesignal.root','Ntuple')
-    #save('./Ntuplesignal.npy',sig)
-print 'len of sig: ' + str(len(sig))
-#random.shuffle(sig)
-#bkg = root2array('BonnTMVATrainingSample_ttbar.root','TrainTree')
-npyBkgFileExists = False
-try:
-   with open('./Ntuplebkg.npy'): pass
-   #close('./Ntuplebkg.npy')
-   npyBkgFileExists = True
-except IOError:
-   print 'Oh dear.'
-
-if npyBkgFileExists:
-    bkg = load('./Ntuplebkg.npy')
-else:
-    bkg = root2array('./Ntuplebkg.root','Ntuple')
-
+# read in samples and convert to numpy arrays
+sig = root2array('./Ntuplesignal.root','Ntuple')
+bkg = root2array('./Ntuplebkg.root','Ntuple')
 dataSample = root2array('./NtupledataAll.root','Ntuple')
-    #save('./Ntuplebkg.npy',bkg)
-#random.shuffle(bkg)
+
 print 'len of sig: ' + str(len(sig))
 print 'len of bkg: ' + str(len(bkg))
 print 'len of data: ' +str(len(dataSample))
@@ -51,21 +24,15 @@ print 'len of data: ' +str(len(dataSample))
 #cut in half for training and testing, remove unwanted variables not for training
 sigtempA = sc.cutTree(sig,True,len(sig)/2,'A')
 sigtempB = sc.cutTree(sig,True,len(sig)/2,'B')
-#print len(sigtemp)
+
 bkgtempA = sc.cutTree(bkg,True,len(bkg)/2,'A')
 bkgtempB = sc.cutTree(bkg,True,len(bkg)/2,'B')
-#print len(bkgtemp)
-
-# don't want to cut the data... we want it all
-#datatempA = sc.cutTree(data,True,len(data/2),'A')
-#datatempB = sc.cutTree(data,True,len(data/2),'B')
-
 
 #keep indices of variables we want
 varIdx = []
 varIdxData = []
 varWIdx = []
-#variableNames = ['m_ll','m_Bb','MET','dPhi_VH', 'ptImbalanceSignificance', 'pt_V', 'pt_Bb', 'dR_Bb', 'acop_Bb', 'dEta_Bb', 'mv1_jet0', 'mv1_jet1']
+
 variableNames = ['dRBB','dEtaBB','dPhiVBB','dPhiLMET','dPhiLBMin','pTV','mBB','HT','pTB1','pTB2','pTimbVH','mTW','pTL','MET']#,'mLL']
 varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
 foundVariables = []
@@ -73,7 +40,9 @@ foundVariablesData = []
 
 #get all of the indices of the variables in the dataset
 #foundVariables, varIdx and varWeightsHash are mutable and changed in the method
+
 sc.getVariableIndices(sig, variableNames, foundVariables, varIdx, varWeightsHash, 'mc')
+
 # we need to do this for data separately because of different branches
 blah = {}
 sc.getVariableIndices(dataSample, variableNames, foundVariablesData, varIdxData, blah, 'data')
@@ -90,6 +59,7 @@ lumi = 20300.0
 
 #need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
 nEntriesA = nEntries*(float((len(sigtempA)+len(bkgtempA)))/float((len(sig)+len(bkg))))
+
 sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
 bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
 sigTrainB,weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntriesA, lumi)
@@ -147,7 +117,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 sigtemp1A = sc.cutTree(sig,False,len(sig)/2,'A')
 bkgtemp1A = sc.cutTree(bkg,False,len(bkg)/2,'A')
 
-print sigtemp1A
+
 labelCodes = sc.readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
 #find weightsPerSample on first run
 sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = sc.cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
@@ -220,7 +190,7 @@ labelsBkgTestB= labelsBkgTestB[sortPermB]
 x1B = vstack((sigTestB, bkgTestB))
 y1B = hstack((sc.onesInt(len(sigTestB)), sc.zerosInt(len(bkgTestB))))
 y1B = transpose(y1B)
-print 'starting testing'
+
 
 sigTestB = transpose(sigTestB)
 bkgTestB = transpose(bkgTestB)

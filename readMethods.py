@@ -1,11 +1,16 @@
 __all__ = ['readBkg','readAllLabels','readSig','readXml']
 
 def readXml(dataType):
+
+    import xml.etree.ElementTree as ET
+    xmlTree = ET.parse('settings.xml')
+    root = xmlTree.getroot()
+
     treename = ''
     branches = []
     for child in root.findall('sampleType'):
         if child.get('name') == dataType.upper():
-            for grandchild in list(x):
+            for grandchild in list(child):
                 if grandchild.tag = 'treeName':
                     treename = grandchild.get('name')
                 elif grandchild.tag = 'branch':
