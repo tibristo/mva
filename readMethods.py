@@ -11,9 +11,9 @@ def readXml(dataType):
     for child in root.findall('sampleType'):
         if child.get('name') == dataType.upper():
             for grandchild in list(child):
-                if grandchild.tag = 'treeName':
+                if grandchild.tag == 'treeName':
                     treename = grandchild.get('name')
-                elif grandchild.tag = 'branch':
+                elif grandchild.tag == 'branch':
                     branches.append(grandchild.get('name'))
     return treename,branches
 
@@ -35,11 +35,11 @@ def readBkg(bkgFile):
 			if (linearr[5] not in labelcodes.keys()):
 				label = linearr[5].strip()
 				labelcodes[label] = len(labelcodes)
-				labelfile.write(label+','+str(labelcodes[label]))
+				labelfile.write(label+','+str(labelcodes[label])+'\n')
 			if (linearr[6] not in namescodes.keys()):
 				name = linearr[6].strip()
 				namescodes[name] = len(namescodes)
-				namesfile.write(name+','+str(namescodes[name]))
+				namesfile.write(name+','+str(namescodes[name])+'\n')
 		else:
 			linearr = line.split(',')
 			if linearr[5] == bkgFile:
@@ -47,11 +47,11 @@ def readBkg(bkgFile):
 			if (linearr[5] not in labelcodes.keys()):
 				label = linearr[5].strip()
 				labelcodes[label] = len(labelcodes)
-				labelfile.write(label+','+str(labelcodes[label]))
+				labelfile.write(label+','+str(labelcodes[label])+'\n')
 			if (linearr[6] not in namescodes.keys()):
 				name = linearr[6].strip()
 				namescodes[name] = len(namescodes)
-				namesfile.write(name+','+str(namescodes[name]))
+				namesfile.write(name+','+str(namescodes[name])+'\n')
 	labelfile.close()
 	namesfile.close()
 	f.close()
@@ -70,11 +70,11 @@ def readAllLabels():
 		if (linearr[5] not in labelcodes.keys()):
 			label = linearr[5].strip()
 			labelcodes[label] = len(labelcodes)
-			labelfile.write(label+','+str(labelcodes[label]))
+			labelfile.write(label+','+str(labelcodes[label])+'\n')
 		if (linearr[6] not in namescodes.keys()):
 			name = linearr[6].strip()
 			namescodes[name] = len(namescodes)
-			namesfile.write(name+','+str(namescodes[name]))
+			namesfile.write(name+','+str(namescodes[name])+'\n')
 	f.close()
 	labelfile.close()
 	namesfile.close()
@@ -96,11 +96,11 @@ def readSig():
 		if (linearr[5] not in labelcodes.keys()):
 			label = linearr[5].strip()
 			labelcodes[label] = len(labelcodes)
-			labelfile.write(label+','+str(labelcodes[label]))
+			labelfile.write(label+','+str(labelcodes[label])+'\n')
 		if (linearr[6] not in namescodes.keys()):
 			name = linearr[6].strip()
 			namescodes[name] = len(namescodes)
-			namesfile.write(name+','+str(namescodes[name]))
+			namesfile.write(name+','+str(namescodes[name])+'\n')
 	f.close()
 	labelfile.close()
 	namesfile.close()

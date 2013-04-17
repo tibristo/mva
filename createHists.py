@@ -1,4 +1,3 @@
-__all__=['createHists','createHistsData','drawStack']
 from numpy import argmax,argmin
 from rootpy.interactive import wait
 from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
@@ -7,8 +6,19 @@ from rootpy.plotting import HistStack
 import ROOT
 ROOT.gROOT.SetBatch(True)
 
+__all__=['createHists','createHistsData','drawStack','readVarNamesXML']
+
 # store variables and hist max/ min values
 histLimits = {}
+
+def readVarNamesXML():
+    import xml.etree.ElementTree as ET
+    xmlTree = ET.parse('settingsPlot.xml')
+    root = xmlTree.getroot()
+    names = []
+    for child in root.findadd('varName'):
+        names.append(child.get('name'))
+    return names
 
 def readXML():
     global histLimits
@@ -27,7 +37,6 @@ def readXML():
 
 readXML()
     
-
 def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSample, foundVariables, allHistStack, allLegendStack, createLog = False):
     global histLimits
     #TODO: These should really be read in from a settings file
@@ -42,8 +51,6 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         fillcol = 'red'
     hist = []
     histidx = 0
-    maxi = []
-    mini = []
 
     log = open(nameOfType+'.log','w')
     
@@ -53,9 +60,6 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
 
     for c in sample:
         variableName = foundVariables[histidx]
-        #maxi.append(c[argmax(c)])
-        #mini.append(c[argmin(c)])
-        #hist.append(Hist(20,mini[histidx],maxi[histidx]))
         hist.append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
@@ -69,7 +73,6 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         hist[histidx].fillstyle='solid'
         lblcount = 0
         for k in histDict.iterkeys():
-            #histDict[k].append(Hist(20,mini[histidx],maxi[histidx]))
             histDict[k].append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
             histDict[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
             histDict[k][histidx].fillstyle = 'solid'
@@ -85,7 +88,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     # create stacks and legends
     histStack = []
     legendStack = []
-    if len(allHistStack) == 0:
+    if not allHistStack:
         initStack = True
     else:
         initStack = False
@@ -95,7 +98,6 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
             allLegendStack.append(Legend(7))
         histStack.append(HistStack(st,st))
         legendStack.append(Legend(7))
-
 
     for rw in histDict.iterkeys():
         log.write(rw + ' length: '+str(len(histDict[rw]))+'\n')
@@ -117,27 +119,22 @@ def drawStack(stack, legends, foundVariables, sampleType,  dataHist = []):
     c2 = Canvas()
     c2.cd()
     xcount = 0
-    #should create a ratio plot too!!! get teh scaling right...
+    # should create a ratio plot too!!! get teh scaling right...
     for x in stack:
-        
-        if len(dataHist) > 0:
+        if dataHist:
             x.Draw()
             xmax = x.GetHistogram().GetMaximum()
             dmax = dataHist['data'][xcount].GetMaximum()
-            tmax = max(xmax, dmax)
-            x.SetMaximum(tmax*1.1)
+            x.SetMaximum(max(xmax,dmax)*1.1)
             x.Draw('hist')
             dataHist['data'][xcount].Draw('same')
         else:
             x.Draw('hist')
         
         legends[xcount].Draw('same')
-        
         c2.SaveAs(foundVariables[xcount]+str(sampleType)+'Stack.png')
         c2.Write()
         xcount +=1 
-
-
 
 def createHistsData(sample, foundVariables, allHistStack, allLegendStack, createLog = False):
     histDict = {'data':[]}
@@ -147,8 +144,6 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, create
 
     hist = []
     histidx = 0
-    maxi = []
-    mini = []
     log = open('data.log','w')
     
     c1 = Canvas()

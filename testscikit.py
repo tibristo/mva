@@ -1,16 +1,19 @@
 from numpy import *
 from root_numpy import *
 import sys
-# used to shuffle multiple arrays at once
+import createHists
 import sortAndCut as sc
 
 if len(sys.argv) < 2:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
 
-# convert to numpy arrays, then randomise
-
 from tempfile import TemporaryFile
+
+# TODO: creating class that handles a sample: signal/ bkg/ data
+#       - It needs to hold a training and testing array for each, labels, weights
+#       - This makes it easier to do training and testing, and it makes it more readable
+#       - Still need to decide where drawing of histograms gets done
 
 # read in samples and convert to numpy arrays
 sig = root2array('./Ntuplesignal.root','Ntuple')
@@ -21,133 +24,110 @@ print 'len of sig: ' + str(len(sig))
 print 'len of bkg: ' + str(len(bkg))
 print 'len of data: ' +str(len(dataSample))
 
-#cut in half for training and testing, remove unwanted variables not for training
+# cut in half for training and testing, remove unwanted variables not for training
 sigtempA = sc.cutTree(sig,True,len(sig)/2,'A')
 sigtempB = sc.cutTree(sig,True,len(sig)/2,'B')
 
 bkgtempA = sc.cutTree(bkg,True,len(bkg)/2,'A')
 bkgtempB = sc.cutTree(bkg,True,len(bkg)/2,'B')
 
-#keep indices of variables we want
+# keep indices of variables we want
 varIdx = []
 varIdxData = []
 varWIdx = []
-
-variableNames = ['dRBB','dEtaBB','dPhiVBB','dPhiLMET','dPhiLBMin','pTV','mBB','HT','pTB1','pTB2','pTimbVH','mTW','pTL','MET']#,'mLL']
+variablesNames = createHists.readVarNamesXML()
 varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
 foundVariables = []
 foundVariablesData = []
 
-#get all of the indices of the variables in the dataset
-#foundVariables, varIdx and varWeightsHash are mutable and changed in the method
-
+# get all of the indices of the variables in the dataset
+# foundVariables, varIdx and varWeightsHash are mutable and changed in the method
 sc.getVariableIndices(sig, variableNames, foundVariables, varIdx, varWeightsHash, 'mc')
-
 # we need to do this for data separately because of different branches
 blah = {}
 sc.getVariableIndices(dataSample, variableNames, foundVariablesData, varIdxData, blah, 'data')
 
-#create the training trees/ arrays
-#TODO: these should be stored in the xml settings file
+# create the training trees/ arrays
+# TODO: these should be stored in the xml settings file
 nEntries = 14443742.0
-#lumi for 2011+2012
+
 lumi = 20300.0
 #lumi for 2011
 #lumi = 4700.00
 #lumi for 2012
-#lumi = 14000.0
-
-#need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
+#lumi = 20300.0
+# need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
 nEntriesA = nEntries*(float((len(sigtempA)+len(bkgtempA)))/float((len(sig)+len(bkg))))
 
-sigTrainA,weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
-bkgTrainA,weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntriesA, lumi)
-sigTrainB,weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntriesA, lumi)
-bkgTrainB,weightsBkgTrainB, labelsBkgTrainB = sc.cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntriesA, lumi)
+# get all of the training data needed
+sigTrainA, weightsSigTrainA, labelsSigTrainA = sc.cutCols(sigtempA, varIdx, len(sigtempA), len(variableNames), varWeightsHash, nEntriesA, lumi) # signal set A
+bkgTrainA, weightsBkgTrainA, labelsBkgTrainA = sc.cutCols(bkgtempA, varIdx, len(bkgtempA), len(variableNames), varWeightsHash, nEntriesA, lumi) # bkg set A
+sigTrainB, weightsSigTrainB, labelsSigTrainB = sc.cutCols(sigtempB, varIdx, len(sigtempB), len(variableNames), varWeightsHash, nEntriesA, lumi) # signal set B
+bkgTrainB, weightsBkgTrainB, labelsBkgTrainB = sc.cutCols(bkgtempB, varIdx, len(bkgtempB), len(variableNames), varWeightsHash, nEntriesA, lumi) # bkg set B
+dataCut = sc.cutColsData(dataSample, varIdxData, len(dataSample),len(variableNames), nEntries, lumi) # data set
 
-dataCut = sc.cutColsData(dataSample, varIdxData, len(dataSample),len(variableNames), nEntries, lumi)
-
-
-
-#add the training trees together, keeping track of which entries are signal and background
+# add the training trees together, keeping track of which entries are signal and background
 xtA = vstack((sigTrainA, bkgTrainA))
-y11A = sc.onesInt(len(sigTrainA))
-y21A = sc.zerosInt(len(bkgTrainA))
-ytA = hstack((y11A, y21A))
-ytA = transpose(ytA)
-sigWeightA = 1.0#float(1/float(len(sigTrain)))
-#print 'sigWeight ' + str(sigWeightA)
-bkgWeightA = float(len(sigTrainA))/float(len(bkgTrainA))
-#print 'bkgWeight ' + str(bkgWeightA)
+ytA = transpose(hstack(( sc.onesInt(len(sigTrainA)), sc.zerosInt(len(bkgTrainA)) )))
+sigWeightA = 1.0 # float(1/float(len(sigTrain)))
+bkgWeightA = float(len(sigTrainA))/float(len(bkgTrainA)) # weight background as ratio
 weightsBkgA = sc.setWeights(len(bkgTrainA),bkgWeightA)
 weightsSigA = sc.setWeights(len(sigTrainA),sigWeightA)
-weightstA = hstack((weightsSigA,weightsBkgA))
-weightstA = transpose(weightstA)
+weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
 
-#add the training trees together, keeping track of which entries are signal and background
+# add the training trees together, keeping track of which entries are signal and background
 xtB = vstack((sigTrainB, bkgTrainB))
-y11B = sc.onesInt(len(sigTrainB))
-y21B = sc.zerosInt(len(bkgTrainB))
-ytB = hstack((y11B, y21B))
-ytB = transpose(ytB)
-sigWeightB = 1.0#float(1/float(len(sigTrain)))
-#print 'sigWeight ' + str(sigWeightB)
+ytB = transpose(hstack(( sc.onesInt(len(sigTrainB)), sc.zerosInt(len(bkgTrainB)) )))
+sigWeightB = 1.0 #float(1/float(len(sigTrain)))
 bkgWeightB = float(len(sigTrainB))/float(len(bkgTrainB))
-#print 'bkgWeight ' + str(bkgWeightB)
 weightsBkgB = sc.setWeights(len(bkgTrainB),bkgWeightB)
 weightsSigB = sc.setWeights(len(sigTrainB),sigWeightB)
-weightstB = hstack((weightsSigB,weightsBkgB))
-weightstB = transpose(weightstB)
+weightstB = transpose(hstack((weightsSigB,weightsBkgB)))
 
-x =xtA
+x = xtA
 y = ytA
 weights = weightstA
-#x,y,weights = sc.shuffle_in_unison(xt,yt,weightst)
 
-#print 'starting training on GradientBoostingClassifier'
-
-from sklearn.ensemble import GradientBoostingClassifier
+# from sklearn.ensemble import GradientBoostingClassifier
 
 # parameters for boosting:
 # GradientBoostingClassifier(loss='deviance', learning_rate=0.10000000000000001, n_estimators=100, subsample=1.0, min_samples_split=2, min_samples_leaf=1, max_depth=3, init=None, random_state=None, max_features=None, verbose=0)
 
 #gb = GradientBoostingClassifier().fit(x,y)
 
-#Test the fit on the other half of the data
+# Test the fit on the other half of the data
 sigtemp1A = sc.cutTree(sig,False,len(sig)/2,'A')
 bkgtemp1A = sc.cutTree(bkg,False,len(bkg)/2,'A')
 
 
-labelCodes = sc.readInLabels(sys.argv[1])#typeOfSample should be signal or bkg
-#find weightsPerSample on first run
+labelCodes = sc.readInLabels(sys.argv[1]) # typeOfSample should be signal or bkg
+# get all testing arrays, event weights, labels and weight per sample for xs and lumi
 sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = sc.cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
 
-sortPerm = labelsSigTestA.argsort()
+
+sortPerm = labelsSigTestA.argsort() # gives the sorting permutation
 #t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
-sigTestA= sigTestA[sortPerm]#list(t_sigTestA)
-weightsSigTestA = weightsSigTestA[sortPerm]#list(t_weightsSigTestA)
-labelsSigTestA= labelsSigTestA[sortPerm]#list(t_labelsSigTestA)
+sigTestA = sigTestA[sortPerm] # sort according to the correct permutation
+weightsSigTestA = weightsSigTestA[sortPerm]
+labelsSigTestA = labelsSigTestA[sortPerm]
 
-#labelsSigTestA, sigTestA, weightsSigTestA = sc.sortMultiple(varWIdx['label_code'],labelsSigtestA,sigTestA,weightsSigTestA)
 bkgTestA, weightsBkgTestA, labelsBkgTestA, weightsPerBkgSample = sc.cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
+
 weightsPerSample = dict(weightsPerSigSample.items() + weightsPerBkgSample.items())
-#for python 3 and greater use
-#weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
-sortPermBkg = labelsBkgTestA.argsort()
+# for python 3 and greater use
+# weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
+
+sortPermBkg = labelsBkgTestA.argsort() # get the sorting permutation for the background
 #t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgTestA,bkgTestA,weightsBkgTestA)))
-bkgTestA= bkgTestA[sortPermBkg]#list(t_bkgTestA)
-weightsBkgTestA = weightsBkgTestA[sortPermBkg]#list(t_weightsBkgTestA)
-labelsBkgTestA= labelsBkgTestA[sortPermBkg]#list(t_labelsBkgTestA)
+bkgTestA = bkgTestA[sortPermBkg] # sort according to permutation
+weightsBkgTestA = weightsBkgTestA[sortPermBkg]
+labelsBkgTestA = labelsBkgTestA[sortPermBkg]
 
-
-#print 'weightsPerSample'
-#print weightsPerSample
-
+sigTestA = transpose(sigTestA)
+bkgTestA = transpose(bkgTestA)
 
 x1A = vstack((sigTestA, bkgTestA))
-y1A = hstack((sc.onesInt(len(sigTestA)), sc.zerosInt(len(bkgTestA))))
-y1A = transpose(y1A)
-
+y1A = transpose(hstack((sc.onesInt(len(sigTestA)), sc.zerosInt(len(bkgTestA)))))
 
 from rootpy.interactive import wait
 from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
@@ -156,41 +136,33 @@ from rootpy.plotting import HistStack
 import ROOT
 ROOT.gROOT.SetBatch(True)
   
+# store all histograms in output.root
 f = ropen('output.root','recreate')
 c1 = Canvas()
 c1.cd()
-
-lblcount = 0
-
-sigTestA = transpose(sigTestA)
-bkgTestA = transpose(bkgTestA)
 
 sigtemp1B = sc.cutTree(sig,False,len(sig)/2,'B')
 bkgtemp1B = sc.cutTree(bkg,False,len(bkg)/2,'B')
 
 sigTestB, weightsSigTestB, labelsSigTestB = sc.cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-#get the reordered, sorted index
+# get the reordered, sorted index
 sortPermB = labelsSigTestB.argsort()
 #t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigTestB,sigTestB,weightsSigTestB)))
-#sort all of the arrays using the sorted index
+# sort all of the arrays using the sorted index
 sigTestB= sigTestB[sortPermB]
 weightsSigTestB = weightsSigTestB[sortPermB]
 labelsSigTestB= labelsSigTestB[sortPermB]
 
 bkgTestB, weightsBkgTestB, labelsBkgTestB = sc.cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-#do the ordering for the background
+# do the ordering for the background
 sortPermBkgB = labelsBkgTestB.argsort()
 #t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgTestB,bkgTestB,weightsBkgTestB)))
 bkgTestB= bkgTestB[sortPermBkgB]
 weightsBkgTestB = weightsBkgTestB[sortPermBkgB]
 labelsBkgTestB= labelsBkgTestB[sortPermB]
 
-
-
 x1B = vstack((sigTestB, bkgTestB))
-y1B = hstack((sc.onesInt(len(sigTestB)), sc.zerosInt(len(bkgTestB))))
-y1B = transpose(y1B)
-
+y1B = transpose(hstack((sc.onesInt(len(sigTestB)), sc.zerosInt(len(bkgTestB)))))
 
 sigTestB = transpose(sigTestB)
 bkgTestB = transpose(bkgTestB)
@@ -204,21 +176,20 @@ for i in variableNames:
 
 allStack = []
 legendAllStack = []
-import createHists
+
 # get sigA histograms
-hist,histDictSigA,testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
+hist, histDictSigA, testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 # get bkgA histograms
 # how to fix legends????
-hist2,histDictBkgA,testAStackBkg,legendBkgStack  = createHists.createHists(bkgTestA, labelCodes, 'bkg', labelsBkgTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
+hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists.createHists(bkgTestA, labelCodes, 'bkg', labelsBkgTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
 
-histData,histDictDataA,testAStackData, legendDataStack = createHists.createHistsData(dataCut, foundVariables, allStack, legendAllStack, True)
+histData, histDictDataA, testAStackData, legendDataStack = createHists.createHistsData(dataCut, foundVariables, allStack, legendAllStack, True)
 print 'len sigTestA: ' + str(len(hist))
 print 'len bkgTestA: ' + str(len(hist2))
 print 'len dataCut: ' + str(len(histData))
 print 'len allStack: ' + str(len(allStack))
+
 for hist2idx in xrange(0,len(hist)):
-
-
     legend = Legend(3)
     legend.AddEntry(hist[hist2idx],'F')
     legend.AddEntry(hist2[hist2idx],'F')
@@ -236,24 +207,17 @@ for hist2idx in xrange(0,len(hist)):
     c1.SaveAs(foundVariables[hist2idx]+".png")
     hist2idx+=1
 
-createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig')
+createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig') # draw histograms
 createHists.drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg')
 createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictDataA)
 createHists.drawStack(allStack, legendAllStack, foundVariables, 'All')
 
-
 f.close()
-#testABkgStack.draw()
 
 hist = []
 hist2 = []
-#score = gb.score(x1,y1)
-
-#print score
 
 from sklearn.tree import DecisionTreeClassifier
-
-
 
 print 'starting training on AdaBoostClassifier'
 #class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)

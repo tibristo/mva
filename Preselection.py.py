@@ -7,13 +7,17 @@
 
 import copy
 import ROOT
+
+from ROOT import *
+import sys
+
 import math
 import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 import readMethods as read
-import cutTypes as cut
+import cutsTypes as cut
 cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 #define dataType as MC or DATA
 if sys.argv[2].upper == 'DATA':
@@ -22,9 +26,6 @@ else:
 	dataType = 'mc'
 
 treename,branches = read.readXml(dataType)
-
-from ROOT import *
-import sys
 
 print "sys.argv = ", sys.argv
 if not len(sys.argv)>=2:  raise(Exception, "Must specify inputFiles as argument!")
@@ -604,7 +605,7 @@ log.close()
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()
 ch_new.GetCurrentFile().Close()
-cut.writeCuts(cuts)
+cut.writeCuts(treename, sys.argv[2], cuts)
 
 print 'nEntries: ' + str(nEntries)
 print 'totalFound: ' + str(totalFound)

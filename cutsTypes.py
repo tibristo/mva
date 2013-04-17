@@ -1,4 +1,5 @@
 __all__ = ['cuts','getIndexOfSample','dPhi','dR','enum','addCut','noEvent','writeCuts','leptonType']
+import math
 
 def getIndexOfSample(mc, sample):
 	for x in xrange(0,len(sample)):
@@ -54,8 +55,8 @@ def addCut(cutNum, cuts):
 	cuts[cutNum][1] = cuts[cutNum][1]+1
 	return cuts
 
-def writeCuts(cuts):
-	outCutFile = open("%s.txt" % (treename+sys.argv[2]),'w')
+def writeCuts(treename, suffix, cuts):
+	outCutFile = open("%s.txt" % (treename+suffix),'w')
 	for i in cuts:
 		outCutFile.write(i[0] + ': '+str(i[1])+'\n')
 	outCutFile.close()
