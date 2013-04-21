@@ -194,3 +194,46 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, create
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
     log.close()
     return hist,histDict,histStack,legendStack
+
+import Sample
+def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSample):
+    """Draw all test stacks for signal, bkg and data at once."""
+    for x in xrange (0, len(signal.test)):
+        if x == 0:
+            subset = 'A'
+        else:
+            subset = 'B'
+        allStack = []
+        legendAllStack = []
+        # get sigA histograms
+        hist, histDictSigA, testAStack, legendSigStack = createHists.createHists(signal.returnTestSample(subset), labelCodes, 'signal', signal.returnTestLabels(subset), weightsPerSample, signal.returnFoundVariables(), allStack, legendAllStack, True)
+        # get bkgA histograms
+        # how to fix legends????
+        hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists.createHists(bkg.returnTestSample(subset), labelCodes, 'bkg', bkg.returnTestLabels(subset), weightsPerSample, bkg.returnFoundVariables(), allStack, legendAllStack, True)
+        # get data histograms
+        histData, histDictDataA, testAStackData, legendDataStack = createHists.createHistsData(dataCut, foundVariables, allStack, legendAllStack, True)
+    
+        for hist2idx in xrange(0,len(hist)):
+            legend = Legend(3)
+            legend.AddEntry(hist[hist2idx],'F')
+            legend.AddEntry(hist2[hist2idx],'F')
+            legend.AddEntry(histData[hist2idx],'F')
+            
+            hist[hist2idx].draw('hist')
+            hist[hist2idx].Write()
+            hist2[hist2idx].draw('histsame')
+            hist2[hist2idx].Write()
+            histData[hist2idx].draw('same')
+            histData[hist2idx].Write()
+            
+            legend.Draw('same')
+            c1.Write()
+            c1.SaveAs(foundVariables[hist2idx]+".png")
+            hist2idx+=1
+        
+        createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig') # draw histograms
+        createHists.drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg')
+        createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictDataA)
+        createHists.drawStack(allStack, legendAllStack, foundVariables, 'All')
+        
+    f.close()

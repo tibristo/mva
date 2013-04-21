@@ -5,15 +5,10 @@ class Sample():
     import createHists
     import sortAndCut as sc
 
-    trainingSet = []
-    testingSet = []
-    variablesDone = False
+    variablesDone = False # whether or not the variables have been found
 
-    # TODO: creating class that handles a sample: signal/ bkg/ data
-    #       - It needs to hold a training and testing array for each, labels, weights
-    #       - This makes it easier to do training and testing, and it makes it more readable
-    #       - Still need to decide where drawing of histograms gets done
     def __init__ (self, filename, treename, typeOfSample):
+        """Define a Sample object given filename, treename and type of sample - sig/bkg/data."""
         self.sample = root2array(filename,treename)
         self.sample_length = len(self.sample)
         typeUpper = typeOfSample.upper()
@@ -23,10 +18,11 @@ class Sample():
         self.type = typeOfSample
         
     def returnFullLength(self):
-        """Return the length of the full input sample"""
+        """Return the length of the full input sample."""
         return self.sample_length
     
-    def returnFullSmaple(self):
+    def returnFullSample(self):
+        """Return the full input sample as a numpy array."""
         return self.sample
     
     def returnSampleType(self):
@@ -38,7 +34,10 @@ class Sample():
     def splitTree(self,training, splitSize, sampleLabel):
         """Return subset of full sample based on training/ testing, length and A or B sample"""
         self.tempSet = sc.cutTree(self.sample,training,splitSize,sampleLabel)
+        self.tempLen = len(self.tempSet)
         return self.tempSet
+
+
 
     def returnTemp(self):
         """Return subset of temp sample without recalculating."""
@@ -46,9 +45,9 @@ class Sample():
 
     def returnTempLength(self):
         """Return length of temp sample."""
-        return len(self.tempSet)
+        return self.tempLen
 
-    def getVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash):
+    def getVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash = {}):
         """Get all of the indices of the variables in the dataset."""
     # foundVariables, varIdx and varWeightsHash are mutable and changed in the method
         if self.type != 'data':
@@ -56,10 +55,11 @@ class Sample():
         else:
             # we need to do this for data separately because of different branches
             blah = {}
-            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, blah, 'data')
+            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, varWeightsHash, 'data')
         setVariableNames(variableNames, foundVariables, varIdx, varWeightsHash)
 
     def setVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash):
+        """Set the variable name values."""
         self.variableNames = copy.deepcopy(variableNames)
         self.varIdx = copy.deepcopy(varIdx)
         self.foundVariables = copy.deepcopy(foundVariables)
@@ -68,127 +68,190 @@ class Sample():
 
 
     def returnVariableData(self):
+        """Return the variable names, indices, list of found variables and the weights hash table."""
         if not variablesDone:
             return -1
         return self.variableNames, self.varIdx, self.foundVariables, self.varWeightsHash
 
     # get all of the training data needed
-    def getTrainingData(self, nEntriesA, lumi):
-        self.train, self.weightsTrain, self.labelsTrain = sc.cutCols(returnTemp(), varIdx, returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi) # signal set A
+    def getTrainingData(self, splitSize, subset, nEntriesA, lumi, labelCodes):
+        """Get the subset of data, the associated weights and labels for training data."""
+        splitTree(True, splitSize, subset)
+        tr, we, lb, xs = sc.cutCols(returnTemp(), varIdx, returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi) # signal set A
+        append = False
+        if subset == 'A':
+            trainIdx = 0
+            if not self.train:
+                append = True
+        else:
+            trainIdx = 1
+            if len(self.train) == 1:
+                append = True
+        if append:
+            self.train.append(tr)
+            self.trainweights.append(we)
+            self.trainLabels.append(lb)
+            self.trainWeightsXS.append(xs)
+        else:
+            self.train[trainIdx] = tr
+            self.trainWeights[trainIdx] = we
+            self.trainLabels[trainIdx] = lb
+            self.trainWeightsXS[trainIdx] = xs
+        if trainIdx == 0:
+            self.trainLengthA = len(self.train[0])
+        else:
+            self.trainLengthB = len(self.train[1])
 
     def getTestingDataForData(self, nEntriesA, lumi):
+        """Get the subset needed for testing if using DATA and NOT MC."""
         if not variablesDone:
             return -1
-        self.test = sc.cutColsData(self.sample, self.varIdx, len(dataSample),len(variableNames), nEntries, lumi) # data set
+        if not self.test:
+            self.test.append(sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntriesA, lumi)) # data set
+        else:
+            self.test[0]=sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntries, lumi) # data set
+            
+    def returnTrainingSamples(self):
+        """Return the array of training samples."""
+        return self.train, self.trainWeights, self.trainLabels, self.trainWeightsXS
 
-# add the training trees together, keeping track of which entries are signal and background
-xtA = vstack((sigTrainA, bkgTrainA))
-ytA = transpose(hstack(( sc.onesInt(len(sigTrainA)), sc.zerosInt(len(bkgTrainA)) )))
-sigWeightA = 1.0 # float(1/float(len(sigTrain)))
-bkgWeightA = float(len(sigTrainA))/float(len(bkgTrainA)) # weight background as ratio
-weightsBkgA = sc.setWeights(len(bkgTrainA),bkgWeightA)
-weightsSigA = sc.setWeights(len(sigTrainA),sigWeightA)
-weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
+    def returnTrainingSample(self, subset):
+        """Return a single training sample indexed by subset A or B."""
+        if subset == 'A':
+            return self.train[0]
+        return self.train[1]
 
-# add the training trees together, keeping track of which entries are signal and background
-xtB = vstack((sigTrainB, bkgTrainB))
-ytB = transpose(hstack(( sc.onesInt(len(sigTrainB)), sc.zerosInt(len(bkgTrainB)) )))
-sigWeightB = 1.0 #float(1/float(len(sigTrain)))
-bkgWeightB = float(len(sigTrainB))/float(len(bkgTrainB))
-weightsBkgB = sc.setWeights(len(bkgTrainB),bkgWeightB)
-weightsSigB = sc.setWeights(len(sigTrainB),sigWeightB)
-weightstB = transpose(hstack((weightsSigB,weightsBkgB)))
+    def returnTestingSample(self, subset):
+        """Return a single testing sample indexed by subset A or B."""
+        if subset == 'A':
+            return self.test[0]
+        return self.test[1]
 
-x = xtA
-y = ytA
-weights = weightstA
+    def getTestingData(self, splitSize, sampleLabel, nEntries, lumi, labelCodes):
+        """Set up a test sample."""
+        splitTree(False, splitSize, sampleLabel)
+        test, weights, labels, weightsXS = sc.cutCols(self.temp, self.varIdx, len(self.temp), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
+        idx = 0
+        append = False
+        if sampleLabel == 'A' and not self.test:
+            idx = 0
+            append = True
+        elif sampleLabel == 'A':
+            idx = 0
+        elif sampleLabel != 'A' and len(self.test) == 1:
+            idx = 1
+            append = True
+        else:
+            idx = 1
+        # We need to make sure that we append or replace appropriately
+        if append:
+            self.test.append(copy.deepcopy(test))
+            self.testWeights.append(copy.deepcopy(weights))
+            self.testLabels.append(copy.deepcopy(labels))
+            self.testWeightsXS.append(copy.deepcopy(weightsXS))
+        else:
+            self.test[idx] = (copy.deepcopy(test))
+            self.testWeights[idx] = (copy.deepcopy(weights))
+            self.testLabels[idx] = (copy.deepcopy(labels))
+            self.testWeightsXS[idx] = (copy.deepcopy(weightsXS))
+            
+        if idx == 0:
+            self.testLengthA = len(self.test[0])
+        else:
+            self.testLengthB = len(self.test[1])
 
-# from sklearn.ensemble import GradientBoostingClassifier
+    def returnTestingSamples(self):
+        """Return the array of testing samples."""
+        return self.test, self.testWeights, self.testLabels, self.testWeightsXS
 
-# parameters for boosting:
-# GradientBoostingClassifier(loss='deviance', learning_rate=0.10000000000000001, n_estimators=100, subsample=1.0, min_samples_split=2, min_samples_leaf=1, max_depth=3, init=None, random_state=None, max_features=None, verbose=0)
-
-#gb = GradientBoostingClassifier().fit(x,y)
-
-# Test the fit on the other half of the data
-sigtemp1A = sc.cutTree(sig,False,len(sig)/2,'A')
-bkgtemp1A = sc.cutTree(bkg,False,len(bkg)/2,'A')
-
-
-labelCodes = sc.readInLabels(sys.argv[1]) # typeOfSample should be signal or bkg
-# get all testing arrays, event weights, labels and weight per sample for xs and lumi
-sigTestA, weightsSigTestA, labelsSigTestA, weightsPerSigSample = sc.cutCols(sigtemp1A, varIdx, len(sigtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
-
-
-sortPerm = labelsSigTestA.argsort() # gives the sorting permutation
-#t_labelsSigTestA, t_sigTestA, t_weightsSigTestA = zip(*sorted(zip(labelsSigTestA,sigTestA,weightsSigTestA)))
-sigTestA = sigTestA[sortPerm] # sort according to the correct permutation
-weightsSigTestA = weightsSigTestA[sortPerm]
-labelsSigTestA = labelsSigTestA[sortPerm]
-
-bkgTestA, weightsBkgTestA, labelsBkgTestA, weightsPerBkgSample = sc.cutCols(bkgtemp1A, varIdx, len(bkgtemp1A), len(variableNames), varWeightsHash, nEntries, lumi, True, labelCodes)
-
-weightsPerSample = dict(weightsPerSigSample.items() + weightsPerBkgSample.items())
-# for python 3 and greater use
-# weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
-
-sortPermBkg = labelsBkgTestA.argsort() # get the sorting permutation for the background
-#t_labelsBkgTestA, t_bkgTestA, t_weightsBkgTestA = zip(*sorted(zip(labelsBkgTestA,bkgTestA,weightsBkgTestA)))
-bkgTestA = bkgTestA[sortPermBkg] # sort according to permutation
-weightsBkgTestA = weightsBkgTestA[sortPermBkg]
-labelsBkgTestA = labelsBkgTestA[sortPermBkg]
-
-sigTestA = transpose(sigTestA)
-bkgTestA = transpose(bkgTestA)
-
-x1A = vstack((sigTestA, bkgTestA))
-y1A = transpose(hstack((sc.onesInt(len(sigTestA)), sc.zerosInt(len(bkgTestA)))))
-
-from rootpy.interactive import wait
-from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
-from rootpy.io import root_open as ropen, DoesNotExist
-from rootpy.plotting import HistStack
-import ROOT
-ROOT.gROOT.SetBatch(True)
-  
-# store all histograms in output.root
-f = ropen('output.root','recreate')
-c1 = Canvas()
-c1.cd()
-
-sigtemp1B = sc.cutTree(sig,False,len(sig)/2,'B')
-bkgtemp1B = sc.cutTree(bkg,False,len(bkg)/2,'B')
-
-sigTestB, weightsSigTestB, labelsSigTestB = sc.cutCols(sigtemp1B, varIdx, len(sigtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-# get the reordered, sorted index
-sortPermB = labelsSigTestB.argsort()
-#t_labelsSigTestB, t_sigTestB, t_weightsSigTestB = zip(*sorted(zip(labelsSigTestB,sigTestB,weightsSigTestB)))
-# sort all of the arrays using the sorted index
-sigTestB= sigTestB[sortPermB]
-weightsSigTestB = weightsSigTestB[sortPermB]
-labelsSigTestB= labelsSigTestB[sortPermB]
-
-bkgTestB, weightsBkgTestB, labelsBkgTestB = sc.cutCols(bkgtemp1B, varIdx, len(bkgtemp1B), len(variableNames), varWeightsHash, nEntries, lumi)
-# do the ordering for the background
-sortPermBkgB = labelsBkgTestB.argsort()
-#t_labelsBkgTestB, t_bkgTestB, t_weightsBkgTestB = zip(*sorted(zip(labelsBkgTestB,bkgTestB,weightsBkgTestB)))
-bkgTestB= bkgTestB[sortPermBkgB]
-weightsBkgTestB = weightsBkgTestB[sortPermBkgB]
-labelsBkgTestB= labelsBkgTestB[sortPermB]
-
-x1B = vstack((sigTestB, bkgTestB))
-y1B = transpose(hstack((sc.onesInt(len(sigTestB)), sc.zerosInt(len(bkgTestB)))))
-
-sigTestB = transpose(sigTestB)
-bkgTestB = transpose(bkgTestB)
-dataCut = transpose(dataCut)
-
-count = 0
-cols = []
-for i in variableNames:
-    cols.append(ones(len(sigTestA)))
+    def returnLengthTest(self, subset):
+        """Return the length of the testing samples by subset A or B."""
+        if subset == 'A':
+            return self.testLengthA
+        return self.testLengthB
 
 
-allStack = []
-legendAllStack = []
+    def returnLengthTrain(self, subset):
+        """Return the length of the training samples by subset A or B."""
+        if subset == 'A':
+            return self.trainLengthA
+        return self.trainLengthB
+
+    def sortTestSamples(self):
+        """Sort the testing samples and weights according to the labels."""
+        for x in xrange(0,len(self.test)):
+            sortPermutation = self.testLabels[x].argsort()
+            self.test[x] = self.test[x][sortPermutation]
+            self.testLabels[x] = self.testLabels[x][sortPermutation]
+            self.testWeights[x] = self.testWeights[x][sortPermutation]
+
+    def transposeTestSamples(self):
+        """Transpose all test matrices."""
+        for x in xrange(0,len(self.test)):
+            self.test[x] = transpose(self.test[x])
+            self.testLabels[x] = transpose(self.testLabels[x])
+            self.testWeights[x] = transpose(self.testWeights[x])
+
+
+    def sortTrainSamples(self):
+        """Sort the training samples and weights according to the labels."""
+        for x in xrange(0,len(self.train)):
+            sortPermutation = self.trainLabels[x].argsort()
+            self.train[x] = self.train[x][sortPermutation]
+            self.trainLabels[x] = self.trainLabels[x][sortPermutation]
+            self.trainWeights[x] = self.trainWeights[x][sortPermutation]
+
+    def transposeTrainSamples(self):
+        """Transpose all test matrices."""
+        for x in xrange(0,len(self.train)):
+            self.train[x] = transpose(self.train[x])
+            self.trainLabels[x] = transpose(self.trainLabels[x])
+            self.trainWeights[x] = transpose(self.trainWeights[x])
+
+    def returnTrainWeightsXS(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.trainWeightsXS[0]
+        else:
+            return self.trainWeightsXS[1]
+
+    def returnTestWeightsXS(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.testWeightsXS[0]
+        else:
+            return self.testWeightsXS[1]
+
+    def returnTestSample(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.test[0]
+        else:
+            return self.test[1]
+
+    def returnTrainSample(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.train[0]
+        else:
+            return self.train[1]
+
+    def returnTestSampleLabels(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.testLabels[0]
+        else:
+            return self.testLabels[1]
+
+    def returnTrainSampleLabels(self, subset):
+        """Return the array of per sample weights (xs)"""
+        if subset == 'A':
+            return self.trainLabels[0]
+        else:
+            return self.trainLabels[1]
+
+    def returnFoundVariables(self):
+        """Return found variables."""
+        return self.foundVariables
+        
 
