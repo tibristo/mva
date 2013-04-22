@@ -1,4 +1,4 @@
-__all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultiple','shuffle_in_unison','cutTree','evenArr','oddArr','cutCols','cutColsData','onesInt','zerosInt','setWeights','getVariableIndices']
+__all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultiple','shuffle_in_unison','cutTree','evenArr','oddArr','cutCols','cutColsData','onesInt','zerosInt','setWeights','getVariableIndices','combineWeights']
 
 from numpy import *
 from root_numpy import *
@@ -146,8 +146,8 @@ def roc_curve_rej(y_true, y_score, pos_label=None):
 
     return fpr, tpr, thresholds[::-1], rej
 
-def readInLabels(fname):
-    f = open('Labels.txt')#+fname+'.txt')
+def readInLabels():
+    f = open('Labels.txt')
     labelcodes = []
     labelcodesNum = []
     for line in f:
@@ -343,14 +343,14 @@ def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeight
             evNum = xcount
         xcount = xcount + 1
 
-def combineSamples(sigTrain, bkgTrain):
+def combineWeights(sigTrain, bkgTrain):
     """Add the training trees together, keeping track of which entries are signal and background."""
     xtA = vstack((sigTrain, bkgTrain))
     ytA = transpose(hstack(( onesInt(len(sigTrain)), zerosInt(len(bkgTrain)) )))
     sigWeightA = 1.0 # float(1/float(len(sigTrain)))
     bkgWeightA = float(len(sigTrain))/float(len(bkgTrain)) # weight background as ratio
-    weightsBkgA = sc.setWeights(len(bkgTrain),bkgWeightA)
-    weightsSigA = sc.setWeights(len(sigTrain),sigWeightA)
+    weightsBkgA = setWeights(len(bkgTrain),bkgWeightA)
+    weightsSigA = setWeights(len(sigTrain),sigWeightA)
     weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
     return xtA, ytA, weightstA
 

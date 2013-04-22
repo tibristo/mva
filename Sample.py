@@ -1,11 +1,19 @@
-class Sample():
-    from numpy import *
-    from root_numpy import *
-    import sys
-    import createHists
-    import sortAndCut as sc
+import sortAndCut as sc
+from numpy import *
+import root_numpy
+import sys
+import createHists
+import copy
 
-    variablesDone = False # whether or not the variables have been found
+class Sample:
+    __all__= ['getTrainingSample','returnFullLength','returnTestSample']
+    __all__.append('returnTestWeightsXS')
+    __all__.append('getTestingDataForData')
+    __all__.append('transposeDataTest')
+    __all__.append('transposeTestSamples')
+    __all__.append('returnTrainWeightsXS')
+    __all__.append('transposeTrainSamples')
+    #variablesDone = False # whether or not the variables have been found
     test = []
     train = []
     testWeights = []
@@ -18,10 +26,12 @@ class Sample():
 
     def __init__ (self, filename, treename, typeOfSample):
         """Define a Sample object given filename, treename and type of sample - sig/bkg/data."""
-        self.sample = root2array(filename,treename)
+        self.sample = root_numpy.root2array(filename,treename)
         self.sample_length = len(self.sample)
+        self.variablesDone = False
         typeUpper = typeOfSample.upper()
-        if (typeUpper!='DATA' or typeUpper!='SIG' or typeUpper!='BKG'):
+        print typeUpper
+        if (typeUpper!='DATA' and typeUpper!='SIG' and typeUpper!='BKG'):
             print 'Type ' + str(typeOfSample) + ' not known, setting to bkg mc'
             self.type = 'bkg'
         self.type = typeOfSample
@@ -56,17 +66,6 @@ class Sample():
         """Return length of temp sample."""
         return self.tempLen
 
-    def getVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash = {}):
-        """Get all of the indices of the variables in the dataset."""
-    # foundVariables, varIdx and varWeightsHash are mutable and changed in the method
-        if self.type != 'data':
-            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, varWeightsHash, 'mc')
-        else:
-            # we need to do this for data separately because of different branches
-            blah = {}
-            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, varWeightsHash, 'data')
-        setVariableNames(variableNames, foundVariables, varIdx, varWeightsHash)
-
     def setVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash):
         """Set the variable name values."""
         self.variableNames = copy.deepcopy(variableNames)
@@ -75,18 +74,29 @@ class Sample():
         self.varWeightsHash = copy.deepcopy(varWeightsHash)
         self.variablesDone = True
 
+    def getVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash = {}):
+        """Get all of the indices of the variables in the dataset."""
+        # foundVariables, varIdx and varWeightsHash are mutable and changed in the method
+        if self.type != 'data':
+            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, varWeightsHash, 'mc')
+        else:
+            # we need to do this for data separately because of different branches
+            blah = {}
+            sc.getVariableIndices(self.sample, variableNames, foundVariables, varIdx, varWeightsHash, 'data')
+        self.setVariableNames(variableNames, foundVariables, varIdx, varWeightsHash)
+        self.variablesDone = True
 
     def returnVariableData(self):
         """Return the variable names, indices, list of found variables and the weights hash table."""
-        if not variablesDone:
+        if not self.variablesDone:
             return -1
         return self.variableNames, self.varIdx, self.foundVariables, self.varWeightsHash
 
     # get all of the training data needed
     def getTrainingData(self, splitSize, subset, nEntriesA, lumi, labelCodes):
         """Get the subset of data, the associated weights and labels for training data."""
-        splitTree(True, splitSize, subset)
-        tr, we, lb, xs = sc.cutCols(returnTemp(), varIdx, returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi) # signal set A
+        self.splitTree(True, splitSize, subset)
+        tr, we, lb, xs = sc.cutCols(self.returnTemp(), self.varIdx, self.returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi, True, labelCodes) # signal set A
         append = False
         if subset == 'A':
             trainIdx = 0
@@ -98,7 +108,7 @@ class Sample():
                 append = True
         if append:
             self.train.append(tr)
-            self.trainweights.append(we)
+            self.trainWeights.append(we)
             self.trainLabels.append(lb)
             self.trainWeightsXS.append(xs)
         else:
@@ -113,12 +123,12 @@ class Sample():
 
     def getTestingDataForData(self, nEntriesA, lumi):
         """Get the subset needed for testing if using DATA and NOT MC."""
-        if not variablesDone:
+        if not self.variablesDone:
             return -1
         if not self.test:
-            self.test.append(sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntriesA, lumi)) # data set
+            self.test.append(sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi)) # data set
         else:
-            self.test[0]=sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntries, lumi) # data set
+            self.test[0]=sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi) # data set
         return 0
             
     def returnTrainingSamples(self):
@@ -143,8 +153,8 @@ class Sample():
 
     def getTestingData(self, splitSize, sampleLabel, nEntries, lumi, labelCodes):
         """Set up a test sample."""
-        splitTree(False, splitSize, sampleLabel)
-        test, weights, labels, weightsXS = sc.cutCols(self.temp, self.varIdx, len(self.temp), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
+        self.splitTree(False, splitSize, sampleLabel)
+        test, weights, labels, weightsXS = sc.cutCols(self.tempSet, self.varIdx, len(self.tempSet), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
         idx = 0
         append = False
         if sampleLabel == 'A' and not self.test:
@@ -197,6 +207,8 @@ class Sample():
         return -1
 
     def transposeDataTest(self):
+        """Transpose the data sample"""
+
         if self.type.upper() == 'DATA':
             self.test[0] = transpose(self.test[0])
 
@@ -210,6 +222,7 @@ class Sample():
 
     def transposeTestSamples(self):
         """Transpose all test matrices."""
+
         for x in xrange(0,len(self.test)):
             self.test[x] = transpose(self.test[x])
             self.testLabels[x] = transpose(self.testLabels[x])
@@ -233,6 +246,7 @@ class Sample():
 
     def returnTrainWeightsXS(self, subset):
         """Return the array of per sample weights (xs)"""
+
         if subset == 'A' and self.trainWeightsXS:
             return self.trainWeightsXS[0]
         elif len(self.trainWeightsXS) > 1:
@@ -284,7 +298,7 @@ class Sample():
 
     def returnFoundVariables(self):
         """Return found variables."""
-        if self.doneVariables:
+        if self.variablesDone:
             return self.foundVariables
         else:
             return -1
