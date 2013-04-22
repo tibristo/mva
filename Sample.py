@@ -6,6 +6,15 @@ class Sample():
     import sortAndCut as sc
 
     variablesDone = False # whether or not the variables have been found
+    test = []
+    train = []
+    testWeights = []
+    trainWeights = []
+    testLabels = []
+    trainLabels = []
+    testWeightsXS = []
+    trainWeightsXS = []
+
 
     def __init__ (self, filename, treename, typeOfSample):
         """Define a Sample object given filename, treename and type of sample - sig/bkg/data."""
@@ -110,6 +119,7 @@ class Sample():
             self.test.append(sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntriesA, lumi)) # data set
         else:
             self.test[0]=sc.cutColsData(self.sample, self.varIdx, self.sampleLength,len(self.variableNames), nEntries, lumi) # data set
+        return 0
             
     def returnTrainingSamples(self):
         """Return the array of training samples."""
@@ -117,15 +127,19 @@ class Sample():
 
     def returnTrainingSample(self, subset):
         """Return a single training sample indexed by subset A or B."""
-        if subset == 'A':
+        if subset == 'A' and self.train:
             return self.train[0]
-        return self.train[1]
+        elif len(self.train) > 1:
+            return self.train[1]
+        return -1
 
     def returnTestingSample(self, subset):
         """Return a single testing sample indexed by subset A or B."""
-        if subset == 'A':
+        if subset == 'A' and self.test:
             return self.test[0]
-        return self.test[1]
+        elif len(self.test) > 1:
+            return self.test[1]
+        return -1
 
     def getTestingData(self, splitSize, sampleLabel, nEntries, lumi, labelCodes):
         """Set up a test sample."""
@@ -166,16 +180,25 @@ class Sample():
 
     def returnLengthTest(self, subset):
         """Return the length of the testing samples by subset A or B."""
-        if subset == 'A':
+        if subset == 'A' and self.test:
             return self.testLengthA
-        return self.testLengthB
+        elif len(self.test) > 1:
+            return self.testLengthB
+        else:
+            return -1
 
 
     def returnLengthTrain(self, subset):
         """Return the length of the training samples by subset A or B."""
-        if subset == 'A':
+        if subset == 'A' and self.train:
             return self.trainLengthA
-        return self.trainLengthB
+        elif len(self.train) > 1:
+            return self.trainLengthB
+        return -1
+
+    def transposeDataTest(self):
+        if self.type.upper() == 'DATA':
+            self.test[0] = transpose(self.test[0])
 
     def sortTestSamples(self):
         """Sort the testing samples and weights according to the labels."""
@@ -210,48 +233,60 @@ class Sample():
 
     def returnTrainWeightsXS(self, subset):
         """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+        if subset == 'A' and self.trainWeightsXS:
             return self.trainWeightsXS[0]
-        else:
+        elif len(self.trainWeightsXS) > 1:
             return self.trainWeightsXS[1]
+        else:
+            return -1
 
     def returnTestWeightsXS(self, subset):
         """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+        if subset == 'A' and self.testWeightsXS:
             return self.testWeightsXS[0]
-        else:
+        elif len(self.testWeightsXS) > 1:
             return self.testWeightsXS[1]
+        return -1
 
-    def returnTestSample(self, subset):
-        """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+    def returnTestSample(self, subset = 'A'):
+        """Return the test array of subset A or B"""
+        if self.type.upper == 'DATA':
             return self.test[0]
-        else:
+        if subset == 'A' and self.test:
+            return self.test[0]
+        elif len(self.test) > 1:
             return self.test[1]
+        return -1
 
     def returnTrainSample(self, subset):
         """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+        if subset == 'A' and self.train:
             return self.train[0]
-        else:
+        elif len(self.train) > 1:
             return self.train[1]
+        return -1
 
     def returnTestSampleLabels(self, subset):
         """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+        if subset == 'A' and self.testLabels:
             return self.testLabels[0]
-        else:
+        elif len(self.testLabels) > 1:
             return self.testLabels[1]
+        return -1
 
     def returnTrainSampleLabels(self, subset):
         """Return the array of per sample weights (xs)"""
-        if subset == 'A':
+        if subset == 'A' and self.trainLabels:
             return self.trainLabels[0]
-        else:
+        elif len(self.trainLabels) > 1:
             return self.trainLabels[1]
+        return -1
 
     def returnFoundVariables(self):
         """Return found variables."""
-        return self.foundVariables
+        if self.doneVariables:
+            return self.foundVariables
+        else:
+            return -1
         
 

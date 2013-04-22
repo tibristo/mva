@@ -79,51 +79,13 @@ testweightsXS_B = dict(sig.returnTestWeightsXS('B').items() + bkg.returnTestWeig
 
 sig.transposeTestSamples()
 bkg.transposeTestSamples()
-dataCut = transpose(dataCut)
-  
-# store all histograms in output.root
-f = ropen('output.root','recreate')
-c1 = Canvas()
-c1.cd()
+dataSample.transposeDataTest()
 
-allStack = []
-legendAllStack = []
+# draw all training and testing histograms
+createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)
+createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B)
 
-# get sigA histograms
-hist, histDictSigA, testAStack, legendSigStack = createHists.createHists(sigTestA, labelCodes, 'signal', labelsSigTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
-# get bkgA histograms
-# how to fix legends????
-hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists.createHists(bkgTestA, labelCodes, 'bkg', labelsBkgTestA, weightsPerSample, foundVariables, allStack, legendAllStack, True)
-# get data histograms
-histData, histDictDataA, testAStackData, legendDataStack = createHists.createHistsData(dataCut, foundVariables, allStack, legendAllStack, True)
 
-for hist2idx in xrange(0,len(hist)):
-    legend = Legend(3)
-    legend.AddEntry(hist[hist2idx],'F')
-    legend.AddEntry(hist2[hist2idx],'F')
-    legend.AddEntry(histData[hist2idx],'F')
-
-    hist[hist2idx].draw('hist')
-    hist[hist2idx].Write()
-    hist2[hist2idx].draw('histsame')
-    hist2[hist2idx].Write()
-    histData[hist2idx].draw('same')
-    histData[hist2idx].Write()
-
-    legend.Draw('same')
-    c1.Write()
-    c1.SaveAs(foundVariables[hist2idx]+".png")
-    hist2idx+=1
-
-createHists.drawStack(testAStack, legendSigStack, foundVariables, 'Sig') # draw histograms
-createHists.drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg')
-createHists.drawStack(allStack, legendAllStack, foundVariables, 'Data', histDictDataA)
-createHists.drawStack(allStack, legendAllStack, foundVariables, 'All')
-
-f.close()
-
-del hist
-del hist2
 
 from sklearn.tree import DecisionTreeClassifier
 
