@@ -14,23 +14,22 @@ class Sample:
     __all__.append('returnTrainWeightsXS')
     __all__.append('transposeTrainSamples')
     #variablesDone = False # whether or not the variables have been found
-    test = []
-    train = []
-    testWeights = []
-    trainWeights = []
-    testLabels = []
-    trainLabels = []
-    testWeightsXS = []
-    trainWeightsXS = []
-
 
     def __init__ (self, filename, treename, typeOfSample):
         """Define a Sample object given filename, treename and type of sample - sig/bkg/data."""
+        self.evNumSearch = False
+        self.test = []
+        self.train = []
+        self.testWeights = []
+        self.trainWeights = []
+        self.testLabels = []
+        self.trainLabels = []
+        self.testWeightsXS = []
+        self.trainWeightsXS = []
         self.sample = root_numpy.root2array(filename,treename)
         self.sample_length = len(self.sample)
         self.variablesDone = False
         typeUpper = typeOfSample.upper()
-        print typeUpper
         if (typeUpper!='DATA' and typeUpper!='SIG' and typeUpper!='BKG'):
             print 'Type ' + str(typeOfSample) + ' not known, setting to bkg mc'
             self.type = 'bkg'
@@ -48,12 +47,36 @@ class Sample:
         """Return data type of input sample."""
         return self.type
 
+    def getEventNumberIndex(self):
+        """Return the index of the EventNumber index in the sample."""
+        idx = 0
+        self.evNumSearch = True
+        for x in self.sample.dtype.names:
+            if x == 'EventNumber':
+                return idx
+            idx += 1
+        return -1
     
     # Split for training and testing, remove unwanted variables not for training
     def splitTree(self,training, splitSize, sampleLabel):
-        """Return subset of full sample based on training/ testing, length and A or B sample"""
-        self.tempSet = sc.cutTree(self.sample,training,splitSize,sampleLabel)
+        """Return subset of full sample based on training/ testing, length and A or B sample.
+        
+        Keyword arguments:
+        training -- True or False if it is training or testing
+        splitSize -- the maximum output size of the array
+        sampleLabel -- A or B, which changes to R if event number index can't be found
+
+        """
+        lab = sampleLabel
+        if not self.evNumSearch:
+            self.evNumIdx = self.getEventNumberIndex()
+        if self.evNumIdx == -1:
+            print 'EventNumber not found!!!!'
+            print 'Using sampleLabel R instead.'
+            lab = 'R'
+        self.tempSet = sc.cutTree(self.sample, training, splitSize, self.evNumIdx, lab)
         self.tempLen = len(self.tempSet)
+
         return self.tempSet
 
 
@@ -89,15 +112,18 @@ class Sample:
     def returnVariableData(self):
         """Return the variable names, indices, list of found variables and the weights hash table."""
         if not self.variablesDone:
-            return -1
+            print 'variables not done'
+            return self.error()
         return self.variableNames, self.varIdx, self.foundVariables, self.varWeightsHash
 
     # get all of the training data needed
     def getTrainingData(self, splitSize, subset, nEntriesA, lumi, labelCodes):
         """Get the subset of data, the associated weights and labels for training data."""
         self.splitTree(True, splitSize, subset)
+        print len(self.returnTemp())
         tr, we, lb, xs = sc.cutCols(self.returnTemp(), self.varIdx, self.returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi, True, labelCodes) # signal set A
         append = False
+        print len(tr)
         if subset == 'A':
             trainIdx = 0
             if not self.train:
@@ -107,28 +133,62 @@ class Sample:
             if len(self.train) == 1:
                 append = True
         if append:
-            self.train.append(tr)
-            self.trainWeights.append(we)
-            self.trainLabels.append(lb)
-            self.trainWeightsXS.append(xs)
+            self.train.append(copy.deepcopy(tr))
+            self.trainWeights.append(copy.deepcopy(we))
+            self.trainLabels.append(copy.deepcopy(lb))
+            self.trainWeightsXS.append(copy.deepcopy(xs))
         else:
-            self.train[trainIdx] = tr
-            self.trainWeights[trainIdx] = we
-            self.trainLabels[trainIdx] = lb
-            self.trainWeightsXS[trainIdx] = xs
+            self.train[trainIdx] = copy.deepcopy(tr)
+            self.trainWeights[trainIdx] = copy.deepcopy(we)
+            self.trainLabels[trainIdx] = copy.deepcopy(lb)
+            self.trainWeightsXS[trainIdx] = copy.deepcopy(xs)
         if trainIdx == 0:
             self.trainLengthA = len(self.train[0])
         else:
             self.trainLengthB = len(self.train[1])
 
+    def weightAllTrainSamples(self, subset, weight):
+        """Change all weights for the training sample of A or B by a factor weight.
+        
+        Keyword arguments:
+        subset -- A or B
+        weight -- the weight to be applied
+
+        """
+        if subset == 'A':
+            idx = 0
+        elif subset == 'B':
+            idx = 1
+        else:
+            print "invalid subset, using A"
+            idx = 0
+        self.trainWeights[idx] = self.trainWeights[idx]*weight
+
+    def weightAllTestSamples(self, subset, weight):
+        """Change all weights for the testing sample of A or B by a factor weight.
+        
+        Keyword arguments:
+        subset -- A or B
+        weight -- the weight to be applied
+
+        """
+        if subset == 'A':
+            idx = 0
+        elif subset == 'B':
+            idx = 1
+        else:
+            print "invalid subset, using A"
+            idx = 0
+        self.testWeights[idx] = self.testWeights[idx]*weight
+
     def getTestingDataForData(self, nEntriesA, lumi):
         """Get the subset needed for testing if using DATA and NOT MC."""
         if not self.variablesDone:
-            return -1
+            return self.error()
         if not self.test:
-            self.test.append(sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi)) # data set
+            self.test.append(copy.deepcopy(sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi))) # data set
         else:
-            self.test[0]=sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi) # data set
+            self.test[0]= copy.deepcopy(sc.cutColsData(self.sample, self.varIdx, self.sample_length,len(self.variableNames), nEntriesA, lumi)) # data set
         return 0
             
     def returnTrainingSamples(self):
@@ -141,7 +201,7 @@ class Sample:
             return self.train[0]
         elif len(self.train) > 1:
             return self.train[1]
-        return -1
+        return self.error()
 
     def returnTestingSample(self, subset):
         """Return a single testing sample indexed by subset A or B."""
@@ -149,7 +209,7 @@ class Sample:
             return self.test[0]
         elif len(self.test) > 1:
             return self.test[1]
-        return -1
+        return self.error()
 
     def getTestingData(self, splitSize, sampleLabel, nEntries, lumi, labelCodes):
         """Set up a test sample."""
@@ -195,7 +255,7 @@ class Sample:
         elif len(self.test) > 1:
             return self.testLengthB
         else:
-            return -1
+            return self.error()
 
 
     def returnLengthTrain(self, subset):
@@ -204,7 +264,7 @@ class Sample:
             return self.trainLengthA
         elif len(self.train) > 1:
             return self.trainLengthB
-        return -1
+        return self.error()
 
     def transposeDataTest(self):
         """Transpose the data sample"""
@@ -239,6 +299,7 @@ class Sample:
 
     def transposeTrainSamples(self):
         """Transpose all test matrices."""
+        print len(self.train)
         for x in xrange(0,len(self.train)):
             self.train[x] = transpose(self.train[x])
             self.trainLabels[x] = transpose(self.trainLabels[x])
@@ -252,7 +313,7 @@ class Sample:
         elif len(self.trainWeightsXS) > 1:
             return self.trainWeightsXS[1]
         else:
-            return -1
+            return self.error()
 
     def returnTestWeightsXS(self, subset):
         """Return the array of per sample weights (xs)"""
@@ -260,7 +321,7 @@ class Sample:
             return self.testWeightsXS[0]
         elif len(self.testWeightsXS) > 1:
             return self.testWeightsXS[1]
-        return -1
+        return self.error()
 
     def returnTestSample(self, subset = 'A'):
         """Return the test array of subset A or B"""
@@ -270,7 +331,7 @@ class Sample:
             return self.test[0]
         elif len(self.test) > 1:
             return self.test[1]
-        return -1
+        return self.error()
 
     def returnTrainSample(self, subset):
         """Return the array of per sample weights (xs)"""
@@ -278,7 +339,7 @@ class Sample:
             return self.train[0]
         elif len(self.train) > 1:
             return self.train[1]
-        return -1
+        return self.error()
 
     def returnTestSampleLabels(self, subset):
         """Return the array of per sample weights (xs)"""
@@ -286,7 +347,7 @@ class Sample:
             return self.testLabels[0]
         elif len(self.testLabels) > 1:
             return self.testLabels[1]
-        return -1
+        return self.error()
 
     def returnTrainSampleLabels(self, subset):
         """Return the array of per sample weights (xs)"""
@@ -294,13 +355,17 @@ class Sample:
             return self.trainLabels[0]
         elif len(self.trainLabels) > 1:
             return self.trainLabels[1]
-        return -1
+        return self.error()
 
     def returnFoundVariables(self):
         """Return found variables."""
         if self.variablesDone:
             return self.foundVariables
         else:
-            return -1
+            return self.error()
+
+    def error(self):
+        print 'some error has occurred, returning -1'
+        return -1
         
 

@@ -47,16 +47,29 @@ lumi = 20300.0
 #lumi for 2012
 #lumi = 20300.0
 # need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
-nEntriesA = nEntries*(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
-nEntriesB = nEntries*(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 labelCodes = sc.readInLabels()
 
-sig.getTrainingData(sig.returnFullLength()/2, 'A', nEntriesA, lumi, labelCodes)
-sig.getTrainingData(sig.returnFullLength()/2, 'B', nEntriesB, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength()/2, 'A', nEntriesA, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength()/2, 'B', nEntriesB, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+
+nEntriesA = 1.0/(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+nEntriesB = 1.0/(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+
+sig.weightAllTrainSamples('A', nEntriesA)
+bkg.weightAllTrainSamples('A', nEntriesA)
+sig.weightAllTrainSamples('B', nEntriesB)
+bkg.weightAllTrainSamples('B', nEntriesB)
+
+sig.weightAllTestSamples('A', nEntriesA)
+bkg.weightAllTestSamples('A', nEntriesA)
+sig.weightAllTestSamples('B', nEntriesB)
+bkg.weightAllTestSamples('B', nEntriesB)
+
+
 print 'Finished getting training data'
-# might not need to sort and transpose these ones!
+
 sig.sortTrainSamples()
 bkg.sortTrainSamples()
 print 'Finished sorting training samples'
@@ -76,18 +89,18 @@ bkg.getTestingData(bkg.returnFullLength()/2, 'A', nEntriesA, lumi, labelCodes)
 bkg.getTestingData(bkg.returnFullLength()/2, 'B', nEntriesB, lumi, labelCodes)
 dataSample.getTestingDataForData(nEntries, lumi)
 
+sig.transposeTestSamples()
+sig.transposeTrainSamples()
+bkg.transposeTestSamples()
+bkg.transposeTrainSamples()
+dataSample.transposeDataTest()
+
 trainWeightsXS_A = dict(sig.returnTrainWeightsXS('A').items() + bkg.returnTrainWeightsXS('A').items())
 trainWeightsXS_B = dict(sig.returnTrainWeightsXS('B').items() + bkg.returnTrainWeightsXS('B').items())
 testWeightsXS_A = dict(sig.returnTestWeightsXS('A').items() + bkg.returnTestWeightsXS('A').items())
 testWeightsXS_B = dict(sig.returnTestWeightsXS('B').items() + bkg.returnTestWeightsXS('B').items())
 # for python 3 and greater use
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
-
-sig.transposeTestSamples()
-sig.transposeTrainSamples()
-bkg.transposeTestSamples()
-bkg.transposeTrainSamples()
-dataSample.transposeDataTest()
 
 # draw all training and testing histograms
 createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)

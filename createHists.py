@@ -74,7 +74,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     c1 = Canvas()
     c1.cd()
     log.write('########################### '+ nameOfType +' ###########################\n')
-
+    print len(sample)
     for c in sample:
         variableName = foundVariables[histidx]
         hist.append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
@@ -285,13 +285,13 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
             
             legend.Draw('same')
             c1.Write()
-            c1.SaveAs(foundVariables[hist2idx]+".png")
+            c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
             hist2idx+=1
         
-        drawStack(testAStack, legendSigStack, foundVariables, 'Sig', str('Test'+subset)) # draw histograms
-        drawStack(testAStackBkg, legendBkgStack, foundVariables, 'Bkg', str('Test'+subset))
-        drawStack(allStack, legendAllStack, foundVariables, 'Data', str('Test'+subset), histDictDataA)
-        drawStack(allStack, legendAllStack, foundVariables, 'All', str('Test' + subset))
+        drawStack(testAStack, legendSigStack, signal.returnFoundVariables(), 'Sig', str('Test'+subset)) # draw histograms
+        drawStack(testAStackBkg, legendBkgStack, bkg.returnFoundVariables(), 'Bkg', str('Test'+subset))
+        drawStack(allStack, legendAllStack, data.returnFoundVariables(), 'Data', str('Test'+subset), histDictDataA)
+        drawStack(allStack, legendAllStack, signal.returnFoundVariables(), 'All', str('Test' + subset))
         
     f.close()
 
@@ -315,15 +315,13 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
         else:
             subset = 'B'
         f = ropen('outputTrain'+str(subset)+'.root','recreate')
+        print subset
         c1 = Canvas()
         c1.cd()
 
         allStack = []
         legendAllStack = []
         # get sigA histograms
-        print signal.returnFoundVariables()
-        print type(signal.returnFoundVariables())
-        print signal.variablesDone
         hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTrainSample(subset), labelCodes, 'signal', signal.returnTrainSampleLabels(subset), weightsPerSample, signal.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
         # get bkgA histograms
         # how to fix legends????
@@ -333,7 +331,6 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
             legend = Legend(3)
             legend.AddEntry(hist[hist2idx],'F')
             legend.AddEntry(hist2[hist2idx],'F')
-            legend.AddEntry(histData[hist2idx],'F')
             
             hist[hist2idx].draw('hist')
             hist[hist2idx].Write()
@@ -342,12 +339,12 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
             
             legend.Draw('same')
             c1.Write()
-            c1.SaveAs(foundVariables[hist2idx]+".png")
+            c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
             hist2idx+=1
         
-        drawStack(testAStack, legendSigStack, sig.returnFoundVariables(), 'Sig', str('Train'+subset)) # draw histograms
+        drawStack(testAStack, legendSigStack, signal.returnFoundVariables(), 'Sig', str('Train'+subset)) # draw histograms
         drawStack(testAStackBkg, legendBkgStack, bkg.returnFoundVariables(), 'Bkg', str('Train'+subset))
-        drawStack(allStack, legendAllStack, sig.returnFoundVariables(), 'All', str('Train' + subset))
+        drawStack(allStack, legendAllStack, signal.returnFoundVariables(), 'All', str('Train' + subset))
         
     f.close()
 

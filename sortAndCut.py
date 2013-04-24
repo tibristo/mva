@@ -194,6 +194,11 @@ def sortMultiple(ind, arr1, arr2, arr3 = []):
 
 
 def shuffle_in_unison(a, b, c):
+    """Shuffle three arrays in unison.
+    
+    Keyword arguments:
+    a, b, c --  3 arrays to be shuffled.
+    """
     assert len(a) == len(b)
     shuffled_a = empty(a.shape, dtype=a.dtype)
     shuffled_b = empty(b.shape, dtype=b.dtype)
@@ -206,43 +211,91 @@ def shuffle_in_unison(a, b, c):
     return shuffled_a, shuffled_b, shuffled_c
 
 # return a part of the array
-def cutTree(arr, training, pos, evNum, sampleVersion = 'Any' ):
+def cutTree(arr, training, pos, evNum, sampleVersion = 'R' ):
+    """Cut the tree into a smaller subset without removing any columns.
+
+    Keyword arguments:
+    arr -- the input sample to be divided
+    training -- True or False to indicate it is training or testing
+    pos -- the split size of the subset
+    evNum -- the index of the EventNumber variable in arr
+    sampleVersion -- the subset A, B or R for random
+    
+    """
     lenarr = len(arr)
-
-
+    # Use first half of array for training, second for testing
     if pos > lenarr:
         pos = lenarr-1
     if training == True:
-        if (sampleVersion == 'Any'):
+        if (sampleVersion == 'R'):
             return arr[:pos]
         elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum)
+            return evenArr(arr, evNum, pos)
         elif sampleVersion == 'B':
-            return oddArr(arr, evNum)
+            return oddArr(arr, evNum, pos)
 
     else:
-        if (sampleVersion == 'Any'):
+        if (sampleVersion == 'R'):
             return arr[lenarr-pos:]
         elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum)
+            return evenArr(arr, evNum, pos)
         elif sampleVersion == 'B':
-            return oddArr(arr, evNum)
+            return oddArr(arr, evNum, pos)
 
-def evenArr(arr, evNum):
+def evenArr(arr, evNum, splitSize):
+    """Return an array with only even EventNumber of size splitSize.
+
+    Keyword arguments:
+    arr -- the input array
+    evNum -- the index of the EventNumber variable in the input array
+    splitSize -- the maximum size of the output array
+
+    """
+    # arr.shape[1] returns number of columns
+    cols = len(arr[0])
+    print cols
+    print arr.shape
+    tempnparr = empty((splitSize))
+    tempArr = []
+    counter = 0
+    print type(arr)
+    maxcols = 0
+    for x in xrange(0,len(arr)):
+        if arr[x][evNum]%2 == 0:
+            #print x[evNum]
+            #print type(arr[x])
+            #print arr[x]
+            tempnparr[x] = arr[x]
+            maxcols = max(maxcols, len(arr[x]))
+            #tempArr.append(asarray(arr[x]))
+            #numpy.concatenate(tempArr,x)
+        counter += 1
+        if counter > splitSize:
+            break
+
+    #print tempArr
+    #return asarray(tempArr)
+    tempnparr.resize((counter))
+    print 'tempnparr: ' + str(len(tempnparr[0]))
+    return tempnparr
+
+def oddArr(arr, evNum, splitSize):
+    """Return an array with only even EventNumber of size splitSize.
+
+    Keyword arguments:
+    arr -- the input array
+    evNum -- the index of the EventNumber variable in the input array
+    splitSize -- the maximum size of the output array
+
+    """
     tempArr = []
     counter = 0
     for x in arr:
-        if x %2 == 0:
+        if x[evNum]%2 == 1:
             tempArr.append(x)
         counter += 1
-    return array(tempArr)
-def oddArr(arr, evNum):
-    tempArr = []
-    counter = 0
-    for x in arr:
-        if x[evNum] %2 == 1:
-            tempArr.append(x)
-        counter += 1
+        if counter > splitSize:
+            break
     return array(tempArr)
 
 
@@ -255,6 +308,7 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
     outweights = []
     outlabels = []
     weightsPerSample = {}
+    print varWIdx
     for row in arr:
         colcount = 0
         for col in varIdx:
@@ -267,6 +321,7 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
         outlabels.append(int(key))
         # there is a better way to do this, need to do it once, rather than many times since it'll be the same                      
         if calcWeightPerSample and (str(key) not in weightsPerSample):
+            print key
             weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
     if calcWeightPerSample:
         return outarr, array(outweights), array(outlabels), weightsPerSample
@@ -310,12 +365,14 @@ def cutColsData(arr, varIdx, rows, cols, nEntries, lumi):
 
 
 def onesInt(length):
+    """Return a list of ones of given length."""
     arr = []
     for i in xrange(0,length):
         arr.append(1)
     return arr
 
 def zerosInt(length):
+    """Return a list of zeroes of given length."""
     arr = []
     for i in xrange(0,length):
         arr.append(0)
@@ -323,12 +380,24 @@ def zerosInt(length):
 
 # set the weights for training
 def setWeights(length, weight):
+    """Return a list of weights of given length."""
     weights = []
     for i in xrange(0,length):
         weights.append(weight)
     return weights
 
 def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeightsHash, name):
+    """
+    
+    Keyword arguments:
+    dataset -- the input sample
+    variableNames -- the list of variableNames we are looking for
+    foundVariables -- a list of found variables that gets returned
+    varIdx -- the list of all indices of found variables
+    varWeightsHash -- a dictionary of all corrections to be applied
+    name -- the sample type - MC or data
+    
+    """
     xcount = 0
     evNum = 0
 #store the variables we find and their indices
