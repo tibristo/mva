@@ -29,6 +29,7 @@ class Sample:
         self.sample = root_numpy.root2array(filename,treename)
         self.sample_length = len(self.sample)
         self.variablesDone = False
+        self.evNumIdx = 0
         typeUpper = typeOfSample.upper()
         if (typeUpper!='DATA' and typeUpper!='SIG' and typeUpper!='BKG'):
             print 'Type ' + str(typeOfSample) + ' not known, setting to bkg mc'
@@ -79,8 +80,6 @@ class Sample:
 
         return self.tempSet
 
-
-
     def returnTemp(self):
         """Return subset of temp sample without recalculating."""
         return self.tempSet
@@ -120,10 +119,8 @@ class Sample:
     def getTrainingData(self, splitSize, subset, nEntriesA, lumi, labelCodes):
         """Get the subset of data, the associated weights and labels for training data."""
         self.splitTree(True, splitSize, subset)
-        print len(self.returnTemp())
         tr, we, lb, xs = sc.cutCols(self.returnTemp(), self.varIdx, self.returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi, True, labelCodes) # signal set A
         append = False
-        print len(tr)
         if subset == 'A':
             trainIdx = 0
             if not self.train:
@@ -162,7 +159,8 @@ class Sample:
         else:
             print "invalid subset, using A"
             idx = 0
-        self.trainWeights[idx] = self.trainWeights[idx]*weight
+        for key in self.trainWeightsXS[idx]:
+            self.trainWeightsXS[idx][key] *= weight
 
     def weightAllTestSamples(self, subset, weight):
         """Change all weights for the testing sample of A or B by a factor weight.
@@ -179,7 +177,8 @@ class Sample:
         else:
             print "invalid subset, using A"
             idx = 0
-        self.testWeights[idx] = self.testWeights[idx]*weight
+        for key in self.testWeightsXS[idx]:
+            self.testWeightsXS[idx][key] *= weight
 
     def getTestingDataForData(self, nEntriesA, lumi):
         """Get the subset needed for testing if using DATA and NOT MC."""
@@ -217,7 +216,7 @@ class Sample:
         test, weights, labels, weightsXS = sc.cutCols(self.tempSet, self.varIdx, len(self.tempSet), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
         idx = 0
         append = False
-        if sampleLabel == 'A' and not self.test:
+        if (sampleLabel == 'A' or sampleLabel == 'C') and not self.test:
             idx = 0
             append = True
         elif sampleLabel == 'A':
@@ -279,6 +278,7 @@ class Sample:
             self.test[x] = self.test[x][sortPermutation]
             self.testLabels[x] = self.testLabels[x][sortPermutation]
             self.testWeights[x] = self.testWeights[x][sortPermutation]
+            #self.testWeightsXS[x] = self.testWeightsXS[x][sortPermutation]
 
     def transposeTestSamples(self):
         """Transpose all test matrices."""
@@ -287,6 +287,7 @@ class Sample:
             self.test[x] = transpose(self.test[x])
             self.testLabels[x] = transpose(self.testLabels[x])
             self.testWeights[x] = transpose(self.testWeights[x])
+            #self.testWeightsXS[x] = transpose(self.testWeightsXS[x])
 
 
     def sortTrainSamples(self):
@@ -296,6 +297,7 @@ class Sample:
             self.train[x] = self.train[x][sortPermutation]
             self.trainLabels[x] = self.trainLabels[x][sortPermutation]
             self.trainWeights[x] = self.trainWeights[x][sortPermutation]
+            #self.trainWeightsXS[x] = self.trainWeightsXS[x][sortPermutation]
 
     def transposeTrainSamples(self):
         """Transpose all test matrices."""
@@ -304,6 +306,7 @@ class Sample:
             self.train[x] = transpose(self.train[x])
             self.trainLabels[x] = transpose(self.trainLabels[x])
             self.trainWeights[x] = transpose(self.trainWeights[x])
+            #self.trainWeightsXS[x] = transpose(self.trainWeightsXS[x])
 
     def returnTrainWeightsXS(self, subset):
         """Return the array of per sample weights (xs)"""

@@ -229,6 +229,8 @@ def cutTree(arr, training, pos, evNum, sampleVersion = 'R' ):
     if training == True:
         if (sampleVersion == 'R'):
             return arr[:pos]
+        elif sampleVersion == 'C':
+            return arr
         elif (sampleVersion == 'A'):
             return evenArr(arr, evNum, pos)
         elif sampleVersion == 'B':
@@ -237,66 +239,63 @@ def cutTree(arr, training, pos, evNum, sampleVersion = 'R' ):
     else:
         if (sampleVersion == 'R'):
             return arr[lenarr-pos:]
+        elif sampleVersion == 'C':
+            return arr
         elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum, pos)
+            return evenArr(arr, evNum, pos, False)
         elif sampleVersion == 'B':
-            return oddArr(arr, evNum, pos)
+            return oddArr(arr, evNum, pos, False)
 
-def evenArr(arr, evNum, splitSize):
+def evenArr(arr, evNum, splitSize, training = True):
     """Return an array with only even EventNumber of size splitSize.
 
     Keyword arguments:
     arr -- the input array
     evNum -- the index of the EventNumber variable in the input array
     splitSize -- the maximum size of the output array
+    training -- whether or not this is a training sample
 
     """
     # arr.shape[1] returns number of columns
-    cols = len(arr[0])
-    print cols
-    print arr.shape
-    tempnparr = empty((splitSize))
-    tempArr = []
+    tempnparr = empty([splitSize],dtype=object)
     counter = 0
-    print type(arr)
-    maxcols = 0
-    for x in xrange(0,len(arr)):
-        if arr[x][evNum]%2 == 0:
-            #print x[evNum]
-            #print type(arr[x])
-            #print arr[x]
-            tempnparr[x] = arr[x]
-            maxcols = max(maxcols, len(arr[x]))
-            #tempArr.append(asarray(arr[x]))
-            #numpy.concatenate(tempArr,x)
-        counter += 1
-        if counter > splitSize:
+    if training:
+        arrit = arr
+    else:
+        arrit = arr[::-1]
+    for x in arrit:
+        if x[evNum]%2 == 0:
+            tempnparr[counter] = x
+            counter += 1
+        if counter >= splitSize:
             break
-
-    #print tempArr
-    #return asarray(tempArr)
-    tempnparr.resize((counter))
-    print 'tempnparr: ' + str(len(tempnparr[0]))
+    tempnparr = resize(tempnparr, [counter])
     return tempnparr
 
-def oddArr(arr, evNum, splitSize):
+def oddArr(arr, evNum, splitSize, training = True):
     """Return an array with only even EventNumber of size splitSize.
 
     Keyword arguments:
     arr -- the input array
     evNum -- the index of the EventNumber variable in the input array
     splitSize -- the maximum size of the output array
+    training -- whether or not this is a training sample
 
     """
-    tempArr = []
+    tempArr = empty([splitSize],dtype=object)
     counter = 0
-    for x in arr:
+    if training:
+        arrit = arr
+    else:
+        arrit = arr[::-1]
+    for x in arrit:
         if x[evNum]%2 == 1:
-            tempArr.append(x)
-        counter += 1
-        if counter > splitSize:
+            tempArr[counter] = x
+            counter += 1
+        if counter >= splitSize:
             break
-    return array(tempArr)
+    tempArr = resize(tempArr, [counter])
+    return tempArr
 
 
 
@@ -308,7 +307,6 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
     outweights = []
     outlabels = []
     weightsPerSample = {}
-    print varWIdx
     for row in arr:
         colcount = 0
         for col in varIdx:
@@ -316,40 +314,24 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
             colcount = colcount + 1
         rowcount = rowcount + 1
         weight = float(row[int(varWIdx['final_xs'])]*lumi/nEntries)
-        outweights.append(weight)
         key = row[int(varWIdx['label_code'])]
+        if weight > 1:
+            print '******************'
+            print varWIdx['final_xs']
+            print row[int(varWIdx['final_xs'])]
+            print labels[int(key)]
+            print weight
+            print '******************'
+        outweights.append(weight)
         outlabels.append(int(key))
         # there is a better way to do this, need to do it once, rather than many times since it'll be the same                      
-        if calcWeightPerSample and (str(key) not in weightsPerSample):
-            print key
-            weightsPerSample[labels[int(row[int(varWIdx['label_code'])])]] = weight
+        if calcWeightPerSample and str(labels[int(key)]) not in weightsPerSample:
+            weightsPerSample[labels[int(key)]] = weight
     if calcWeightPerSample:
         return outarr, array(outweights), array(outlabels), weightsPerSample
     else:
         return outarr, array(outweights), array(outlabels)
 
-
-
-# take out only the variables we want to train on
-# if sampleVersion = A, only use even EventNumbers, B odd
-'''
-def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi):
-    rowcount = 0
-    #initialise a basic numpy array that we will return
-    outarr = ones((int(rows),int(cols)))
-    outweights = []
-    outlabels = []
-    for row in arr:
-        colcount = 0
-        for col in varIdx:
-            outarr[rowcount][colcount] = row[col]
-            colcount = colcount + 1
-        rowcount = rowcount + 1
-        outweights.append(row[int(varWIdx['final_xs'])]*lumi/nEntries)
-        outlabels.append(int(row[int(varWIdx['label_code'])]))
-        
-    return outarr, array(outweights), array(outlabels)
-'''
 def cutColsData(arr, varIdx, rows, cols, nEntries, lumi):
     rowcount = 0
     #initialise a basic numpy array that we will return

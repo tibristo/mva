@@ -74,10 +74,9 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     c1 = Canvas()
     c1.cd()
     log.write('########################### '+ nameOfType +' ###########################\n')
-    print len(sample)
     for c in sample:
         variableName = foundVariables[histidx]
-        hist.append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -90,7 +89,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         hist[histidx].fillstyle='solid'
         lblcount = 0
         for k in histDict.iterkeys():
-            histDict[k].append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+            histDict[k].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
             histDict[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
             histDict[k][histidx].fillstyle = 'solid'
             histDict[k][histidx].SetOption('hist')
@@ -132,7 +131,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     log.close()
     return hist,histDict,histStack,legendStack
 
-def drawStack(stack, legends, foundVariables, sampleType, subset = 'TestA', dataHist = []):
+def drawStack(stack, legends, foundVariables, sampleType, subset = 'TestA', dataHist = {}):
     """Draw the given stack.
     
     Keyword arguments:
@@ -189,7 +188,7 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
     log.write('########################### DATA  ###########################\n')
     for c in sample:
         variableName = foundVariables[histidx]
-        hist.append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -201,11 +200,13 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
         hist[histidx].SetTitle('data')
         hist[histidx].fillstyle='solid'
         
-        histDict['data'].append(Hist(20,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        histDict['data'].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         histDict['data'][histidx].fillcolor=fillcol
         histDict['data'][histidx].linecolor=fillcol
         histDict['data'][histidx].SetOption('hist')
-        histDict['data'][histidx].SetTitle('data ' + foundVariables[histidx])
+        histDict['data'][histidx].SetTitle('data')
+        histDict['data'][histidx].GetXaxis().SetTitle(foundVariables[histidx])
+        histDict['data'][histidx].GetYaxis().SetTitle("# Events")
         for i in c:
             histDict['data'][histidx].fill(i)
     
@@ -234,7 +235,7 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
     return hist,histDict,histStack,legendStack
 
 import Sample
-def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB):
+def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB, onlyOne = 'N'):
     """Draw all test stacks for signal, bkg and data at once.
 
     Keyword arguments:
@@ -246,9 +247,7 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
     weightsPerSampleB -- the XS weight for subset B
     
     """
-  
     # store all histograms in output.root
-
     for x in xrange (0, len(signal.test)):
         if x == 0:
             subset = 'A'
@@ -263,10 +262,10 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
         allStack = []
         legendAllStack = []
         # get sigA histograms
-        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTestSample(subset), labelCodes, 'signal', signal.returnTestSampleLabels(subset), weightsPerSample, signal.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
+        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTestSample(subset), labelCodes, 'signal', signal.returnTestSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
         # get bkgA histograms
         # how to fix legends????
-        hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists(bkg.returnTestSample(subset), labelCodes, 'bkg', bkg.returnTestSampleLabels(subset), weightsPerSample, bkg.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
+        hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists(bkg.returnTestSample(subset), labelCodes, 'bkg', bkg.returnTestSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
         # get data histograms
         histData, histDictDataA, testAStackData, legendDataStack = createHistsData(data.returnTestSample(), data.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
     
@@ -280,8 +279,8 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
             hist[hist2idx].Write()
             hist2[hist2idx].draw('histsame')
             hist2[hist2idx].Write()
-            histData[hist2idx].draw('same')
-            histData[hist2idx].Write()
+            histDictDataA['data'][hist2idx].draw('same')
+            histDictDataA['data'][hist2idx].Write()
             
             legend.Draw('same')
             c1.Write()
@@ -322,10 +321,10 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
         allStack = []
         legendAllStack = []
         # get sigA histograms
-        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTrainSample(subset), labelCodes, 'signal', signal.returnTrainSampleLabels(subset), weightsPerSample, signal.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
+        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTrainSample(subset), labelCodes, 'signal', signal.returnTrainSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
         # get bkgA histograms
         # how to fix legends????
-        hist2, histDictBkgA, testAStackBkg, legendBkgStack  = createHists(bkg.returnTrainSample(subset), labelCodes, 'bkg', bkg.returnTrainSampleLabels(subset), weightsPerSample, bkg.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
+        hist2, histDictBkgA, testAStackBkg, legendBkgStack  = createHists(bkg.returnTrainSample(subset), labelCodes, 'bkg', bkg.returnTrainSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
 
         for hist2idx in xrange(0,len(hist)):
             legend = Legend(3)

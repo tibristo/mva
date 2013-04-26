@@ -23,18 +23,21 @@ print 'Finished reading in all samples'
 
 # keep indices of variables we want
 varIdx = []
+varIdxBkg = []
 varIdxData = []
 varWIdx = []
 variablesNames = createHists.readVarNamesXML()
 varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
+varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
 foundVariables = []
+foundVariablesBkg = []
 foundVariablesData = []
 
 # cut in half for training and testing, remove unwanted variables not for training
 # set up testing and training samples for signal and background
 
 sig.getVariableNames(variablesNames, foundVariables, varIdx, varWeightsHash)
-bkg.setVariableNames(variablesNames, foundVariables, varIdx, varWeightsHash)
+bkg.getVariableNames(variablesNames, foundVariablesBkg, varIdxBkg, varWeightsHashBkg)
 dataSample.getVariableNames(variablesNames, foundVariablesData, varIdxData)
 
 # create the training trees/ arrays
@@ -62,12 +65,6 @@ bkg.weightAllTrainSamples('A', nEntriesA)
 sig.weightAllTrainSamples('B', nEntriesB)
 bkg.weightAllTrainSamples('B', nEntriesB)
 
-sig.weightAllTestSamples('A', nEntriesA)
-bkg.weightAllTestSamples('A', nEntriesA)
-sig.weightAllTestSamples('B', nEntriesB)
-bkg.weightAllTestSamples('B', nEntriesB)
-
-
 print 'Finished getting training data'
 
 sig.sortTrainSamples()
@@ -83,11 +80,21 @@ y = yA
 weights = weightsA
 
 # Set up the testing samples
-sig.getTestingData(sig.returnFullLength()/2, 'A', nEntriesA, lumi, labelCodes)
-sig.getTestingData(sig.returnFullLength()/2, 'B', nEntriesB, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength()/2, 'A', nEntriesA, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength()/2, 'B', nEntriesB, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+#sig.getTestingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+#bkg.getTestingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
 dataSample.getTestingDataForData(nEntries, lumi)
+
+nEntriesA = 1.0/(float((sig.returnLengthTest('A')+bkg.returnLengthTest('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+nEntriesB = 1.0/(float((sig.returnLengthTest('B')+bkg.returnLengthTest('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+
+sig.weightAllTestSamples('A', nEntriesA)
+bkg.weightAllTestSamples('A', nEntriesA)
+sig.weightAllTestSamples('B', nEntriesB)
+bkg.weightAllTestSamples('B', nEntriesB)
 
 sig.transposeTestSamples()
 sig.transposeTrainSamples()
@@ -95,16 +102,18 @@ bkg.transposeTestSamples()
 bkg.transposeTrainSamples()
 dataSample.transposeDataTest()
 
-trainWeightsXS_A = dict(sig.returnTrainWeightsXS('A').items() + bkg.returnTrainWeightsXS('A').items())
-trainWeightsXS_B = dict(sig.returnTrainWeightsXS('B').items() + bkg.returnTrainWeightsXS('B').items())
-testWeightsXS_A = dict(sig.returnTestWeightsXS('A').items() + bkg.returnTestWeightsXS('A').items())
-testWeightsXS_B = dict(sig.returnTestWeightsXS('B').items() + bkg.returnTestWeightsXS('B').items())
+trainWeightsXS_A = [dict(sig.returnTrainWeightsXS('A').items()), dict(bkg.returnTrainWeightsXS('A').items())]
+print trainWeightsXS_A
+trainWeightsXS_B = [dict(sig.returnTrainWeightsXS('B').items()), dict(bkg.returnTrainWeightsXS('B').items())]
+testWeightsXS_A = [dict(sig.returnTestWeightsXS('A').items()), dict(bkg.returnTestWeightsXS('A').items())]
+print testWeightsXS_A
+testWeightsXS_B = [dict(sig.returnTestWeightsXS('B').items()), dict(bkg.returnTestWeightsXS('B').items())]
 # for python 3 and greater use
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 
 # draw all training and testing histograms
 createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)
-createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B)
+createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C')
 
 
 
