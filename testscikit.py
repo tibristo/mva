@@ -16,9 +16,9 @@ if len(sys.argv) < 1:
     sys.exit("not enough args supplied")
 
 # read in samples and convert to numpy arrays
-sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuplesig12.root','Ntuple','sig')
-bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuplebkg12.root','Ntuple','bkg')
-dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/NtupledataAll12.root','Ntuple','data')
+sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120sig12.root','Ntuple','sig')
+bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120bkg12.root','Ntuple','bkg')
+dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120dataAll12.root','Ntuple','data')
 print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -43,6 +43,7 @@ dataSample.getVariableNames(variablesNames, foundVariablesData, varIdxData)
 # create the training trees/ arrays
 # TODO: these should be stored in the xml settings file
 nEntries = 14443742.0
+nEntries = 13600000.0 + 82900.0
 
 lumi = 20300.0
 #lumi for 2011

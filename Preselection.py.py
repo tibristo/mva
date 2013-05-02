@@ -464,7 +464,7 @@ for i in range(nEntries):
 		print 'passed m_Wpt or mll'
 	countpt = 0
 	for pt in ptvArr:
-		if pt > 120:
+		if pt < 120:
 			eventType[countpt] = False
 		countpt = countpt + 1
 	
