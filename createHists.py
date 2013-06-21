@@ -59,7 +59,8 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     #TODO: These should really be read in from a settings file
     histDict = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
 
-    coloursForStack = ['blue', 'green', 'red', 'yellow', 'black', 'pink', 'magenta', 'cyan']
+    #coloursForStack = ['Green', 'Blue', 'Orange', 'Orange', 'Orange-2', 'Yellow', 'Pink', 'Red']
+    coloursForStack = [3, 4, 800, 800, 795, 5, 6, 2]
     colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
 
     if nameOfType == 'signal':
@@ -76,7 +77,8 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     log.write('########################### '+ nameOfType +' ###########################\n')
     for c in sample:
         variableName = foundVariables[histidx]
-        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        #hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -89,11 +91,13 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         hist[histidx].fillstyle='solid'
         lblcount = 0
         for k in histDict.iterkeys():
-            histDict[k].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
-            histDict[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
+            #histDict[k].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+            histDict[k].append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+            #histDict[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
+            histDict[k][histidx].SetFillColor(int(coloursForStack[int(colourDict[k])]))
             histDict[k][histidx].fillstyle = 'solid'
             histDict[k][histidx].SetOption('hist')
-            histDict[k][histidx].SetTitle(str(k) + str(foundVariables[histidx]))
+            histDict[k][histidx].SetTitle(str(k))# + str(foundVariables[histidx]))
         for i in c:
             lbl = labelCodes[int(labelsForSample[lblcount])]
             histDict[lbl][histidx].fill(i)
@@ -188,7 +192,8 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
     log.write('########################### DATA  ###########################\n')
     for c in sample:
         variableName = foundVariables[histidx]
-        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        #hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -200,7 +205,8 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
         hist[histidx].SetTitle('data')
         hist[histidx].fillstyle='solid'
         
-        histDict['data'].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        #histDict['data'].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        histDict['data'].append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         histDict['data'][histidx].fillcolor=fillcol
         histDict['data'][histidx].linecolor=fillcol
         histDict['data'][histidx].SetOption('hist')

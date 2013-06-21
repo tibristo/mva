@@ -259,7 +259,7 @@ def evenArr(arr, evNum, splitSize, training = True):
     # arr.shape[1] returns number of columns
     tempnparr = empty([splitSize],dtype=object)
     counter = 0
-    if training:
+    if True:#training:
         arrit = arr
     else:
         arrit = arr[::-1]
@@ -284,7 +284,7 @@ def oddArr(arr, evNum, splitSize, training = True):
     """
     tempArr = empty([splitSize],dtype=object)
     counter = 0
-    if training:
+    if True:#training:
         arrit = arr
     else:
         arrit = arr[::-1]
@@ -313,9 +313,9 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
             outarr[rowcount][colcount] = row[col]
             colcount = colcount + 1
         rowcount = rowcount + 1
-        weight = float(row[int(varWIdx['final_xs'])]*lumi/nEntries)
+        weight = float(row[int(varWIdx['final_xs'])]*lumi/row[int(varWIdx['AllEntries'])]) #nEntries)
         key = row[int(varWIdx['label_code'])]
-        if weight > 1:
+        if weight > 10000:
             print '******************'
             print varWIdx['final_xs']
             print row[int(varWIdx['final_xs'])]

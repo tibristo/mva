@@ -1,4 +1,33 @@
 __all__ = ['readBkg','readAllLabels','readSig','readXml']
+import ROOT
+def readPIDs(dirIn, pid, dict_pid):
+    for key in dirIn.GetListOfKeys():
+        entries = 0
+        if key.GetName().find("pid") != -1:
+            #print 'found pid'
+            pid = key.GetName()
+        cl_name = dirIn.Get(key.GetName()).ClassName()
+        if cl_name == 'TDirectoryFile':
+            readPIDs(dirIn.Get(key.GetName()),pid, dict_pid)
+        elif (cl_name == 'TH1F' or cl_name == 'TH1D') and key.GetName().endswith('BaselineOneLepton'):
+            hist = dirIn.Get(key.GetName())
+            foundbin = False
+            for lab in hist.GetXaxis().GetLabels():
+                labname = lab.GetName()
+                if labname.lower().find("all")!=-1:
+                    bin = hist.GetXaxis().FindBin(labname)
+                    bincont = hist.GetBinContent(bin)
+                    if bincont >= 1.0 and bincont%int(bincont) == 0.0:
+                        entries = int(bincont)
+                        foundbin = True
+                        continue
+                    else:
+                        entries = int(bincont)
+            dict_pid[pid[4:]] = entries
+            pid = ''
+            
+    return dict_pid
+
 
 def readXml(dataType):
 

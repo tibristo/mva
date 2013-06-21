@@ -214,12 +214,13 @@ class Sample:
         """Set up a test sample."""
         self.splitTree(False, splitSize, sampleLabel)
         test, weights, labels, weightsXS = sc.cutCols(self.tempSet, self.varIdx, len(self.tempSet), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
+        print len(test)
         idx = 0
         append = False
         if (sampleLabel == 'A' or sampleLabel == 'C') and not self.test:
             idx = 0
             append = True
-        elif sampleLabel == 'A':
+        elif sampleLabel == 'A' or sampleLabel == 'C':
             idx = 0
         elif sampleLabel != 'A' and len(self.test) == 1:
             idx = 1

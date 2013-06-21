@@ -18,7 +18,9 @@ warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 import readMethods as read
 import cutsTypes as cut
-cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
+cuts = [['mcTypeVeto',0],['looseLeptonMin1',0],['WHSignalLepton',0],['looseLeptonVeto',0],['metVeto',0],['mTWlowCut',0],['mTWlt120',0],['jetMin2jets',0],['jetMin2Veto',0],['bJetMin1',0],['bJetExactly2',0],['jetVeto',0],['dRgt07ptWlt200',0],\
+['dRlt34ptWlt90',0],['dRlt30ptWgt90_lt120',0],['dRlt23ptWgt120_lt160',0],['dRlt18ptWgt160_lt200',0],['dRlt14ptWgt200',0],['jet1pT',0],['pTWgt0_lt90',0],['pTWgt90_lt120',0],['pTWgt120_lt160',0],['pTWgt160_lt200',0],['pTWgt200',0],['pTWgt120',0]]
+#cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 #define dataType as MC or DATA
 if sys.argv[2].upper == 'DATA':
 	dataType = 'data'
@@ -33,9 +35,12 @@ if not len(sys.argv)>=2:  raise(Exception, "Must specify inputFiles as argument!
 inputFiles = sys.argv[1].split(',')
 print "inputFiles = ", inputFiles
 ch = TChain(treename)
+dict_pid = {}
 for file in inputFiles:
     ch.Add(file)
-
+    f = TFile(file)
+    read.readPIDs(f, '', dict_pid)
+print dict_pid
 nEntries = ch.GetEntries()
 nEventsPassedSkim = 0
 print "nEntries = ", nEntries
@@ -84,6 +89,7 @@ gROOT.ProcessLine(\
     Float_t xscorr2;\
     Float_t final_xs;\
     Float_t label_code;\
+    Float_t AllEntries;\
     };")
 
 
@@ -114,6 +120,7 @@ if (data == False):
 	ch_new.Branch('final_xs',AddressOf(varStruct,'final_xs'),'Final Cross-Section')
 	#ch_new.Branch('label',AddressOf(varStruct,'label'),'Label')
 	ch_new.Branch('label_code',AddressOf(varStruct,'label_code'),'Label Code')
+	ch_new.Branch('AllEntries',AddressOf(varStruct,'AllEntries'),'All Entries')
 	#ch_new.Branch('name',AddressOf(varStruct,'name'),'Name');
 	#ch_new.Branch('name_code',AddressOf(varStruct,'name_code'),'Name Code');
 print 'data is false'
@@ -146,18 +153,20 @@ print 'start looop'
 for i in range(nEntries):
 	foundevent = False
 	ch.GetEntry(i)
+	if i%1000==0:
+		print "Processing event nr. %i of %i" % (i,nEntries)
 	
 	cutNum = 0
+	mc_ch_num = ch.mc_channel_number
 	if (data == False):
-		ind = cut.getIndexOfSample(ch.mc_channel_number, samples)
+		ind = cut.getIndexOfSample(mc_ch_num, samples)
 		
 		if ind == -1:
 			continue
 	
 	cut.addCut(cutNum,cuts)
-	cutNum = cutNum + 1
-	if i%1000==0:
-		print "Processing event nr. %i of %i" % (i,nEntries)
+	cutNum += 1
+
 
 	h_n_events.Fill(0) # Count all events
 	#count and select all leptons
@@ -204,7 +213,7 @@ for i in range(nEntries):
 			muonTLorentzSignal.append(muVec.Clone())
 			goodMuons = goodMuons+1
 			
-	numTypeElectrons = [0,0,0,0]#loose, ZHmedium, WHmedium, tight
+	numTypeElectrons = [0,0,0,0]#loose, ZHsignal, WHsignal, WHMJ
 
 	numElectrons = len(ch.el_pt)
 	#if debug == True:
@@ -254,7 +263,24 @@ for i in range(nEntries):
 	# not looking for eventType[0] or [2] right now..... stop if statements for now
 	#f numTypeMuons[0] + numTypeElectrons[0]  == 0 and goodElectrons + goodMuons == 0:#no loose leptons
 	#	eventType[0] = True
-	if (numTypeMuons[3] + numTypeElectrons[3])  == 1 and  (numTypeMuons[0] + numTypeElectrons[0])  == 0:#goodElectrons + goodMuons == 1:#1 tight, 0 loose
+
+	# check at least 1 loose lepton (for cutflow comparison)
+	if (numTypeMuons[0] + numTypeElectrons[0] >= 1):
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	else:
+		continue
+	# check exactly 1 WH signal lepton (for cutflow comparison)
+	# Do we use [2] or [3] for signal lepton?!
+	if (numTypeMuons[2] + numTypeElectrons[2] == 1):
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	else:
+		continue
+
+	if (numTypeMuons[2] + numTypeElectrons[2])  == 1 and  (numTypeMuons[0] + numTypeElectrons[0])  == 0:#goodElectrons + goodMuons == 1:#1 tight, 0 loose
+                #TODO:  check that this is right... should require exactly 1 loose lepton, is this just for stats?
+		# commenting this out for now, check that eventType[1] is True
 		eventType[1] = True
 		if numTypeElectrons[3] == 1:
 			lep1 = electronTLorentzSignal[0]
@@ -267,6 +293,13 @@ for i in range(nEntries):
 			lep1 = electronTLorentzMediumW[0]
 		else:
 			lep1 = muonTLorentzMediumW[0]
+	# check exactly 1 WH signal lepton and exactly 1 loose lepton (for cutflow comparison)
+	if eventType[1]:
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	# add the else here for the cutflow comparison
+	else:
+		continue
 	'''
 	if numTypeMuons[1] + numTypeMuons[0]  == 2 and numTypeMuons[1] == 1 and goodElectrons + goodMuons == 2:# 1 medium, 1 loose
 	 	eventType[2] = True
@@ -290,16 +323,19 @@ for i in range(nEntries):
 
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum,cuts)
-	cutNum = cutNum + 1
+# Removed this during cutflow comparison
+#	cut.addCut(cutNum,cuts)
+#	cutNum = cutNum + 1
 	if debug:
 		print 'passed lepton veto'
 		print '0lep : ' + str(eventType[0])
 		print '1lep : ' + str(eventType[1])
 		print '2lep : ' + str(eventType[2])
+
+
+
 	
-	#print 'passed lepton veto'
-	#check jets are cool
+	# *************************** Reconstruct the jets ********************
 	numJets = len(ch.jet_pt)
 	numSignalJets = 0
 	numOtherJets = 0
@@ -310,6 +346,7 @@ for i in range(nEntries):
 	totalJetPx = 0
 	totalJetPy = 0
 	addJet = TLorentzVector()
+	numRecoJets = 0
 	if debug == True:
 		print 'numJets: ' +str(numJets)
 	for j in xrange(0,numJets):
@@ -327,7 +364,7 @@ for i in range(nEntries):
 			isTagged = True
 		
 		if isTagged and math.fabs(jeteta) < 2.5:
-			numSignalJets = numSignalJets + 1
+			numSignalJets += 1
 			isSignal = True
 			if jetpt > jet1.Pt():
 				jet2.SetPtEtaPhiE(jet1.Pt(), jet1.Eta(), jet1.Phi(), jet1.E())
@@ -336,10 +373,11 @@ for i in range(nEntries):
 				jet2.SetPtEtaPhiE(jetpt, jeteta, jetphi, jetE)
 
 		if isTagged:
-			numOtherbJets = numOtherbJets + 1
+			numOtherbJets += 1
 		
 		else:
-			numOtherJets = numOtherJets + 1
+			numOtherJets += 1
+		numRecoJets += 1
 		addJet = addJet+jetVector.Clone()
 		totalJetPx = totalJetPx + jetVector.Px()
 		totalJetPy = totalJetPy + jetVector.Py()
@@ -348,23 +386,22 @@ for i in range(nEntries):
 		print 'jet1 pt: ' + str(jet1.Pt())
 		print 'jet2 pt: ' + str(jet2.Pt())
 		print 'numsignal jets: ' + str(numSignalJets)
-	if jet1.Pt() < 45 or numSignalJets < 2:
+
+	# ********************** check MET *********************************
+#	met = ch.MET_et/1000.0
+	met = ch.MET_sumet/1000.0
+	pxmiss = -(totalJetPx + lep1.Px() + lep2.Px())
+	pymiss = -(totalJetPy + lep1.Py() + lep2.Py())
+	ptmiss = math.sqrt(pxmiss*pxmiss + pymiss*pymiss)
+	ptmiss_phi = TMath.ATan2(pymiss, pxmiss)
+	dphi_met_ptmiss = cut.dPhi(ch.MET_phi, ptmiss_phi)
+	dphi_met_jet1 = cut.dPhi(ch.MET_phi, jet1.Phi())
+	dphi_met_jet2 = cut.dPhi(ch.MET_phi, jet2.Phi())
+	if eventType[0] and (met <= 120 or ptmiss <= 30 or dphi_met_ptmiss >= math.pi or min(dphi_met_jet1, dphi_met_jet2 )< 1.5):
 		eventType[0] = False
+	if eventType[1] and met <= 25:
 		eventType[1] = False
-		eventType[2] = False
-#	if numSignalJets < 2:
-#		#print 'not enough signal jets'
-#		continue
-	
-	if numOtherJets > 0:
-		#print 'too many other jets'
-		r =1
-		#eventType[0] = False
-		#eventType[1] = False
-	if (numOtherbJets - numSignalJets) > 0:
-		#print 'too many other b-jets'
-		r= 2
-		#eventType[2] = False
+
 
 
 	if cut.noEvent(eventType):
@@ -372,9 +409,12 @@ for i in range(nEntries):
 	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
-		print 'passed jet cuts'
-	#W variables calculation
-	met = ch.MET_et/1000.0
+		print 'passed met cut'
+
+
+
+	# ********************* V variables calculation ******************
+
 	metPhi = ch.MET_phi
 	metX = (met)*math.cos(metPhi)
 	metY = (met)*math.sin(metPhi)
@@ -401,72 +441,159 @@ for i in range(nEntries):
 	# is ptv for 0 lep case correct????
 	ptvArr = [met, m_Wpt, m_Zpt]
 
+
+	# ********************** calculate mTW *****************************
+	ptv = met
+	if eventType[1]:#check mTW
+		mtw = m_Wmass
+		ptv = m_Wpt
+		#next two if statements for cutflow comparison only
+		if mtw > 40:# or m_Wpt > 160:
+			cut.addCut(cutNum,cuts)
+			cutNum += 1
+		else:
+			continue
+		if mtw < 120: #m_Wpt > 120:
+			cut.addCut(cutNum,cuts)
+			cutNum += 1
+		else:
+			continue
+		if m_Wpt < 120:
+			eventType[1] = False
+			# continue here for cutflow comparison
+			continue
+	else: # else here for cutflow comparison
+		continue
+	if eventType[2]:
+		mll = (lep1 + lep2).M()
+		if mll <= 71 or mll >= 121:
+			eventType[2] = False
+
+# Commented out after adding above cut.addCut() statements for cutflow comparison
+#	if cut.noEvent(eventType):
+#		continue
+#	cut.addCut(cutNum,cuts)
+#	cutNum += 1
+
+	if debug:
+		print 'passed m_Wpt or mll'
+
+
+        #Check jets are cool
+	# The numRecoJets >= 2 and == 2 are only here for cutflow comparison
+	if numRecoJets >= 2:
+		cut.addCut(cutNum, cuts)
+		cutNum+=1
+	else:
+		continue
+	if numRecoJets == 2:
+		cut.addCut(cutNum, cuts)
+		cutNum+=1
+	else:
+		continue
+
+	if numSignalJets >= 1:
+		cut.addCut(cutNum, cuts)
+		cutNum+=1
+	else:
+		continue
+
+#does this jet1,Pt<45 cut need to be in here now?  Moved to after dR cuts
+	if numSignalJets == 2:
+		cut.addCut(cutNum, cuts)
+		cutNum+=1
+	else:
+		eventType[0] = False
+		eventType[1] = False
+		eventType[2] = False
+		continue
+	if numSignalJets == 2 and numRecoJets == 2:
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	else:
+		continue
+	if numOtherJets > 0:
+		#print 'too many other jets'
+		r =1
+		#eventType[0] = False
+		#eventType[1] = False
+	if (numOtherbJets - numSignalJets) > 0:
+		#print 'too many other b-jets'
+		r= 2
+		#eventType[2] = False
+
+
+	# ********************** jet dR *****************************
 	jetdR = cut.dR(jet1.Eta(), jet1.Phi(), jet2.Eta(), jet2.Phi())
 	for pti in xrange(1,2):
 		if (eventType[pti]):
 			if ptvArr[pti] <= 200 and jetdR <= 0.7:
 				eventType[pti] = False
+			
 	if eventType[0] and met <= 200 and jetdR <= 0.7:
 		eventType[0] = False
-
-
 	if cut.noEvent(eventType):
 		continue
 	cut.addCut(cutNum,cuts)
 	cutNum = cutNum + 1
 	if debug:
 		print 'passed dR cuts'
-	#check MET:
-	pxmiss = -(totalJetPx + lep1.Px() + lep2.Px())
-	pymiss = -(totalJetPy + lep1.Py() + lep2.Py())
-	ptmiss = math.sqrt(pxmiss*pxmiss + pymiss*pymiss)
-	ptmiss_phi = TMath.ATan2(pymiss, pxmiss)
-	dphi_met_ptmiss = cut.dPhi(ch.MET_phi, ptmiss_phi)
-	dphi_met_jet1 = cut.dPhi(ch.MET_phi, jet1.Phi())
-	dphi_met_jet2 = cut.dPhi(ch.MET_phi, jet2.Phi())
-	if eventType[0] and (met <= 120 or ptmiss <= 30 or dphi_met_ptmiss >= math.pi or min(dphi_met_jet1, dphi_met_jet2 )< 1.5):
-		eventType[0] = False
-	if eventType[1] and met <= 25:
-		eventType[1] = False
 
-
-
-	if cut.noEvent(eventType):
+	# *************** Following is for binned W pT analysis of lnubb Signal Region ********
+		# ******* Mostly for cutflow comparison, might be useful to keep *********
+	if (jetdR > 0.7 and jetdR < 3.4) and m_Wpt < 90:
+		cut.addCut(cutNum, cuts)
+	elif jetdR < 3.0 and (m_Wpt >= 90 and m_Wpt < 120):
+		cut.addCut(cutNum+1, cuts)
+	elif jetdR < 2.3 and (m_Wpt >= 120 and m_Wpt < 160):
+		cut.addCut(cutNum+2, cuts)
+	elif jetdR < 1.8 and (m_Wpt >= 160 and m_Wpt < 200):
+		cut.addCut(cutNum+3, cuts)
+	elif jetdR < 1.4 and m_Wpt >= 200:
+		cut.addCut(cutNum+4, cuts)
+	else:
 		continue
-	cut.addCut(cutNum,cuts)
-	cutNum = cutNum + 1
-	if debug:
-		print 'passed dphi cuts'
-	
-	# check vector boson cuts
-	# calculate mTW
-	
-	
-  
+	cutNum +=5
 
-	ptv = met
-	if eventType[1]:#check mTW
-		mtw = m_Wmass
-		ptv = m_Wpt
-		if m_Wpt < 120 and mtw < 40:
-			eventType[1] = False
-	if eventType[2]:
-		mll = (lep1 + lep2).M()
-		if mll <= 71 or mll >= 121:
-			eventType[2] = False
 
-	if cut.noEvent(eventType):
+	# ****************** Jet PT cut **************************
+	if jet1.Pt() > 45:
+		cut.addCut(cutNum, cuts)
+		cutNum +=1 
+	else:
 		continue
-	cut.addCut(cutNum,cuts)
-	cutNum = cutNum + 1
 
-	if debug:
-		print 'passed m_Wpt or mll'
+
+	# ****************** pT W cuts **************************
+
+	if m_Wpt > 0 and m_Wpt < 60:
+		cut.addCut (cutNum, cuts)
+	elif m_Wpt >= 60 and m_Wpt < 120:
+		cut.addCut (cutNum+1, cuts)
+	elif m_Wpt >= 120 and m_Wpt < 160:
+		cut.addCut (cutNum+2, cuts)
+	elif m_Wpt >= 160 and m_Wpt < 200:
+		cut.addCut (cutNum+3, cuts)
+	elif m_Wpt >= 200:
+		cut.addCut (cutNum+4, cuts)
+	else:
+		continue
+	cutNum += 5
+
 	countpt = 0
 	for pt in ptvArr:
 		if pt < 120:
 			eventType[countpt] = False
 		countpt = countpt + 1
+	
+
+
+	if cut.noEvent(eventType):
+		continue
+	cut.addCut(cutNum,cuts)
+	cutNum = cutNum + 1
+	if debug:
+		print 'passed jet cuts'
 	
 	if eventType[0] or eventType[1] or eventType[2]:
 		foundevent = True
@@ -485,8 +612,8 @@ for i in range(nEntries):
 		
 	if cut.noEvent(eventType):
 		continue
-	cut.addCut(cutNum,cuts)
-	cutNum = cutNum + 1
+#	cut.addCut(cutNum,cuts)
+#	cutNum = cutNum + 1
 	if debug:
 		print 'should be an event!!!!!!'
 
@@ -546,7 +673,6 @@ for i in range(nEntries):
 	else:
 		category[0] = -1
         '''
-	#print samples[ind][1]
 	label = ''
 	if (data == False):
 		varStruct.xs = float(samples[ind][1])
@@ -554,14 +680,9 @@ for i in range(nEntries):
 		varStruct.xscorr2 = float(samples[ind][3])
 		varStruct.final_xs = float(samples[ind][4])
 		label = copy.deepcopy(samples[ind][5])
-		#varStruct.label = label
-		#print 'samples[ind][5].strip():' + label
 		label_code = float(labelcodesAll[label])
 		varStruct.label_code = copy.deepcopy(label_code)
-		#print 'labelcodesAll[samples[ind][5].strip()]: ' + str(labelcodesAll[samples[ind][5]])
-		#print str(varStruct.label_code)
-		#varStruct.name = samples[ind][6].strip()
-		#varStruct.name_code = namecodesAll[samples[ind][6].strip()]
+		varStruct.AllEntries = float(dict_pid[str(mc_ch_num)])
 	if eventType[0] or eventType[2]:
 		if debug:
 			print '0 or 1 lep event found ***********************************************'
@@ -580,27 +701,6 @@ for i in range(nEntries):
 log.close()
 	#print 'passed event!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 
-#    # Check to see if it passes the vertex requirements
-#    pass_vertex = False
-#    for i_vertex in xrange(ch.vxp_n):
-#        if ch.vxp_nTracks[i_vertex] >= 3 and abs(ch.vxp_z[i_vertex]) < 150.0 :
-#            pass_vertex = True
-#            break
-
-#    # Fill histograms recording cuts
-#    if pass_trigger == True :
-#        h_n_events.Fill(1)
-
-#        if pass_vertex == True :
-#            h_n_events.Fill(2)
-
-#            # Record information for events which pass all the cuts so far   
-#            nEventsPassedSkim = nEventsPassedSkim + 1
-#            ch_new.Fill()
-    
-
-# Print the contents
-#ch_new.Print()
 
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()

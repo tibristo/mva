@@ -16,9 +16,9 @@ if len(sys.argv) < 1:
     sys.exit("not enough args supplied")
 
 # read in samples and convert to numpy arrays
-sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120sig12.root','Ntuple','sig')
+sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120sig12_FullCutflow.root','Ntuple','sig')
 bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120bkg12.root','Ntuple','bkg')
-dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120dataAll12.root','Ntuple','data')
+dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120data12.root','Ntuple','data')
 print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -27,8 +27,8 @@ varIdxBkg = []
 varIdxData = []
 varWIdx = []
 variablesNames = createHists.readVarNamesXML()
-varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
-varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1}
+varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1,'AllEntries':-1}
+varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1, 'AllEntries':-1}
 foundVariables = []
 foundVariablesBkg = []
 foundVariablesData = []
@@ -53,18 +53,18 @@ lumi = 20300.0
 # need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
 labelCodes = sc.readInLabels()
 
-sig.getTrainingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
-sig.getTrainingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength(), 'B', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
 
 nEntriesA = 1.0/(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 nEntriesB = 1.0/(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 
-sig.weightAllTrainSamples('A', nEntriesA)
-bkg.weightAllTrainSamples('A', nEntriesA)
-sig.weightAllTrainSamples('B', nEntriesB)
-bkg.weightAllTrainSamples('B', nEntriesB)
+sig.weightAllTrainSamples('A', 1.0)#nEntriesA)
+bkg.weightAllTrainSamples('A', 1.0)#nEntriesA)
+sig.weightAllTrainSamples('B', 1.0)#nEntriesB)
+bkg.weightAllTrainSamples('B', 1.0)#nEntriesB)
 
 print 'Finished getting training data'
 
@@ -81,21 +81,31 @@ y = yA
 weights = weightsA
 
 # Set up the testing samples
-sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
-#sig.getTestingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
-sig.getTestingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
-#bkg.getTestingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+#sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+#bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength(), 'B', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
 dataSample.getTestingDataForData(nEntries, lumi)
 
-nEntriesA = 1.0/(float((sig.returnLengthTest('A')+bkg.returnLengthTest('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
-nEntriesB = 1.0/(float((sig.returnLengthTest('B')+bkg.returnLengthTest('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+#nEntriesA = 1.0/(float((sig.returnLengthTest('A')+bkg.returnLengthTest('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+#nEntriesB = 1.0/(float((sig.returnLengthTest('B')+bkg.returnLengthTest('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 
-sig.weightAllTestSamples('A', nEntriesA)
-bkg.weightAllTestSamples('A', nEntriesA)
-sig.weightAllTestSamples('B', nEntriesB)
-bkg.weightAllTestSamples('B', nEntriesB)
+nEntriesSA = 1.0/(float((sig.returnLengthTest('A')))/float(sig.returnFullLength()))
+nEntriesSB = 1.0/(float((sig.returnLengthTest('B')))/float(sig.returnFullLength()))
+nEntriesBA = 1.0/(float((bkg.returnLengthTest('A')))/float(bkg.returnFullLength()))
+nEntriesBB = 1.0/(float((bkg.returnLengthTest('B')))/float(bkg.returnFullLength()))
+print 'nEntriesSA: ' + str(nEntriesSA)
+print 'nEntriesBA: ' + str(nEntriesBA)
+print 'nEntriesSB: ' + str(nEntriesSB)
+print 'nEntriesBB: ' + str(nEntriesBB)
+
+
+sig.weightAllTestSamples('A', nEntriesSA)
+bkg.weightAllTestSamples('A', nEntriesBA)
+sig.weightAllTestSamples('B', nEntriesSB)
+bkg.weightAllTestSamples('B', nEntriesBB)
 
 sig.transposeTestSamples()
 sig.transposeTrainSamples()
