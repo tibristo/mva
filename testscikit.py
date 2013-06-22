@@ -16,9 +16,9 @@ if len(sys.argv) < 1:
     sys.exit("not enough args supplied")
 
 # read in samples and convert to numpy arrays
-sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120sig12_FullCutflow.root','Ntuple','sig')
-bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120bkg12.root','Ntuple','bkg')
-dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120data12.root','Ntuple','data')
+sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
+bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
 print 'Finished reading in all samples'
 
 # keep indices of variables we want

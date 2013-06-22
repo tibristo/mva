@@ -78,7 +78,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     for c in sample:
         variableName = foundVariables[histidx]
         #hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
-        hist.append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -89,15 +89,19 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         hist[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
         hist[histidx].SetTitle(nameOfType)
         hist[histidx].fillstyle='solid'
+        hist[histidx].SetStats(0)
         lblcount = 0
         for k in histDict.iterkeys():
             #histDict[k].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
-            histDict[k].append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+            histDict[k].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
             #histDict[k][histidx].fillcolor = coloursForStack[int(colourDict[k])]
             histDict[k][histidx].SetFillColor(int(coloursForStack[int(colourDict[k])]))
             histDict[k][histidx].fillstyle = 'solid'
             histDict[k][histidx].SetOption('hist')
             histDict[k][histidx].SetTitle(str(k))# + str(foundVariables[histidx]))
+            histDict[k][histidx].SetStats(0)
+            histDict[k][histidx].GetXaxis().SetTitle(foundVariables[histidx])
+            histDict[k][histidx].GetYaxis().SetTitle('# Events')
         for i in c:
             lbl = labelCodes[int(labelsForSample[lblcount])]
             histDict[lbl][histidx].fill(i)
@@ -127,12 +131,19 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
                     histDict[rw][rwcount].scale(weightsPerSample[rw])
                 histStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 allHistStack[rwcount].Add(histDict[rw][rwcount].Clone())
+                histStack[rwcount].Draw()
+                allHistStack[rwcount].Draw()
                 histDict[rw][rwcount].draw('hist')
+                histStack[rwcount].GetXaxis().SetTitle(histDict[rw][rwcount].GetXaxis().GetTitle())
+                histStack[rwcount].GetYaxis().SetTitle('# Events')
+                allHistStack[rwcount].GetXaxis().SetTitle(histDict[rw][rwcount].GetXaxis().GetTitle())
+                allHistStack[rwcount].GetYaxis().SetTitle('# Events')
                 legendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 allLegendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 c1.SaveAs("histDict"+str(nameOfType)+str(subset)+str(rwcount)+".png")
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
     log.close()
+
     return hist,histDict,histStack,legendStack
 
 def drawStack(stack, legends, foundVariables, sampleType, subset = 'TestA', dataHist = {}):
@@ -193,7 +204,7 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
     for c in sample:
         variableName = foundVariables[histidx]
         #hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
-        hist.append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        hist.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         hist[histidx].fill_array(c)
         hist[histidx].scale(1.0/hist[histidx].integral())
         
@@ -204,15 +215,17 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
         hist[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
         hist[histidx].SetTitle('data')
         hist[histidx].fillstyle='solid'
+        hist[histidx].SetStats(0)
         
         #histDict['data'].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
-        histDict['data'].append(Hist(40,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        histDict['data'].append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
         histDict['data'][histidx].fillcolor=fillcol
         histDict['data'][histidx].linecolor=fillcol
         histDict['data'][histidx].SetOption('hist')
         histDict['data'][histidx].SetTitle('data')
         histDict['data'][histidx].GetXaxis().SetTitle(foundVariables[histidx])
         histDict['data'][histidx].GetYaxis().SetTitle("# Events")
+        histDict['data'][histidx].SetStats(0)
         for i in c:
             histDict['data'][histidx].fill(i)
     
@@ -232,12 +245,16 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
         for rwcount in xrange(0,len(histDict[rw])):
             if histDict[rw][rwcount].GetEntries() > 0:
                 histStack[rwcount].Add(histDict[rw][rwcount].Clone())
+                histStack[rwcount].Draw()
+                histStack[rwcount].GetXaxis().SetTitle(histDict[rw][rwcount].GetXaxis().GetTitle())
+                histStack[rwcount].GetYaxis().SetTitle('# Events')
                 histDict[rw][rwcount].draw('hist')
                 legendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 allLegendStack[rwcount].AddEntry(histDict[rw][rwcount], 'F')
                 c1.SaveAs("histDictData"+str(subset)+str(rwcount)+".png")
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
     log.close()
+
     return hist,histDict,histStack,legendStack
 
 import Sample

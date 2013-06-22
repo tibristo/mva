@@ -52,7 +52,8 @@ ch.SetBranchStatus("*",0)
 [ ch.SetBranchStatus(branchname, 1) for branchname in branches ]
 
 # Write to new file
-outFile = "%s.root" % (treename+sys.argv[2])
+outFile_in = inputFiles[0].split('/')[-1]
+outFile = "%s.root" % (treename+"_"+outFile_in[:outFile_in.find('.root')]+"_"+sys.argv[2])
 #outFile = "/Users/katharine/Documents/Work/MSSMAtautau/Data/MSSMA200tautaulh.SlimmedD3PD.root"
 newFile = TFile(outFile, "RECREATE")
 h_n_events = ROOT.TH1D('h_n_events', '', 20, -0.5, 20.5)
@@ -253,13 +254,7 @@ for i in range(nEntries):
 	#check 0 lep
 	
 	# but can this not be 0 lep and 1 lep?
-	'''
-	if debug:
-		print 'numLooseLeptons: ' + str(numTypeElectrons[0] + numTypeMuons[0])
-		print 'numMediumZLeptons: ' + str(numTypeElectrons[1] + numTypeMuons[1])
-		print 'numMediumWLeptons: ' + str(numTypeElectrons[2] + numTypeMuons[2])
-		print 'numTightLeptons: ' + str(numTypeElectrons[3] + numTypeMuons[3])
-	'''
+
 	# not looking for eventType[0] or [2] right now..... stop if statements for now
 	#f numTypeMuons[0] + numTypeElectrons[0]  == 0 and goodElectrons + goodMuons == 0:#no loose leptons
 	#	eventType[0] = True
@@ -282,10 +277,14 @@ for i in range(nEntries):
                 #TODO:  check that this is right... should require exactly 1 loose lepton, is this just for stats?
 		# commenting this out for now, check that eventType[1] is True
 		eventType[1] = True
-		if numTypeElectrons[3] == 1:
-			lep1 = electronTLorentzSignal[0]
+		#if numTypeElectrons[3] == 1:
+		#	lep1 = electronTLorentzSignal[0]
+		#else:
+		#	lep1 = muonTLorentzSignal[0]
+		if numTypeElectrons[2] == 1:
+			lep1 = electronTLorentzMediumW[0]
 		else:
-			lep1 = muonTLorentzSignal[0]
+			lep1 = muonTLorentzMediumW[0]
 		# lep2 = (0,0,0,0)
 	if (numTypeMuons[2] + numTypeElectrons[2]) == 1 and (numTypeMuons[0] + numTypeElectrons[0]) == 1:
 		eventType[1] = True
@@ -352,10 +351,14 @@ for i in range(nEntries):
 	for j in xrange(0,numJets):
 		isTagged = False
 		isSignal = False
-		jetpt = ch.jet_corrected_pt[j]/1000.0
-		jeteta = ch.jet_corrected_eta[j]
-		jetphi = ch.jet_corrected_phi[j]
-		jetE = ch.jet_corrected_E[j]/1000.0
+		#jetpt = ch.jet_corrected_pt[j]/1000.0
+		#jeteta = ch.jet_corrected_eta[j]
+		#jetphi = ch.jet_corrected_phi[j]
+		#jetE = ch.jet_corrected_E[j]/1000.0
+		jetpt = ch.jet_pt[j]/1000.0
+		jeteta = ch.jet_eta[j]
+		jetphi = ch.jet_phi[j]
+		jetE = ch.jet_E[j]/1000.0
 		jetVector = TLorentzVector()
 		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)
 		if jetpt <= 25 or math.fabs(jeteta) >= 4.5:			
@@ -388,8 +391,8 @@ for i in range(nEntries):
 		print 'numsignal jets: ' + str(numSignalJets)
 
 	# ********************** check MET *********************************
-#	met = ch.MET_et/1000.0
-	met = ch.MET_sumet/1000.0
+	met = ch.MET_et/1000.0
+	#met = ch.MET_sumet/1000.0
 	pxmiss = -(totalJetPx + lep1.Px() + lep2.Px())
 	pymiss = -(totalJetPy + lep1.Py() + lep2.Py())
 	ptmiss = math.sqrt(pxmiss*pxmiss + pymiss*pymiss)
@@ -448,12 +451,12 @@ for i in range(nEntries):
 		mtw = m_Wmass
 		ptv = m_Wpt
 		#next two if statements for cutflow comparison only
-		if mtw > 40:# or m_Wpt > 160:
+		if True:#mtw > 40:# or m_Wpt > 160:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
 			continue
-		if mtw < 120: #m_Wpt > 120:
+		if True: #mtw < 120: #m_Wpt > 120:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
@@ -551,6 +554,8 @@ for i in range(nEntries):
 		cut.addCut(cutNum+3, cuts)
 	elif jetdR < 1.4 and m_Wpt >= 200:
 		cut.addCut(cutNum+4, cuts)
+	elif jetdR > 0.7:
+		removethiswhendonecheckingcutflow = 'okay'
 	else:
 		continue
 	cutNum +=5
@@ -646,16 +651,16 @@ for i in range(nEntries):
 	varStruct.pTV = ptv
 	varStruct.mBB = (jet1+jet2).M()
 	varStruct.HT = 0
-	if eventType[0]:
+	if False:#eventType[0]:
 		varStruct.HT = (addJet).Et()+met
 	elif eventType[1]:
-		varStruct.HT = (addJet+lep1).Et() + met
+		varStruct.HT = math.fabs(jet1.Pt())+math.fabs(jet2.Pt())+math.fabs(lep1.Pt()) + met
 	elif eventType[2]:
 		varStruct.HT = (lep1+lep2+addJet).Et() + met
-	varStruct.pTB1 = jet1.Pt()
-	varStruct.pTB2 = jet2.Pt()
+	varStruct.pTB1 = max(jet1.Pt(),jet2.Pt())
+	varStruct.pTB2 = min(jet1.Pt(),jet2.Pt())
 	pTBB = (jet1+jet2).Pt()
-	varStruct.pTimbVH = (pTBB-ptv)/(pTBB+ptv)
+	varStruct.pTimbVH = math.fabs(pTBB-ptv)/(pTBB+ptv)
 	if debug:
 		print 'set pTimbVH'
 	varStruct.MET = met
@@ -705,9 +710,11 @@ log.close()
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()
 ch_new.GetCurrentFile().Close()
-cut.writeCuts(treename, sys.argv[2], cuts)
+cut.writeCuts(treename, '_'+outFile_in[:outFile_in.find('.root')]+'_'+sys.argv[2], cuts)
 
-print 'nEntries: ' + str(nEntries)
-print 'totalFound: ' + str(totalFound)
-print 'tightLeptons: ' + str(tightLeptons)
-print 'tightLeptonsPlusLoose: ' + str(tightLeptonsPlusLoose)
+final_log = open('presel'+sys.argv[2]+'_Final_Log.txt','w')
+final_log.write('nEntries: ' + str(nEntries)+'\n')
+final_log.write('totalFound: ' + str(totalFound)+'\n')
+final_log.write('tightLeptons: ' + str(tightLeptons)+'\n')
+final_log.write('tightLeptonsPlusLoose: ' + str(tightLeptonsPlusLoose))
+final_log.close()
