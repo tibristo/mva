@@ -171,26 +171,23 @@ def readInNames(fname):
     namecodesNum,namecodes = zip(*sorted(zip(namecodesNum,namecodes)))
     return namecodes
 
-def sortMultiple(ind, arr1, arr2, arr3 = []):
+def sortMultiple(arr1, arr2):
+    print 'sort Multiple'
     if len(arr1) > len(arr2):
         return -1
+    print 'start sort'
     for x in xrange(1,len(arr1)-1):
-        val = arr1[ind][x]
-        val2 = arr2[ind][x]
-        if not arr3 == []:
-            val3 = arr3[ind][x]
+        val = arr1[x]
+        val2 = arr2[x]
         hole = x
-        while hole > 0 and val < arr[ind][hole-1]:
-            arr1[ind][hole] = arr1[ind][hole-1]
-            arr2[ind][hole] = arr2[ind][hole-1]
-            if not arr3 == []:
-                arr3[ind][hole] = arr3[ind][hole-1]
+        while hole > 0 and val < arr1[hole-1]:
+            arr1[hole] = arr1[hole-1]
+            arr2[hole] = arr2[hole-1]
             hole -= 1
         arr1[hole] = val
         arr2[hole] = val2
-        arr3[hole] = val3
         
-    return arr1,arr2,arr3
+    return arr1,arr2
 
 
 def shuffle_in_unison(a, b, c):

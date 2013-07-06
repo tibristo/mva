@@ -1,4 +1,6 @@
 from numpy import argmax,argmin
+import sortAndCut as sc
+from numpy import transpose,bincount
 from rootpy.interactive import wait
 from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
 from rootpy.io import root_open as ropen, DoesNotExist
@@ -39,6 +41,65 @@ def readXML():
 
 readXML()
     
+
+def drawSigBkgDistrib(sample, classif, foundVariables):
+    idx = 0
+    c1 = Canvas()
+    c1.cd()
+    histidx = 0
+    histSig = []
+    histBkg = []
+
+    classif, sample = sc.sortMultiple(classif,sample)
+    sample2 = transpose(sample)
+    binc = bincount(classif)
+    numzero = binc[0]
+    numone = binc[1]
+    global histLimits
+    print len(sample2)
+    print sample2
+    for x in sample2:
+        x = transpose(x)
+        variableName = foundVariables[histidx]
+        histSig.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        histSig[histidx].fill_array(x[:numzero])
+        histSig[histidx].scale(1.0/histSig[histidx].integral())
+
+        histSig[histidx].fillcolor='red'
+        histSig[histidx].SetFillStyle(3004)
+        histSig[histidx].linecolor='red'
+        
+        histSig[histidx].GetXaxis().SetTitle(foundVariables[histidx])
+        histSig[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
+        histSig[histidx].SetTitle('Background')
+#        histSig[histidx].fillstyle='solid'
+        histSig[histidx].SetStats(0)
+        
+
+        histBkg.append(Hist(50,int(histLimits[variableName][0]),int(histLimits[variableName][1])))
+        histBkg[histidx].fill_array(x[numzero:])
+        histBkg[histidx].scale(1.0/histBkg[histidx].integral())
+
+        histBkg[histidx].fillcolor='blue'
+        histBkg[histidx].linecolor='blue'
+        histBkg[histidx].SetFillStyle(3005)
+        
+        histBkg[histidx].GetXaxis().SetTitle(foundVariables[histidx])
+        histBkg[histidx].GetYaxis().SetTitle('# Events Normalised to 1')
+        histBkg[histidx].SetTitle('Signal')
+#        histBkg[histidx].fillstyle='solid'
+        histBkg[histidx].SetStats(0)
+
+        leg = Legend(2)
+        leg.AddEntry(histBkg[histidx],'F')
+        leg.AddEntry(histSig[histidx],'F')
+
+        histBkg[histidx].draw('hist')
+        histSig[histidx].draw('histsame')
+        leg.Draw('same')
+        c1.SaveAs(variableName+"SigBkgComparison.png")
+        histidx+=1
+
 def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSample, foundVariables, allHistStack, allLegendStack, subset = 'TestA', createLog = False):
     """Create all of the histograms for each sample and save them to file.
     
@@ -258,6 +319,9 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
     return hist,histDict,histStack,legendStack
 
 import Sample
+
+        
+
 def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB, onlyOne = 'N'):
     """Draw all test stacks for signal, bkg and data at once.
 

@@ -9,6 +9,7 @@ from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
 from rootpy.io import root_open as ropen, DoesNotExist
 from rootpy.plotting import HistStack
 import ROOT
+import copy
 ROOT.gROOT.SetBatch(True)
 
 if len(sys.argv) < 1:
@@ -53,18 +54,23 @@ lumi = 20300.0
 # need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
 labelCodes = sc.readInLabels()
 
-sig.getTrainingData(sig.returnFullLength(), 'A', nEntries, lumi, labelCodes)
-sig.getTrainingData(sig.returnFullLength(), 'B', nEntries, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength(), 'A', nEntries, lumi, labelCodes)
-bkg.getTrainingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+sig.getTrainingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
+bkg.getTrainingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
 
 nEntriesA = 1.0/(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 nEntriesB = 1.0/(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 
-sig.weightAllTrainSamples('A', 1.0)#nEntriesA)
-bkg.weightAllTrainSamples('A', 1.0)#nEntriesA)
-sig.weightAllTrainSamples('B', 1.0)#nEntriesB)
-bkg.weightAllTrainSamples('B', 1.0)#nEntriesB)
+nEntriesSA = 1.0/(float((sig.returnLengthTrain('A')))/float(sig.returnFullLength()))
+nEntriesSB = 1.0/(float((sig.returnLengthTrain('B')))/float(sig.returnFullLength()))
+nEntriesBA = 1.0/(float((bkg.returnLengthTrain('A')))/float(bkg.returnFullLength()))
+nEntriesBB = 1.0/(float((bkg.returnLengthTrain('B')))/float(bkg.returnFullLength()))
+
+sig.weightAllTrainSamples('A', nEntriesSA)
+bkg.weightAllTrainSamples('A', nEntriesBA)
+sig.weightAllTrainSamples('B', nEntriesSB)
+bkg.weightAllTrainSamples('B', nEntriesBB)
 
 print 'Finished getting training data'
 
@@ -101,11 +107,13 @@ print 'nEntriesBA: ' + str(nEntriesBA)
 print 'nEntriesSB: ' + str(nEntriesSB)
 print 'nEntriesBB: ' + str(nEntriesBB)
 
-
 sig.weightAllTestSamples('A', nEntriesSA)
 bkg.weightAllTestSamples('A', nEntriesBA)
 sig.weightAllTestSamples('B', nEntriesSB)
 bkg.weightAllTestSamples('B', nEntriesBB)
+
+xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'))
+xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'))
 
 sig.transposeTestSamples()
 sig.transposeTrainSamples()
@@ -123,30 +131,43 @@ testWeightsXS_B = [dict(sig.returnTestWeightsXS('B').items()), dict(bkg.returnTe
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 
 # draw all training and testing histograms
-createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)
-createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C')
+#createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)
+#createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C')
 
+
+#x = xA
+#y = yA
+#weights = weightsA
 
 
 from sklearn.tree import DecisionTreeClassifier
 
 print 'starting training on AdaBoostClassifier'
 #class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)
-'''
+
 
 from sklearn.ensemble import AdaBoostClassifier
 from time import clock
 # Build a forest and compute the feature importances
 ada = AdaBoostClassifier(DecisionTreeClassifier(compute_importances=True,max_depth=4,min_samples_split=2,min_samples_leaf=100),n_estimators=400, learning_rate=0.5, algorithm="SAMME",compute_importances=True)
 start = clock()
-ada.fit(xtA, ytA)
+ada.fit(x, y, weights)
 elapsed = clock()-start
 print 'time taken for training: ' + str(elapsed)
+
+xtA_C = copy.deepcopy(xtA)
+pred = ada.predict(xtA_C)
+print bincount(pred)
+#print pred
+print len(pred)
+print len(xtA_C)
+createHists.drawSigBkgDistrib(xtA_C, pred, sig.returnFoundVariables())
+
 importancesada = ada.feature_importances_
 print importancesada
-#print ada.score(x1,y1)
+print ada.score(xtA,ytA)
 print ada.get_params()
-std = std([tree.feature_importances_ for tree in ada.estimators_],
+std_mat = std([tree.feature_importances_ for tree in ada.estimators_],
              axis=0)
 indicesada = argsort(importancesada)[::-1]
 variableNamesSorted = []
@@ -171,8 +192,8 @@ import pylab as pl
 
 pl.figure()
 pl.title("Feature importances Ada")
-pl.bar(xrange(len(variableNames)), importancesada[indicesada],
-       color="r", yerr=std[indicesada], align="center")
+pl.bar(xrange(len(variableNamesSorted)), importancesada[indicesada],
+       color="r", yerr=std_mat[indicesada], align="center")
 pl.xticks(xrange(12), variableNamesSorted)#indicesada)
 pl.xlim([-1, 12])
 pl.show()
@@ -182,8 +203,8 @@ plot_step = 1000.0
 class_names = "AB"
 
 
+
 pl.figure(figsize=(15, 5))
-'''
 '''
 # Plot the decision boundaries
 pl.subplot(131)
@@ -201,31 +222,30 @@ Z = Z.reshape(xx.shape)
 cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 pl.axis("tight")
 '''
+
+
+
 '''
-
-
-
-
 # Plot the training points
 pl.subplot(131)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     idx = where(y == i)
-    pl.scatter(x[idx, 0], x[idx, 1],
+    pl.scatter(xtA[idx, 0], xtA[idx, 1],
                c=c, cmap=pl.cm.Paired,
                label="Class %s" % n)
 pl.axis("tight")
 pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
-
+'''
 
 
 
 # Plot the class probabilities
-class_proba = ada.predict_proba(x)[:, -1]
+class_proba = ada.predict_proba(xtA)[:, -1]
 #pl.subplot(132)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(class_proba[y == i],
+    pl.hist(class_proba[ytA == i],
             bins=50,
             range=(0, 1),
             facecolor=c,
@@ -235,20 +255,19 @@ pl.ylabel('Samples')
 pl.xlabel('Class Probability')
 
 # Plot the two-class decision scores
-twoclass_output = ada.decision_function(x)
+twoclass_output = ada.decision_function(xtA)
 
 #reweight twoclass_output
 print twoclass_output
 
-#for x in xrange(0,len(twoclass_output)):
-#    weight = 
-#    twoclass_output[x][0] = twoclass_output[x][0]*weight
+for i in xrange(0,len(twoclass_output)):
+    twoclass_output[i] = twoclass_output[i]+1
 
 pl.subplot(133)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(twoclass_output[y == i],
+    pl.hist(twoclass_output[ytA == i],
             bins=50,
-            range=(-1, 1),
+            range=(0, 1),
             facecolor=c,
             label='Class %s' % n, normed=True)
 pl.legend(loc='upper right')
@@ -261,20 +280,20 @@ mean_fpr = linspace(0, 1, 100)
 from sklearn.metrics import roc_curve, auc
 pl.subplot(132)
 beginIdx = 0
-endIdx = len(xt)#/2
+endIdx = len(xtA)#/2
 #need method to calculate rej: 1-num(b)/total(b)
 #tpr is signal efficiency: num(s)/total(s)
 for i in range(1):
-    probas_ = ada.predict_proba(xt[beginIdx:endIdx])
+    probas_ = ada.predict_proba(xtA[beginIdx:endIdx])
     # Compute ROC curve and area the curve
-    fpr, tpr, thresholds, rej = sc.roc_curve_rej(yt[beginIdx:endIdx], probas_[:,1])
+    fpr, tpr, thresholds, rej = sc.roc_curve_rej(ytA[beginIdx:endIdx], probas_[:,1])
     #mean_tpr += interp(mean_fpr, fpr, tpr)
     #mean_tpr[0] = 0.0
     roc_auc = auc(tpr,rej)#auc(fpr, tpr)
     print i
     pl.plot(tpr, rej, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc), color=plot_colors[i])
     beginIdx = endIdx
-    endIdx = len(xt)
+    endIdx = len(xtA)
 
 pl.show()
-'''
+
