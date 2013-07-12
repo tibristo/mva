@@ -3,6 +3,10 @@ __all__=['argsortlist','roc_curve_ref','readInLabels','readInNames','sortMultipl
 from numpy import *
 from root_numpy import *
 import sys
+import math
+import CorrsAndSysts_ext as cs
+corr = cs.CorrsAndSysts(1,2012,True)
+labelTranslate = {'ttbar':cs.CAS.EventType.ttbar,'st':cs.CAS.EventType.stop,'WW':cs.CAS.EventType.diboson,'ZZ':cs.CAS.EventType.diboson,'WZ':cs.CAS.EventType.diboson,'Wl':cs.CAS.EventType.Wl,'Wcc':cs.CAS.EventType.Wcc,'Wc':cs.CAS.EventType.Wc,'Wb':cs.CAS.EventType.Wb,'Zb':cs.CAS.EventType.Zb,'Z':cs.CAS.EventType.NONAME,'WH110':cs.CAS.EventType.WHlvbb,'WH115':cs.CAS.EventType.WHlvbb,'WH120':cs.CAS.EventType.WHlvbb,'WH125':cs.CAS.EventType.WHlvbb,'WH130':cs.CAS.EventType.WHlvbb,'WH135':cs.CAS.EventType.WHlvbb,'WH140':cs.CAS.EventType.WHlvbb}
 
 def argsortlist(seq):
     # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
@@ -402,3 +406,27 @@ def combineWeights(sigTrain, bkgTrain):
     weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
     return xtA, ytA, weightstA
 
+        
+def getEventType(labelCodes, labelVal):
+    global corr
+    global labelTranslate
+    evtType = labelTranslate[labelCodes[labelVal]]
+    return evtType    
+
+def applyCorrs(arr, labelCodes, varWIdx, nEntries):
+    global corr
+    correctionWeights = empty([nEntries])
+    count = 0
+    for row in arr:
+        evtType = getEventType(labelCodes,row[varWIdx['label_code']])
+        vPt = row[varWIdx['VpT_truth']]
+        dphi = math.fabs(row[varWIdx['dPhiVBB']])
+        njet = 2#row[varWIdx['signal_jets']]#need to add this!!!
+        hNLOCorr = corr.Get_HiggsNLOEWKCorrection(evtType, vPt)
+        bkgTopPTCorr = corr.Get_BkgpTCorrection(evtType, vPt)
+        topptCorr = 1.0#corr.Get_ToppTCorrection(evtType, avgTopPt)
+        dphiCorr = corr.Get_BkgDeltaPhiCorrection(evtType, dphi, njet)
+        mcCorr = row[varWIdx['weight_MC']]
+        correctionWeights[count]=1.0*hNLOCorr*bkgTopPTCorr*topptCorr*dphiCorr*mcCorr
+        count+=1
+    return correctionWeights

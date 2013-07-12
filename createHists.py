@@ -100,7 +100,7 @@ def drawSigBkgDistrib(sample, classif, foundVariables):
         c1.SaveAs(variableName+"SigBkgComparison.png")
         histidx+=1
 
-def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSample, foundVariables, allHistStack, allLegendStack, subset = 'TestA', createLog = False):
+def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSample, foundVariables, allHistStack, allLegendStack, corrWeights, subset = 'TestA', createLog = False):
     """Create all of the histograms for each sample and save them to file.
     
     Keyword arguments:
@@ -183,13 +183,14 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
             allLegendStack.append(Legend(7))
         histStack.append(HistStack(st,st))
         legendStack.append(Legend(7))
-
+    rwcount_outer = 0
     for rw in histDict.iterkeys():
         log.write(rw + ' length: '+str(len(histDict[rw]))+'\n')
         for rwcount in xrange(0,len(histDict[rw])):
             if histDict[rw][rwcount].GetEntries() > 0:
                 if rw in weightsPerSample:
                     histDict[rw][rwcount].scale(weightsPerSample[rw])
+                    histDict[rw][rwcount].scale(corrWeights[rwcount_outer][rwcount])
                 histStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 allHistStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 histStack[rwcount].Draw()
@@ -203,6 +204,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
                 allLegendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 c1.SaveAs("histDict"+str(nameOfType)+str(subset)+str(rwcount)+".png")
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
+        rwcount_outer += 1
     log.close()
 
     return hist,histDict,histStack,legendStack
@@ -320,9 +322,9 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
 
 import Sample
 
-        
+DEFAULT = ones((1,1))
 
-def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB, onlyOne = 'N'):
+def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB, onlyOne = 'N', corrWeightsA = DEFAULT, corrWeightsB = DEFAULT):
     """Draw all test stacks for signal, bkg and data at once.
 
     Keyword arguments:
@@ -334,14 +336,20 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
     weightsPerSampleB -- the XS weight for subset B
     
     """
+    if corrWeightsA is DEFAULT:
+        corrWeightsA = hstack(signal.returnTestCorrectionWeights('A'), bkg.returnTestCorrectionWeights('A'))
+    if corrWeightsB is DEFAULT:
+        corrWeightsB = hstack(signal.returnTestCorrectionWeights('B'), bkg.returnTestCorrectionWeights('B'))
     # store all histograms in output.root
     for x in xrange (0, len(signal.test)):
         if x == 0:
             subset = 'A'
             weightsPerSample = weightsPerSampleA
+            corrWeights = corrWeightsA
         else:
             subset = 'B'
             weightsPerSample = weightsPerSampleB
+            corrWeights = corrWeightsB
         f = ropen('outputTest'+str(subset)+'.root','recreate')
         c1 = Canvas()
         c1.cd()
@@ -349,10 +357,10 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
         allStack = []
         legendAllStack = []
         # get sigA histograms
-        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTestSample(subset), labelCodes, 'signal', signal.returnTestSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
+        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTestSample(subset), labelCodes, 'signal', signal.returnTestSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, corrWeights,str('Test'+subset), True)
         # get bkgA histograms
         # how to fix legends????
-        hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists(bkg.returnTestSample(subset), labelCodes, 'bkg', bkg.returnTestSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
+        hist2, histDictBkgA, testAStackBkg,legendBkgStack  = createHists(bkg.returnTestSample(subset), labelCodes, 'bkg', bkg.returnTestSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, corrWeights, str('Test'+subset), True)
         # get data histograms
         histData, histDictDataA, testAStackData, legendDataStack = createHistsData(data.returnTestSample(), data.returnFoundVariables(), allStack, legendAllStack, str('Test'+subset), True)
     
@@ -381,7 +389,7 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
         
     f.close()
 
-def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset = 'TrainA'):
+def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsPerSampleB, corrWeightsA = DEFAULT, corrWeightsB = DEFAULT, subset = 'TrainA'):
     """Draw all train stacks for signal and bkg at once.
 
     Keyword arguments:
@@ -392,14 +400,21 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
     subset -- extra identifier for the filename (default TrainA)
     
     """
-  
+    if corrWeightsA is DEFAULT:
+        corrWeightsA = hstack(signal.returnTestCorrectionWeights('A'), bkg.returnTestCorrectionWeights('A'))
+    if corrWeightsB is DEFAULT:
+        corrWeightsB = hstack(signal.returnTestCorrectionWeights('B'), bkg.returnTestCorrectionWeights('B'))
     # store all histograms in output.root
 
     for x in xrange (0, len(signal.train)):
         if x == 0:
             subset = 'A'
+            weightsPerSample = weightsPerSampleA
+            corrWeights = corrWeightsA
         else:
             subset = 'B'
+            weightsPerSample = weightsPerSampleB
+            corrWeights = corrWeightsB
         f = ropen('outputTrain'+str(subset)+'.root','recreate')
         print subset
         c1 = Canvas()
@@ -408,10 +423,10 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSample, subset =
         allStack = []
         legendAllStack = []
         # get sigA histograms
-        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTrainSample(subset), labelCodes, 'signal', signal.returnTrainSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
+        hist, histDictSigA, testAStack, legendSigStack = createHists(signal.returnTrainSample(subset), labelCodes, 'signal', signal.returnTrainSampleLabels(subset), weightsPerSample[0], signal.returnFoundVariables(), allStack, legendAllStack, corrWeights, str('Train'+subset), True)
         # get bkgA histograms
         # how to fix legends????
-        hist2, histDictBkgA, testAStackBkg, legendBkgStack  = createHists(bkg.returnTrainSample(subset), labelCodes, 'bkg', bkg.returnTrainSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, str('Train'+subset), True)
+        hist2, histDictBkgA, testAStackBkg, legendBkgStack  = createHists(bkg.returnTrainSample(subset), labelCodes, 'bkg', bkg.returnTrainSampleLabels(subset), weightsPerSample[1], bkg.returnFoundVariables(), allStack, legendAllStack, corrWeights, str('Train'+subset), True)
 
         for hist2idx in xrange(0,len(hist)):
             legend = Legend(3)

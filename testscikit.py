@@ -127,12 +127,17 @@ trainWeightsXS_B = [dict(sig.returnTrainWeightsXS('B').items()), dict(bkg.return
 testWeightsXS_A = [dict(sig.returnTestWeightsXS('A').items()), dict(bkg.returnTestWeightsXS('A').items())]
 print testWeightsXS_A
 testWeightsXS_B = [dict(sig.returnTestWeightsXS('B').items()), dict(bkg.returnTestWeightsXS('B').items())]
+
+trainCorrWeights_A = hstack(sig.returnTrainCorrectionWeights('A'), bkg.returnTrainCorrectionWeights('A'))
+trainCorrWeights_B = hstack(sig.returnTrainCorrectionWeights('B'), bkg.returnTrainCorrectionWeights('B'))
+testCorrWeights_A = hstack(sig.returnTestCorrectionWeights('A'), bkg.returnTestCorrectionWeights('A'))
+testCorrWeights_B = hstack(sig.returnTestCorrectionWeights('B'), bkg.returnTestCorrectionWeights('B'))
 # for python 3 and greater use
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 
 # draw all training and testing histograms
-#createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B)
-#createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C')
+createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B, trainCorrWeights_A, trainCorrWeights_B)
+createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C', testCorrWeights_A, testCorrWeights_B)
 
 
 #x = xA
