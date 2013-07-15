@@ -44,14 +44,118 @@ def leptonType(ltype, trkIso, caloIso):
 	type = [isLoose,isZHTight,isWHTight,isWHMJ]
 	return type
 
-def triggerMET(trigger_met):
-	return type
+def checkBit(flag, bit):#flag is short
+	return bool( flag & (1<<bit) )
 
-def triggerEl(trigger_el):
-	return type
+def getPeriodData2011(runNbr):
+	if (runNbr >= 177986 and runNbr <= 178109):
+		return 0 //period B
+	elif (runNbr >= 179710 and runNbr <= 180481):
+		return 1 #period D
+	elif (runNbr >= 180614 and runNbr <= 180776):
+		return 2 #period E
+	elif (runNbr >= 182013 and runNbr <= 182519):
+		return 3 #period F
+	elif (runNbr >= 182726 and runNbr <= 183462): 
+		return 4 #period G
+	elif (runNbr >= 183544 and runNbr <= 184169):
+		return 5 #period H
+	elif (runNbr >= 185353 and runNbr <= 186493):
+		return 6 #period I
+	elif (runNbr >= 186516 and runNbr <= 186755):
+		return 7 #period J
+	elif (runNbr >= 186873 and runNbr <= 187815):
+		return 8 #period K
+	elif (runNbr >= 188902 and runNbr <= 190343):
+		return 9 #period L
+	elif (runNbr >= 190503 and runNbr <= 191933):
+		return 10 #period M
+	
+	return -1
 
-def triggerMu(trigger_mu):
-	return type
+def matchTriggerElectron(trigger_el, el_triggermatched, channel, RunNumber):
+	matchtrigger = False
+
+	if channel==0:
+		return False
+
+	if(channel==1):
+		if(RunNumber > 191933) : # 2012
+    
+			if( checkBit(trigger_el, triggerBitEl.EF_e24vhi_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e24vhi_medium1) ):
+				matchtrigger = True
+
+			if( checkBit(trigger_el, triggerBitEl.EF_e60_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e60_medium1) ):
+				matchtrigger = True
+	else:#  2011 data
+      
+		period = getPeriodData2011(RunNumber);
+      
+		if (period >= 0 and period <= 6) : #// B-I
+			if( checkBit(trigger_el, triggerBitEl.EF_e20_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e20_medium) ):
+				matchtrigger = True
+		elif (period <= 8) : #// J-K
+			if( checkBit(trigger_el, triggerBitEl.EF_e22_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e22_medium) ):
+				matchtrigger = True
+		elif (period <= 10) :# // L-M
+			if( checkBit(trigger_el, triggerBitEl.EF_e22vh_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e22vh_medium1) ):
+				matchtrigger = True
+			if( checkBit(trigger_el, triggerBitEl.EF_e45_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e45_medium1) ):
+				matchtrigger = True
+		else:
+			print "WARNING: 2011 RunNumber not found!"
+
+      return matchtrigger
+
+
+
+
+def matchTriggerMuon(trigger_mu, mu_triggermatched, channel, RunNumber): 
+
+	matchtrigger = False
+
+	if(channel == 0):
+		return False
+
+
+	if(channel == 1):
+		if(RunNumber > 191933):#  2012
+			
+			if( checkBit(trigger_mu, triggerBitMu.EF_mu24i_tight) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu24i_tight) ):
+				matchtrigger = True
+
+			if( checkBit(trigger_mu, triggerBitMu.EF_mu36_tight) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu36_tight) ):
+				matchtrigger = True
+
+	else: #2011 data
+      
+		period = getPeriodData2011(RunNumber)
+      
+		if (period >= 0 and period <= 6): # B-I
+			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG ) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG ) ):
+				matchtrigger = True
+		elif (period <= 8): # J-K
+			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
+				matchtrigger = True
+		elif (period <= 10): # L-M
+			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
+				matchtrigger = True
+		else:
+			print "WARNING: 2011 RunNumber not found!"
+	return matchtrigger
+
+
+#def triggerMET(trigger_met):
+#	passedTrigger = bool( and )
+#	return type
+
+def triggerEl(trigger_el, runNumber):
+	passTrigger = bool(checkBit(trigger_el, triggerBitEl.EF_e24vhi_medium1) or runNumber <= 191933 )
+	return passTrigger
+
+def triggerMu(trigger_mu, runNumber = 0):
+	#passTrigger = bool()
+	return True
 
 def noEvent(eventArr):
 	eventBool = False

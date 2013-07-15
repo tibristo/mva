@@ -6,7 +6,7 @@ import sys
 import math
 import CorrsAndSysts_ext as cs
 corr = cs.CorrsAndSysts(1,2012,True)
-labelTranslate = {'ttbar':cs.CAS.EventType.ttbar,'st':cs.CAS.EventType.stop,'WW':cs.CAS.EventType.diboson,'ZZ':cs.CAS.EventType.diboson,'WZ':cs.CAS.EventType.diboson,'Wl':cs.CAS.EventType.Wl,'Wcc':cs.CAS.EventType.Wcc,'Wc':cs.CAS.EventType.Wc,'Wb':cs.CAS.EventType.Wb,'Zb':cs.CAS.EventType.Zb,'Z':cs.CAS.EventType.NONAME,'WH110':cs.CAS.EventType.WHlvbb,'WH115':cs.CAS.EventType.WHlvbb,'WH120':cs.CAS.EventType.WHlvbb,'WH125':cs.CAS.EventType.WHlvbb,'WH130':cs.CAS.EventType.WHlvbb,'WH135':cs.CAS.EventType.WHlvbb,'WH140':cs.CAS.EventType.WHlvbb}
+labelTranslate = {'ttbar':cs.CAS.EventType.ttbar,'st':cs.CAS.EventType.stop,'WW':cs.CAS.EventType.diboson,'ZZ':cs.CAS.EventType.diboson,'WZ':cs.CAS.EventType.diboson,'Wl':cs.CAS.EventType.Wl,'Wcc':cs.CAS.EventType.Wcc,'Wc':cs.CAS.EventType.Wc,'Wb':cs.CAS.EventType.Wb,'Zb':cs.CAS.EventType.Zb,'Z':cs.CAS.EventType.NONAME,'WH110':cs.CAS.EventType.WHlvbb,'WH115':cs.CAS.EventType.WHlvbb,'WH120':cs.CAS.EventType.WHlvbb,'WH125':cs.CAS.EventType.WHlvbb,'WH130':cs.CAS.EventType.WHlvbb,'WH135':cs.CAS.EventType.WHlvbb,'WH140':cs.CAS.EventType.WHlvbb,'NONAME':cs.CAS.EventType.NONAME}
 
 def argsortlist(seq):
     # http://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
@@ -160,7 +160,7 @@ def readInLabels():
         labelcodesNum.append(int(l[1]))
     f.close()
     labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
-    #print labelcodes
+    print labelcodes
     return labelcodes
 
 def readInNames(fname):
@@ -395,14 +395,27 @@ def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeight
             evNum = xcount
         xcount = xcount + 1
 
-def combineWeights(sigTrain, bkgTrain):
+def setCorrWeights(sample, weights, subsample, trainSample = True):
+    if trainSample:
+        corrWeights = sample.returnTrainCorrectionWeights(subsample)
+    else:
+        corrWeights = sample.returnTestCorrectionWeights(subsample)
+    xcount = 0
+    for x in corrWeights:
+        weights[xcount]*=x
+        xcount+=1
+    return weights
+
+def combineWeights(sigTrain, bkgTrain, subsample, trainSample = True):
     """Add the training trees together, keeping track of which entries are signal and background."""
     xtA = vstack((sigTrain, bkgTrain))
     ytA = transpose(hstack(( onesInt(len(sigTrain)), zerosInt(len(bkgTrain)) )))
     sigWeightA = 1.0 # float(1/float(len(sigTrain)))
     bkgWeightA = float(len(sigTrain))/float(len(bkgTrain)) # weight background as ratio
     weightsBkgA = setWeights(len(bkgTrain),bkgWeightA)
+    setCorrWeights(bkgTrain, weightsBkgA, subsample, trainSample)
     weightsSigA = setWeights(len(sigTrain),sigWeightA)
+    setCorrWeights(sigTrain, weightsSigA, subsample, trainSample)
     weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
     return xtA, ytA, weightstA
 
@@ -410,7 +423,11 @@ def combineWeights(sigTrain, bkgTrain):
 def getEventType(labelCodes, labelVal):
     global corr
     global labelTranslate
-    evtType = labelTranslate[labelCodes[labelVal]]
+    key = labelCodes[int(labelVal)]
+    if key in labelTranslate.keys():
+        evtType = labelTranslate[key]
+    else:
+        evtType = labelTranslate['NONAME']
     return evtType    
 
 def applyCorrs(arr, labelCodes, varWIdx, nEntries):
@@ -419,14 +436,14 @@ def applyCorrs(arr, labelCodes, varWIdx, nEntries):
     count = 0
     for row in arr:
         evtType = getEventType(labelCodes,row[varWIdx['label_code']])
-        vPt = row[varWIdx['VpT_truth']]
+        vPt = float(row[varWIdx['VpT_truth']])
         dphi = math.fabs(row[varWIdx['dPhiVBB']])
         njet = 2#row[varWIdx['signal_jets']]#need to add this!!!
         hNLOCorr = corr.Get_HiggsNLOEWKCorrection(evtType, vPt)
-        bkgTopPTCorr = corr.Get_BkgpTCorrection(evtType, vPt)
+        #bkgTopPTCorr = corr.Get_BkgpTCorrection(evtType, vPt)
         topptCorr = 1.0#corr.Get_ToppTCorrection(evtType, avgTopPt)
         dphiCorr = corr.Get_BkgDeltaPhiCorrection(evtType, dphi, njet)
         mcCorr = row[varWIdx['weight_MC']]
-        correctionWeights[count]=1.0*hNLOCorr*bkgTopPTCorr*topptCorr*dphiCorr*mcCorr
+        correctionWeights[count]=1.0*hNLOCorr*topptCorr*dphiCorr*mcCorr
         count+=1
     return correctionWeights

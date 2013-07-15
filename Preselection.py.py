@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 import readMethods as read
 import cutsTypes as cut
-cuts = [['mcTypeVeto',0],['looseLeptonMin1',0],['WHSignalLepton',0],['looseLeptonVeto',0],['metVeto',0],['mTWlowCut',0],['mTWlt120',0],['jetMin2jets',0],['jetMin2Veto',0],['bJetMin1',0],['bJetExactly2',0],['jetVeto',0],['dRgt07ptWlt200',0],\
+cuts = [['mcTypeVeto',0],['looseLeptonMin1',0],['WHSignalLepton',0],['looseLeptonVeto',0],['TriggerMatched',0],['metVeto',0],['mTWlowCut',0],['mTWlt120',0],['jetMin2jets',0],['jetMin2Veto',0],['bJetMin1',0],['bJetExactly2',0],['jetVeto',0],['dRgt07ptWlt200',0],\
 ['dRlt34ptWlt90',0],['dRlt30ptWgt90_lt120',0],['dRlt23ptWgt120_lt160',0],['dRlt18ptWgt160_lt200',0],['dRlt14ptWgt200',0],['jet1pT',0],['pTWgt0_lt90',0],['pTWgt90_lt120',0],['pTWgt120_lt160',0],['pTWgt160_lt200',0],['pTWgt200',0],['pTWgt120',0]]
 #cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 #define dataType as MC or DATA
@@ -185,6 +185,8 @@ for i in range(nEntries):
 	electronTLorentzSignal = []
 	numMuons = len(ch.mu_pt)
 	goodMuons = 0
+	el_triggerMatched = 0
+	mu_triggerMatched = 0
 	#if debug == True:
 	#	print 'numMuons: ' +str(numMuons)
 	#get all muons
@@ -209,6 +211,7 @@ for i in range(nEntries):
 			numTypeMuons[2] = numTypeMuons[2] + 1
 			muonTLorentzMediumW.append(muVec.Clone())
 			goodMuons = goodMuons+1
+			mu_triggerMatched = ch.mu_triggerMatched[x]
 		if typeFull[3]:#tight lepton
 			numTypeMuons[3] = numTypeMuons[3] + 1
 			muonTLorentzSignal.append(muVec.Clone())
@@ -244,6 +247,7 @@ for i in range(nEntries):
 			numTypeElectrons[2] = numTypeElectrons[2] + 1
 			electronTLorentzMediumW.append(elVec.Clone())
 			goodElectrons = goodElectrons + 1
+			el_triggerMatched = ch.el_triggerMatched[x]
 		if typeFull[3]:#tight lepton
 			electronTLorentzSignal.append(elVec.Clone())
 			numTypeElectrons[3] = numTypeElectrons[3] + 1
@@ -331,9 +335,30 @@ for i in range(nEntries):
 		print '1lep : ' + str(eventType[1])
 		print '2lep : ' + str(eventType[2])
 
+	# *************************** Trigger *********************************
+	passTrigger = False
+	runNumber = ch.RunNumber
+	'''if (numTypeElectrons[2] == 1):
+		passTrigger = cut.triggerEl(ch.trigger_el, runNumber)
+	else:
+		passTrigger = cut.triggerMu(ch.trigger_mu, runNumber)
+	if passTrigger:
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	else:
+		continue'''
+	# *************************** Trigger Matching ************************
+	passTriggerMatch = False
+	if (numTypeElectrons[2] == 1):
+		passTriggerMatch = cut.matchTriggerElectron(ch.trigger_el, el_triggerMatched, 1, runNumber)
+	else:
+		passTriggerMatch = cut.matchTriggerMuon(ch.trigger_mu, mu_triggerMatched, 1, runNumber)
 
-
-	
+	if passTriggerMatch:
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	else:
+		continue
 	# *************************** Reconstruct the jets ********************
 	numJets = len(ch.jet_pt)
 	numSignalJets = 0

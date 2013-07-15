@@ -17,9 +17,12 @@ if len(sys.argv) < 1:
     sys.exit("not enough args supplied")
 
 # read in samples and convert to numpy arrays
-sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
-bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
+#sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
+sig = Sample.Sample('Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
+#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+bkg = Sample.Sample('Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
+dataSample = Sample.Sample('Ntuple120_sumet_data12.root','Ntuple','data')
 print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -28,8 +31,8 @@ varIdxBkg = []
 varIdxData = []
 varWIdx = []
 variablesNames = createHists.readVarNamesXML()
-varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1,'AllEntries':-1}
-varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1, 'AllEntries':-1}
+varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1,'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1}
+varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1, 'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1}
 foundVariables = []
 foundVariablesBkg = []
 foundVariablesData = []
@@ -79,8 +82,8 @@ bkg.sortTrainSamples()
 print 'Finished sorting training samples'
 
 # set up some training samples for A
-xA, yA, weightsA = sc.combineWeights(sig.returnTrainingSample('A'), bkg.returnTrainingSample('B'))
-xB, yB, weightsB = sc.combineWeights(sig.returnTrainingSample('B'), bkg.returnTrainingSample('B'))
+xA, yA, weightsA = sc.combineWeights(sig.returnTrainingSample('A'), bkg.returnTrainingSample('A'), 'A', True)
+xB, yB, weightsB = sc.combineWeights(sig.returnTrainingSample('B'), bkg.returnTrainingSample('B'), 'B', True)
 
 x = xA
 y = yA
@@ -89,9 +92,9 @@ weights = weightsA
 # Set up the testing samples
 #sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
 #bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
-sig.getTestingData(sig.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
 sig.getTestingData(sig.returnFullLength(), 'B', nEntries, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength(), 'A', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
 bkg.getTestingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
 dataSample.getTestingDataForData(nEntries, lumi)
 
@@ -112,8 +115,8 @@ bkg.weightAllTestSamples('A', nEntriesBA)
 sig.weightAllTestSamples('B', nEntriesSB)
 bkg.weightAllTestSamples('B', nEntriesBB)
 
-xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'))
-xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'))
+xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'), 'A', False)
+xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'), 'B', False)
 
 sig.transposeTestSamples()
 sig.transposeTrainSamples()
@@ -128,10 +131,10 @@ testWeightsXS_A = [dict(sig.returnTestWeightsXS('A').items()), dict(bkg.returnTe
 print testWeightsXS_A
 testWeightsXS_B = [dict(sig.returnTestWeightsXS('B').items()), dict(bkg.returnTestWeightsXS('B').items())]
 
-trainCorrWeights_A = hstack(sig.returnTrainCorrectionWeights('A'), bkg.returnTrainCorrectionWeights('A'))
-trainCorrWeights_B = hstack(sig.returnTrainCorrectionWeights('B'), bkg.returnTrainCorrectionWeights('B'))
-testCorrWeights_A = hstack(sig.returnTestCorrectionWeights('A'), bkg.returnTestCorrectionWeights('A'))
-testCorrWeights_B = hstack(sig.returnTestCorrectionWeights('B'), bkg.returnTestCorrectionWeights('B'))
+trainCorrWeights_A = hstack((sig.returnTrainCorrectionWeights('A'), bkg.returnTrainCorrectionWeights('A')))
+trainCorrWeights_B = hstack((sig.returnTrainCorrectionWeights('B'), bkg.returnTrainCorrectionWeights('B')))
+testCorrWeights_A = hstack((sig.returnTestCorrectionWeights('A'), bkg.returnTestCorrectionWeights('A')))
+testCorrWeights_B = hstack((sig.returnTestCorrectionWeights('B'), bkg.returnTestCorrectionWeights('B')))
 # for python 3 and greater use
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 

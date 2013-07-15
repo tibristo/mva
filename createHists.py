@@ -1,4 +1,4 @@
-from numpy import argmax,argmin
+from numpy import argmax,argmin,ones
 import sortAndCut as sc
 from numpy import transpose,bincount
 from rootpy.interactive import wait
@@ -118,11 +118,12 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
     """
     global histLimits
     #TODO: These should really be read in from a settings file
-    histDict = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
-
+    #histDict = {'W':[],'Z':[],'WW':[],'ZZ':[],'st':[],'ttbar':[],'WZ':[],'WH125':[]}
+    histDict = {'Wl':[],'Wcc':[],'Wc':[],'Wb':[],'Zb':[],'Z':[],'WW':[],'ZZ':[],'stop':[],'ttbar':[],'WZ':[],'WH125':[]}
     #coloursForStack = ['Green', 'Blue', 'Orange', 'Orange', 'Orange-2', 'Yellow', 'Pink', 'Red']
     coloursForStack = [3, 4, 800, 800, 795, 5, 6, 2]
-    colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
+    #colourDict = {'W':0,'Z':1,'WW':2,'ZZ':3,'st':4,'ttbar':5,'WZ':6,'WH125':7}
+    colourDict = {'Wl':0,'Wcc':0,'Wc':0,'Wb':0,'Zb':1,'Z':1,'WW':2,'ZZ':3,'stop':4,'ttbar':5,'WZ':6,'WH125':7}
 
     if nameOfType == 'signal':
         fillcol = 'blue'
@@ -165,7 +166,9 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
             histDict[k][histidx].GetYaxis().SetTitle('# Events')
         for i in c:
             lbl = labelCodes[int(labelsForSample[lblcount])]
-            histDict[lbl][histidx].fill(i)
+            if lbl in histDict.keys():
+                histDict[lbl][histidx].fill(i)
+                histDict[lbl][histidx].scale(corrWeights[histidx])
             lblcount += 1
       
         histidx+=1
@@ -190,7 +193,6 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
             if histDict[rw][rwcount].GetEntries() > 0:
                 if rw in weightsPerSample:
                     histDict[rw][rwcount].scale(weightsPerSample[rw])
-                    histDict[rw][rwcount].scale(corrWeights[rwcount_outer][rwcount])
                 histStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 allHistStack[rwcount].Add(histDict[rw][rwcount].Clone())
                 histStack[rwcount].Draw()
