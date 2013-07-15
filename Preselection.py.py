@@ -211,7 +211,7 @@ for i in range(nEntries):
 			numTypeMuons[2] = numTypeMuons[2] + 1
 			muonTLorentzMediumW.append(muVec.Clone())
 			goodMuons = goodMuons+1
-			mu_triggerMatched = ch.mu_triggerMatched[x]
+			mu_triggerMatched = ch.mu_triggermatched[x]
 		if typeFull[3]:#tight lepton
 			numTypeMuons[3] = numTypeMuons[3] + 1
 			muonTLorentzSignal.append(muVec.Clone())
@@ -247,7 +247,7 @@ for i in range(nEntries):
 			numTypeElectrons[2] = numTypeElectrons[2] + 1
 			electronTLorentzMediumW.append(elVec.Clone())
 			goodElectrons = goodElectrons + 1
-			el_triggerMatched = ch.el_triggerMatched[x]
+			el_triggerMatched = ch.el_triggermatched[x]
 		if typeFull[3]:#tight lepton
 			electronTLorentzSignal.append(elVec.Clone())
 			numTypeElectrons[3] = numTypeElectrons[3] + 1

@@ -49,7 +49,7 @@ def checkBit(flag, bit):#flag is short
 
 def getPeriodData2011(runNbr):
 	if (runNbr >= 177986 and runNbr <= 178109):
-		return 0 //period B
+		return 0 #period B
 	elif (runNbr >= 179710 and runNbr <= 180481):
 		return 1 #period D
 	elif (runNbr >= 180614 and runNbr <= 180776):
@@ -104,11 +104,7 @@ def matchTriggerElectron(trigger_el, el_triggermatched, channel, RunNumber):
 				matchtrigger = True
 		else:
 			print "WARNING: 2011 RunNumber not found!"
-
-      return matchtrigger
-
-
-
+	return matchtrigger
 
 def matchTriggerMuon(trigger_mu, mu_triggermatched, channel, RunNumber): 
 
