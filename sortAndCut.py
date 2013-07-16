@@ -406,16 +406,22 @@ def setCorrWeights(sample, weights, subsample, trainSample = True):
         xcount+=1
     return weights
 
-def combineWeights(sigTrain, bkgTrain, subsample, trainSample = True):
+def combineWeights(sig, bkg, subsample, trainSample = True):
     """Add the training trees together, keeping track of which entries are signal and background."""
+    if trainSample:
+        sigTrain = sig.returnTrainingSample(subsample)
+        bkgTrain = bkg.returnTrainingSample(subsample)
+    if not trainSample:
+        sigTrain = sig.returnTestingSample(subsample)
+        bkgTrain = bkg.returnTestingSample(subsample)
     xtA = vstack((sigTrain, bkgTrain))
     ytA = transpose(hstack(( onesInt(len(sigTrain)), zerosInt(len(bkgTrain)) )))
     sigWeightA = 1.0 # float(1/float(len(sigTrain)))
     bkgWeightA = float(len(sigTrain))/float(len(bkgTrain)) # weight background as ratio
     weightsBkgA = setWeights(len(bkgTrain),bkgWeightA)
-    setCorrWeights(bkgTrain, weightsBkgA, subsample, trainSample)
+    setCorrWeights(bkg, weightsBkgA, subsample, trainSample)
     weightsSigA = setWeights(len(sigTrain),sigWeightA)
-    setCorrWeights(sigTrain, weightsSigA, subsample, trainSample)
+    setCorrWeights(sig, weightsSigA, subsample, trainSample)
     weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
     return xtA, ytA, weightstA
 

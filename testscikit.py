@@ -18,11 +18,11 @@ if len(sys.argv) < 1:
 
 # read in samples and convert to numpy arrays
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
-sig = Sample.Sample('Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
+sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-bkg = Sample.Sample('Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-dataSample = Sample.Sample('Ntuple120_sumet_data12.root','Ntuple','data')
+dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
 print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -82,8 +82,10 @@ bkg.sortTrainSamples()
 print 'Finished sorting training samples'
 
 # set up some training samples for A
-xA, yA, weightsA = sc.combineWeights(sig.returnTrainingSample('A'), bkg.returnTrainingSample('A'), 'A', True)
-xB, yB, weightsB = sc.combineWeights(sig.returnTrainingSample('B'), bkg.returnTrainingSample('B'), 'B', True)
+#xA, yA, weightsA = sc.combineWeights(sig.returnTrainingSample('A'), bkg.returnTrainingSample('A'), 'A', True)
+xA, yA, weightsA = sc.combineWeights(sig, bkg, 'A', True)
+#xB, yB, weightsB = sc.combineWeights(sig.returnTrainingSample('B'), bkg.returnTrainingSample('B'), 'B', True)
+xB, yB, weightsB = sc.combineWeights(sig, bkg, 'B', True)
 
 x = xA
 y = yA
@@ -115,8 +117,10 @@ bkg.weightAllTestSamples('A', nEntriesBA)
 sig.weightAllTestSamples('B', nEntriesSB)
 bkg.weightAllTestSamples('B', nEntriesBB)
 
-xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'), 'A', False)
-xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'), 'B', False)
+#xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'), 'A', False)
+xtA, ytA, weightstA = sc.combineWeights(sig, bkg, 'A', False)
+#xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'), 'B', False)
+xtB, ytB, weightstB = sc.combineWeights(sig, bkg, 'B', False)
 
 sig.transposeTestSamples()
 sig.transposeTrainSamples()
