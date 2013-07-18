@@ -450,6 +450,16 @@ def applyCorrs(arr, labelCodes, varWIdx, nEntries):
         topptCorr = 1.0#corr.Get_ToppTCorrection(evtType, avgTopPt)
         dphiCorr = corr.Get_BkgDeltaPhiCorrection(evtType, dphi, njet)
         mcCorr = row[varWIdx['weight_MC']]
-        correctionWeights[count]=1.0*hNLOCorr*topptCorr*dphiCorr*mcCorr
+        puCorrVec = row[varWIdx['weight_PU']]
+        puCorr = puCorrVec[0]
+        weight_lepton1_vec = row[varWIdx['weight_lepton1']]
+        weight_lepton1 = 1
+        for c in weight_lepton1_vec:
+            weight_lepton1 *= c
+        
+        metCorr = row[varWIdx['weight_MET']]
+        correctionWeights[count]=math.fabs(1.0*hNLOCorr*topptCorr*dphiCorr*mcCorr*metCorr*weight_lepton1)#*puCorr
+        if correctionWeights[count] < 0.5:
+            print correctionWeights[count]
         count+=1
     return correctionWeights

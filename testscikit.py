@@ -31,8 +31,8 @@ varIdxBkg = []
 varIdxData = []
 varWIdx = []
 variablesNames = createHists.readVarNamesXML()
-varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1,'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1}
-varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1, 'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1}
+varWeightsHash = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1,'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1, 'weight_PU' : -1, 'weight_lepton1' : -1, 'weight_MET' : -1}
+varWeightsHashBkg = {'xs':-1,'xscorr1':-1,'xscorr2':-1,'final_xs':-1,'label':-1,'label_code':-1,'name':-1,'name_code':-1, 'AllEntries':-1, 'VpT_truth':-1, 'dPhiVBB': -1, 'weight_MC' : -1, 'weight_PU' : -1, 'weight_lepton1' : -1, 'weight_MET' : -1}
 foundVariables = []
 foundVariablesBkg = []
 foundVariablesData = []
@@ -49,7 +49,7 @@ dataSample.getVariableNames(variablesNames, foundVariablesData, varIdxData)
 nEntries = 14443742.0
 nEntries = 13600000.0 + 82900.0
 
-lumi = 20300.0
+lumi = 12746.00#20300.0
 #lumi for 2011
 #lumi = 4700.00
 #lumi for 2012
@@ -155,6 +155,7 @@ createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A,
 from sklearn.tree import DecisionTreeClassifier
 
 print 'starting training on AdaBoostClassifier'
+raw_input()
 #class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)
 
 

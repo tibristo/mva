@@ -167,8 +167,8 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
         for i in c:
             lbl = labelCodes[int(labelsForSample[lblcount])]
             if lbl in histDict.keys():
-                histDict[lbl][histidx].fill(i)
-                histDict[lbl][histidx].scale(corrWeights[histidx])
+                histDict[lbl][histidx].fill(i,corrWeights[histidx])
+                #histDict[lbl][histidx].scale(corrWeights[histidx])
             lblcount += 1
       
         histidx+=1

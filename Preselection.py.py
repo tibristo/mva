@@ -31,6 +31,12 @@ treename,branches = read.readXml(dataType)
 
 print "sys.argv = ", sys.argv
 if not len(sys.argv)>=2:  raise(Exception, "Must specify inputFiles as argument!")
+channel = 'both'
+if len(sys.argv) == 3:
+	if 'EL' in sys.argv[3].upper:
+		channel = 'el'
+	if 'MU' in sys.argv[3].upper:
+		channel = 'mu'
    
 inputFiles = sys.argv[1].split(',')
 print "inputFiles = ", inputFiles
@@ -53,7 +59,7 @@ ch.SetBranchStatus("*",0)
 
 # Write to new file
 outFile_in = inputFiles[0].split('/')[-1]
-outFile = "%s.root" % (treename+"_"+outFile_in[:outFile_in.find('.root')]+"_"+sys.argv[2])
+outFile = "%s.root" % (treename+"_"+outFile_in[:outFile_in.find('.root')]+"_"+sys.argv[2]+"_"+channel)
 #outFile = "/Users/katharine/Documents/Work/MSSMAtautau/Data/MSSMA200tautaulh.SlimmedD3PD.root"
 newFile = TFile(outFile, "RECREATE")
 h_n_events = ROOT.TH1D('h_n_events', '', 20, -0.5, 20.5)
@@ -148,7 +154,7 @@ print 'type of Sample: ' + sys.argv[2]
 totalFound = 0
 tightLeptons = 0
 tightLeptonsPlusLoose = 0
-log = open('presel'+sys.argv[2]+'Log.txt','w')
+log = open('presel'+sys.argv[2]+'_'+channel+'Log.txt','w')
 entryNtuple.Write("numEntries")
 print 'start looop'
 for i in range(nEntries):
@@ -297,7 +303,13 @@ for i in range(nEntries):
 		else:
 			lep1 = muonTLorentzMediumW[0]
 	# check exactly 1 WH signal lepton and exactly 1 loose lepton (for cutflow comparison)
-	if eventType[1]:
+	if eventType[1] and channel == 'both':
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	elif eventType[1] and channel == 'el' and numTypeElectrons[2] == 1:
+		cut.addCut(cutNum, cuts)
+		cutNum += 1
+	elif eventType[1] and channel == 'mu' and numTypeMuons[2] == 1:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	# add the else here for the cutflow comparison
@@ -735,9 +747,9 @@ log.close()
 # use GetCurrentFile just in case we went over the (customizable) maximum file size
 ch_new.GetCurrentFile().Write()
 ch_new.GetCurrentFile().Close()
-cut.writeCuts(treename, '_'+outFile_in[:outFile_in.find('.root')]+'_'+sys.argv[2], cuts)
+cut.writeCuts(treename, '_'+outFile_in[:outFile_in.find('.root')]+'_'+sys.argv[2]+'_'+channel, cuts)
 
-final_log = open('presel'+sys.argv[2]+'_Final_Log.txt','w')
+final_log = open('presel'+sys.argv[2]+'_'+channel+'_Final_Log.txt','w')
 final_log.write('nEntries: ' + str(nEntries)+'\n')
 final_log.write('totalFound: ' + str(totalFound)+'\n')
 final_log.write('tightLeptons: ' + str(tightLeptons)+'\n')
