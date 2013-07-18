@@ -37,7 +37,7 @@ if len(sys.argv) == 3:
 		channel = 'el'
 	if 'MU' in sys.argv[3].upper:
 		channel = 'mu'
-   
+print 'channel ' + channel   
 inputFiles = sys.argv[1].split(',')
 print "inputFiles = ", inputFiles
 ch = TChain(treename)
