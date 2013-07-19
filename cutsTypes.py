@@ -87,23 +87,23 @@ def matchTriggerElectron(trigger_el, el_triggermatched, channel, RunNumber):
 
 			if( checkBit(trigger_el, triggerBitEl.EF_e60_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e60_medium1) ):
 				matchtrigger = True
-	else:#  2011 data
+		else:#  2011 data
       
-		period = getPeriodData2011(RunNumber);
+			period = getPeriodData2011(RunNumber);
       
-		if (period >= 0 and period <= 6) : #// B-I
-			if( checkBit(trigger_el, triggerBitEl.EF_e20_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e20_medium) ):
-				matchtrigger = True
-		elif (period <= 8) : #// J-K
-			if( checkBit(trigger_el, triggerBitEl.EF_e22_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e22_medium) ):
-				matchtrigger = True
-		elif (period <= 10) :# // L-M
-			if( checkBit(trigger_el, triggerBitEl.EF_e22vh_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e22vh_medium1) ):
-				matchtrigger = True
-			if( checkBit(trigger_el, triggerBitEl.EF_e45_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e45_medium1) ):
-				matchtrigger = True
-		else:
-			print "WARNING: 2011 RunNumber not found!"
+			if (period >= 0 and period <= 6) : #// B-I
+				if( checkBit(trigger_el, triggerBitEl.EF_e20_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e20_medium) ):
+					matchtrigger = True
+			elif (period <= 8) : #// J-K
+				if( checkBit(trigger_el, triggerBitEl.EF_e22_medium) and checkBit( el_triggermatched,  triggerBitEl.EF_e22_medium) ):
+					matchtrigger = True
+			elif (period <= 10) :# // L-M
+				if( checkBit(trigger_el, triggerBitEl.EF_e22vh_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e22vh_medium1) ):
+					matchtrigger = True
+				if( checkBit(trigger_el, triggerBitEl.EF_e45_medium1) and checkBit( el_triggermatched,  triggerBitEl.EF_e45_medium1) ):
+					matchtrigger = True
+			else:
+				print "WARNING: 2011 RunNumber not found!"
 	return matchtrigger
 
 def matchTriggerMuon(trigger_mu, mu_triggermatched, channel, RunNumber): 
@@ -123,21 +123,21 @@ def matchTriggerMuon(trigger_mu, mu_triggermatched, channel, RunNumber):
 			if( checkBit(trigger_mu, triggerBitMu.EF_mu36_tight) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu36_tight) ):
 				matchtrigger = True
 
-	else: #2011 data
+		else: #2011 data
       
-		period = getPeriodData2011(RunNumber)
-      
-		if (period >= 0 and period <= 6): # B-I
-			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG ) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG ) ):
-				matchtrigger = True
-		elif (period <= 8): # J-K
-			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
-				matchtrigger = True
-		elif (period <= 10): # L-M
-			if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
-				matchtrigger = True
-		else:
-			print "WARNING: 2011 RunNumber not found!"
+			period = getPeriodData2011(RunNumber)
+			
+			if (period >= 0 and period <= 6): # B-I
+				if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG ) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG ) ):
+					matchtrigger = True
+			elif (period <= 8): # J-K
+				if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
+					matchtrigger = True
+			elif (period <= 10): # L-M
+				if( checkBit(trigger_mu, triggerBitMu.EF_mu18_MG_medium) and checkBit( mu_triggermatched,  triggerBitMu.EF_mu18_MG_medium) ):
+					matchtrigger = True
+			else:
+				print "WARNING: 2011 RunNumber not found!"
 	return matchtrigger
 
 
@@ -146,11 +146,11 @@ def matchTriggerMuon(trigger_mu, mu_triggermatched, channel, RunNumber):
 #	return type
 
 def triggerEl(trigger_el, runNumber):
-	passTrigger = bool(checkBit(trigger_el, triggerBitEl.EF_e24vhi_medium1) or runNumber <= 191933 )
+	passTrigger = bool(checkBit(trigger_el, triggerBitEl.EF_e24vhi_medium1) or checkBit(trigger_el, triggerBitEl.EF_e60_medium1) or runNumber <= 191933 )
 	return passTrigger
 
 def triggerMu(trigger_mu, runNumber = 0):
-	#passTrigger = bool()
+	passTrigger = bool(checkBit(trigger_mu, triggerBitMu.EF_mu24i_tight) or checkBit(trigger_mu, triggerBitMu.EF_mu36_tight)or runNumber <= 191933)
 	return True
 
 def noEvent(eventArr):

@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 #return iter->second.final_xsection*m_lumi/iter->second.nevents;
 import readMethods as read
 import cutsTypes as cut
-cuts = [['mcTypeVeto',0],['looseLeptonMin1',0],['WHSignalLepton',0],['looseLeptonVeto',0],['TriggerMatched',0],['metVeto',0],['mTWlowCut',0],['mTWlt120',0],['jetMin2jets',0],['jetMin2Veto',0],['bJetMin1',0],['bJetExactly2',0],['jetVeto',0],['dRgt07ptWlt200',0],\
+cuts = [['mcTypeVeto',0],['looseLeptonMin1',0],['WHSignalLepton',0],['looseLeptonVeto',0],['Trigger',0],['TriggerMatched',0],['metVeto',0],['mTWlowCut',0],['mTWlt120',0],['jetMin2jets',0],['jetMin2Veto',0],['bJetMin1',0],['bJetExactly2',0],['jetVeto',0],['dRgt07ptWlt200',0],\
 ['dRlt34ptWlt90',0],['dRlt30ptWgt90_lt120',0],['dRlt23ptWgt120_lt160',0],['dRlt18ptWgt160_lt200',0],['dRlt14ptWgt200',0],['jet1pT',0],['pTWgt0_lt90',0],['pTWgt90_lt120',0],['pTWgt120_lt160',0],['pTWgt160_lt200',0],['pTWgt200',0],['pTWgt120',0]]
 #cuts = [['mcTypeVeto',0],['leptonVeto',0],['jetCuts',0],['pTveto1',0],['metVeto',0],['massVeto',0],['pTveto2',0]]
 #define dataType as MC or DATA
@@ -245,11 +245,11 @@ for i in range(nEntries):
 			numTypeElectrons[0] = numTypeElectrons[0] + 1
 			electronTLorentzLoose.append(elVec.Clone())
 			goodElectrons = goodElectrons + 1
-		if (typeFull[1]):#medium lepton
+		if (typeFull[1]):#ZHmedium lepton
 			numTypeElectrons[1] = numTypeElectrons[1] + 1
 			electronTLorentzMediumZ.append(elVec.Clone())
 			goodElectrons = goodElectrons + 1
-		if (typeFull[2]):#medium lepton
+		if (typeFull[2]):#WHmedium lepton
 			numTypeElectrons[2] = numTypeElectrons[2] + 1
 			electronTLorentzMediumW.append(elVec.Clone())
 			goodElectrons = goodElectrons + 1
@@ -270,7 +270,7 @@ for i in range(nEntries):
 	#	eventType[0] = True
 
 	# check at least 1 loose lepton (for cutflow comparison)
-	if (numTypeMuons[0] + numTypeElectrons[0] >= 1):
+	if (numTypeMuons[0] + numTypeElectrons[0] >= 1) or (numTypeMuons[2] + numTypeElectrons[2] >=1 ):
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:
@@ -283,7 +283,7 @@ for i in range(nEntries):
 	else:
 		continue
 
-	if (numTypeMuons[2] + numTypeElectrons[2])  == 1 and  (numTypeMuons[0] + numTypeElectrons[0])  == 0:#goodElectrons + goodMuons == 1:#1 tight, 0 loose
+	if (numTypeMuons[0] + numTypeElectrons[0])  == 0:#goodElectrons + goodMuons == 1:#1 tight, 0 loose
                 #TODO:  check that this is right... should require exactly 1 loose lepton, is this just for stats?
 		# commenting this out for now, check that eventType[1] is True
 		eventType[1] = True
@@ -296,7 +296,7 @@ for i in range(nEntries):
 		else:
 			lep1 = muonTLorentzMediumW[0]
 		# lep2 = (0,0,0,0)
-	if (numTypeMuons[2] + numTypeElectrons[2]) == 1 and (numTypeMuons[0] + numTypeElectrons[0]) == 1:
+	elif (numTypeMuons[0] + numTypeElectrons[0]) == 1:
 		eventType[1] = True
 		if numTypeElectrons[2]== 1:
 			lep1 = electronTLorentzMediumW[0]
@@ -306,7 +306,7 @@ for i in range(nEntries):
 	if eventType[1] and channel == 'both':
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
-	elif eventType[1] and channel == 'el' and numTypeElectrons[2] == 1:
+	elif eventType[1] and channel == 'el' and numTypeElectrons[2] == 1:# and numTypeMuons[0] == 0:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	elif eventType[1] and channel == 'mu' and numTypeMuons[2] == 1:
@@ -350,7 +350,7 @@ for i in range(nEntries):
 	# *************************** Trigger *********************************
 	passTrigger = False
 	runNumber = ch.RunNumber
-	'''if (numTypeElectrons[2] == 1):
+	if (numTypeElectrons[2] == 1):
 		passTrigger = cut.triggerEl(ch.trigger_el, runNumber)
 	else:
 		passTrigger = cut.triggerMu(ch.trigger_mu, runNumber)
@@ -358,7 +358,7 @@ for i in range(nEntries):
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:
-		continue'''
+		continue
 	# *************************** Trigger Matching ************************
 	passTriggerMatch = False
 	if (numTypeElectrons[2] == 1):
@@ -366,7 +366,7 @@ for i in range(nEntries):
 	else:
 		passTriggerMatch = cut.matchTriggerMuon(ch.trigger_mu, mu_triggerMatched, 1, runNumber)
 
-	if passTriggerMatch:
+	if passTriggerMatch or data:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:

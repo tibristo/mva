@@ -18,11 +18,35 @@ if len(sys.argv) < 1:
 
 # read in samples and convert to numpy arrays
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
-sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'el':
+        sig = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.mc12_8TeV.OneLepton.Nominal_sig_el.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.mc12_8TeV.OneLepton.Nominal_bkg_el.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.data12_8TeV.OneLepton.Electron_data_el.root','Ntuple','data')
+        print 'el channel'
+    elif sys.argv[1] == 'mu':
+        sig = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.mc12_8TeV.OneLepton.Nominal_sig_mu.root','Ntuple','sig')
+#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.mc12_8TeV.OneLepton.Nominal_bkg_mu.root','Ntuple','bkg')
+#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/channels/Ntuple_AnalysisManager.data12_8TeV.OneLepton.Muon_data_mu.root','Ntuple','data')
+        print 'mu channel'
+    else:
+        sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+        print 'both channels'
+else:
+    sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
+    bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
+    dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+    print 'both channels'
 print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -49,7 +73,7 @@ dataSample.getVariableNames(variablesNames, foundVariablesData, varIdxData)
 nEntries = 14443742.0
 nEntries = 13600000.0 + 82900.0
 
-lumi = 12746.00#20300.0
+lumi = 13000.00#20300.0
 #lumi for 2011
 #lumi = 4700.00
 #lumi for 2012
