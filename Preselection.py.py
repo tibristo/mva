@@ -33,9 +33,9 @@ print "sys.argv = ", sys.argv
 if not len(sys.argv)>=2:  raise(Exception, "Must specify inputFiles as argument!")
 channel = 'both'
 if len(sys.argv) == 4:
-	if 'EL' in str(sys.argv[3]).upper:
+	if 'EL' in str(sys.argv[3]).upper():
 		channel = 'el'
-	if 'MU' in str(sys.argv[3]).upper:
+	if 'MU' in str(sys.argv[3]).upper():
 		channel = 'mu'
 print 'channel ' + channel   
 inputFiles = sys.argv[1].split(',')
