@@ -32,10 +32,10 @@ treename,branches = read.readXml(dataType)
 print "sys.argv = ", sys.argv
 if not len(sys.argv)>=2:  raise(Exception, "Must specify inputFiles as argument!")
 channel = 'both'
-if len(sys.argv) == 3:
-	if 'EL' in sys.argv[3].upper:
+if len(sys.argv) == 4:
+	if 'EL' in sys.argv[4].upper:
 		channel = 'el'
-	if 'MU' in sys.argv[3].upper:
+	if 'MU' in sys.argv[4].upper:
 		channel = 'mu'
 print 'channel ' + channel   
 inputFiles = sys.argv[1].split(',')
