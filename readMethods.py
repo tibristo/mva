@@ -44,7 +44,11 @@ def readXml(dataType):
                     treename = grandchild.get('name')
                 elif grandchild.tag == 'branch':
                     branches.append(grandchild.get('name'))
-    return treename,branches
+    cuts = []
+    for child in root.findall('cuts'): # all cuts
+        cuts.append([child.get('name'), 0])
+
+    return treename,branches,cuts
 
 def readBkg(bkgFile):
 	filename = 'SampleInfo'+bkgFile+'.csv'

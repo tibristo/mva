@@ -115,6 +115,34 @@
     <branch name='weight2Tag'/>
     <branch name='weightbTagDT'/>
   </sampleType>
-
+  <cuts>
+    <cut name='mcTypeVeto'/>
+    <cut name='looseLeptonMin1'/>
+    <cut name='WHSignalLepton'/>
+    <cut name='looseLeptonVeto'/>
+    <cut name='Trigger'/>
+    <cut name='TriggerMatched'/>
+    <cut name='metVeto'/>
+    <cut name='mTWlowCut'/>
+    <cut name='mTWlt120'/>
+    <cut name='jetMin2jets'/>
+    <cut name='jetMin2Veto'/>
+    <cut name='bJetMin1'/>
+    <cut name='bJetExactly2'/>
+    <cut name='jetVeto'/>
+    <cut name='dRgt07ptWlt200'/>
+    <cut name='dRlt34ptWlt90'/>
+    <cut name='dRlt30ptWgt90_lt120'/>
+    <cut name='dRlt23ptWgt120_lt160'/>
+    <cut name='dRlt18ptWgt160_lt200'/>
+    <cut name='dRlt14ptWgt200'/>
+    <cut name='jet1pT'/>
+    <cut name='pTWgt0_lt90'/>
+    <cut name='pTWgt90_lt120'/>
+    <cut name='pTWgt120_lt160'/>
+    <cut name='pTWgt160_lt200'/>
+    <cut name='pTWgt200'/>
+    <cut name='pTWgt120'/>
+  </cuts>
 
 </settings>
