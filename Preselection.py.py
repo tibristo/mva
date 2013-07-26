@@ -164,8 +164,13 @@ foundevent = False
 # Turn on ttree cache: http://root.cern.ch/drupal/content/spin-little-disk-spin
 #tree->SetCacheSize(10000000);
 #tree->AddBranchToCache("*");
-ch.SetCacheSize(10000000)
-[ ch.AddBranchToCache(branchname) for branchname in branches ]
+# branches here need to point to the tree branches, not just text!!!!!
+branchDict = {}
+ch.SetCacheSize(100000000)#100MB
+cacheBranches = ['mc_channel_number','mu_type','el_type','mu_pt','mu_eta','mu_phi', 'mu_trackIso','mu_caloIso', 'mu_triggermatched', 'trigger_mu','el_pt','el_eta','el_phi', 'el_trackIso','el_caloIso','el_triggermatched','trigger_el','RunNumber']
+for branchname in cacheBranches:
+	branchDict[branchname] = ch.GetBranch(branchname)
+	ch.AddBranchToCache(branchDict[branchname]
 
 for i in range(nEntries):
 	if i%1000==0:
@@ -173,8 +178,10 @@ for i in range(nEntries):
 
 	cutNum = 0	
 	foundevent = False
-	ch.GetEntry(i) # Need to change this to read in single branches at a time, first finalise names of branches though
+        ch.LoadTree(i)			    
+	#ch.GetEntry(i) # Need to change this to read in single branches at a time, first finalise names of branches though
         #look here http://root.cern.ch/phpBB3/viewtopic.php?f=14&t=12570
+	branchDict['mc_channel_number'].GetEntry(i)
 	mc_ch_num = ch.mc_channel_number
 	if (data == False):
 		ind = cut.getIndexOfSample(mc_ch_num, samples)
@@ -186,6 +193,8 @@ for i in range(nEntries):
 
 	h_n_events.Fill(0) # Count all events
 	#count and select all leptons
+	branchDict['mu_type'].GetEntry(i)
+	branchDict['el_type'].GetEntry(i)
 	numLep = len(ch.mu_type) + len(ch.el_type)
 	numTypeMuons = [0,0,0,0]#loose, ZHmedium, WHmedium, tight
 	lep1 = TLorentzVector()
@@ -198,12 +207,18 @@ for i in range(nEntries):
 	electronTLorentzMediumZ = []
 	electronTLorentzLoose = []
 	electronTLorentzSignal = []
+	branchDict['mu_pt'].GetEntry(i)
 	numMuons = len(ch.mu_pt)
 	el_triggerMatched = 0
 	mu_triggerMatched = 0
 
 	m = 0.1057
 	muVec = TLorentzVector()
+        branchDict['mu_trackIso'].GetEntry(i)
+        branchDict['mu_caloIso'].GetEntry(i)
+        branchDict['mu_eta'].GetEntry(i)
+        branchDict['mu_phi'].GetEntry(i)
+			    
 	for x in xrange(0,numMuons):
 		type = ch.mu_type[x]
 		typeFull = cut.leptonType(type, ch.mu_trackIso[x], ch.mu_caloIso[x])
@@ -226,10 +241,16 @@ for i in range(nEntries):
 			muonTLorentzSignal.append(muVec.Clone())
 			
 	numTypeElectrons = [0,0,0,0]#loose, ZHsignal, WHsignal, WHMJ
+        branchDict['el_pt'].GetEntry(i)
 	numElectrons = len(ch.el_pt)
 	m = 0.511/1000.0
 	elVec = TLorentzVector()
 	#get all electrons
+        branchDict['el_trackIso'].GetEntry(i)
+        branchDict['el_caloIso'].GetEntry(i)
+        branchDict['el_eta'].GetEntry(i)
+        branchDict['el_phi'].GetEntry(i)
+        branchDict['el_triggermatched'].GetEntry(i)
 	for x in xrange(0,numElectrons):
 		type = ch.el_type[x]
 		typeFull = cut.leptonType(type, ch.el_trackIso[x], ch.el_caloIso[x])
@@ -307,10 +328,13 @@ for i in range(nEntries):
 
 	# *************************** Trigger *********************************
 	passTrigger = False
+        branchDict['RunNumber'].GetEntry(i)
 	runNumber = ch.RunNumber
 	if (numTypeElectrons[2] == 1):
+                branchDict['trigger_el'].GetEntry(i)
 		passTrigger = cut.triggerEl(ch.trigger_el, runNumber)
 	else:
+                branchDict['trigger_mu'].GetEntry(i)
 		passTrigger = cut.triggerMu(ch.trigger_mu, runNumber)
 	if passTrigger:
 		cut.addCut(cutNum, cuts)
@@ -331,6 +355,7 @@ for i in range(nEntries):
 		continue
 	
 	# *************************** Reconstruct the jets ********************
+        ch.GetEntry(i)
 	numJets = len(ch.jet_pt)
 	numSignalJets = 0
 	numOtherJets = 0
