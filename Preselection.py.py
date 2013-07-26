@@ -417,7 +417,7 @@ for i in range(nEntries):
 		m_Wmass = math.sqrt(m_Wet*m_Wet-m_Wpt*m_Wpt)
 		m_Wphi = TMath.ATan2(m_Wpy, m_Wpx)
 
-	ptvArr = [met, m_Wpt, m_Zpt]
+	ptvArr = [met, m_Wpt, -999]#m_Zpt]
 	# ********************** calculate mTW *****************************
 	ptv = met
 	if eventType[1]:#check mTW
