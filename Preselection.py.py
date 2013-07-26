@@ -616,8 +616,7 @@ for i in range(nEntries):
 
 	if eventType[1] and debug:
 		print 'found event!'
-	else:
-		foundevent = False
+
 	if(foundevent==True):
 		#print 'found eventType[1]'
 		nEventsPassedSkim += 1
