@@ -11,13 +11,11 @@ def getIndexOfSample(mc, sample):
 	return -1
 
 def dPhi(phi1, phi2):
-	if phi1 > math.pi:
-		phi1 = phi1 - 2*math.pi
-	if phi2 > math.pi:
-		phi2 = phi2 - 2*math.pi
 	dphi = math.fabs(phi1 - phi2)
-	if (dphi > math.pi):
-		dphi = 2*math.pi - dphi
+	if (dphi >= math.pi):
+		dphi -= math.pi
+	elif dphi < math.pi:
+		dphi += math.pi
 	return dphi
 	
 def dR(eta1, phi1, eta2, phi2):
