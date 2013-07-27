@@ -218,7 +218,7 @@ for i in range(nEntries):
         branchDict['mu_caloIso'].GetEntry(i)
         branchDict['mu_eta'].GetEntry(i)
         branchDict['mu_phi'].GetEntry(i)
-			    
+	branchDict['mu_triggermatched'].GetEntry(i)
 	for x in xrange(0,numMuons):
 		type = ch.mu_type[x]
 		typeFull = cut.leptonType(type, ch.mu_trackIso[x], ch.mu_caloIso[x])
