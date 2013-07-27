@@ -170,7 +170,7 @@ ch.SetCacheSize(100000000)#100MB
 cacheBranches = ['mc_channel_number','mu_type','el_type','mu_pt','mu_eta','mu_phi', 'mu_trackIso','mu_caloIso', 'mu_triggermatched', 'trigger_mu','el_pt','el_eta','el_phi', 'el_trackIso','el_caloIso','el_triggermatched','trigger_el','RunNumber']
 for branchname in cacheBranches:
 	branchDict[branchname] = ch.GetBranch(branchname)
-	ch.AddBranchToCache(branchDict[branchname]
+	ch.AddBranchToCache(branchDict[branchname])
 
 for i in range(nEntries):
 	if i%1000==0:
@@ -434,6 +434,10 @@ for i in range(nEntries):
 	metY = (met)*math.sin(metPhi)
 	m_Wpt = 0
 	m_Wmass = 0
+	metVec = TLorentzVector()
+	metVec.SetPtEtaPhiM(met, 0, metPhi, 0)
+	lepVec = TLorentzVector()
+	lepVec.SetPtEtaPhiM(lep1.Pt(),0,lep1.Eta(),0)
 	if eventType[1]:
 		m_Wet  = lep1.Et() + met
 		m_Wpx  = lep1.Px() + metX
@@ -441,6 +445,12 @@ for i in range(nEntries):
 		m_Wpt  = math.sqrt(m_Wpx*m_Wpx+m_Wpy*m_Wpy)
 		m_Wmass = math.sqrt(m_Wet*m_Wet-m_Wpt*m_Wpt)
 		m_Wphi = TMath.ATan2(m_Wpy, m_Wpx)
+		m_Wmass = (metVec+lepVec).M() # Taken from Freiburg code
+		misset = TVector2()
+		misset.SetMagPhi(met, metPhi)
+		lepv2 = TVector2()
+		lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
+		m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
 	# ********************** calculate mTW *****************************
@@ -526,8 +536,8 @@ for i in range(nEntries):
 		cut.addCut(cutNum+3, cuts)
 	elif jetdR < 1.4 and m_Wpt >= 200:
 		cut.addCut(cutNum+4, cuts)
-	elif jetdR > 0.7:
-		removethiswhendonecheckingcutflow = 'okay'
+	#elif jetdR > 0.7:
+	#	removethiswhendonecheckingcutflow = 'okay'
 	else:
 		continue
 	cutNum +=5
