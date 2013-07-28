@@ -449,7 +449,7 @@ for i in range(nEntries):
 		misset = TVector2()
 		misset.SetMagPhi(met, metPhi)
 		lepv2 = TVector2()
-		lepv2.SetMagPhi(lep1 t(), lep1.Phi())
+		lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
 		m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
