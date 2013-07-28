@@ -536,7 +536,7 @@ for i in range(nEntries):
 		cut.addCut(cutNum+3, cuts)
 	elif jetdR < 1.4 and m_Wpt >= 200:
 		cut.addCut(cutNum+4, cuts)
-	elif jetdR > 0.7 and m_Wpt >= 200:
+	elif jetdR > 0.7 and m_Wpt < 200:
 		removethiswhendonecheckingcutflow = 'okay'
 	else:
 		continue
