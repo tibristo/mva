@@ -449,7 +449,7 @@ for i in range(nEntries):
 		misset = TVector2()
 		misset.SetMagPhi(met, metPhi)
 		lepv2 = TVector2()
-		lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
+		lepv2.SetMagPhi(lep1 t(), lep1.Phi())
 		m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
@@ -536,8 +536,8 @@ for i in range(nEntries):
 		cut.addCut(cutNum+3, cuts)
 	elif jetdR < 1.4 and m_Wpt >= 200:
 		cut.addCut(cutNum+4, cuts)
-	#elif jetdR > 0.7:
-	#	removethiswhendonecheckingcutflow = 'okay'
+	elif jetdR > 0.7 and m_Wpt >= 200:
+		removethiswhendonecheckingcutflow = 'okay'
 	else:
 		continue
 	cutNum +=5
