@@ -1,6 +1,19 @@
 __all__ = ['cuts','getIndexOfSample','dPhi','dR','enum','addCut','noEvent','writeCuts','leptonType']
 import math
 
+indexDict = {}
+def createIndexDict(sample):
+	global indexDict
+	for x in sample:
+		if x[0] not in indexDict.keys():
+			indexDict[x[0]]=1
+
+def checkIndexOfSample(mc):
+	global indexDict
+	if str(mc) in indexDict.keys():
+		return True
+	return False
+
 def getIndexOfSample(mc, sample):
 	for x in xrange(0,len(sample)):
 		#print int(sample[x][0])

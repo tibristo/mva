@@ -172,6 +172,8 @@ for branchname in cacheBranches:
 	branchDict[branchname] = ch.GetBranch(branchname)
 	ch.AddBranchToCache(branchDict[branchname])
 
+cut.createIndexDict(samples)
+
 for i in range(nEntries):
 	if i%1000==0:
 		print "Processing event nr. %i of %i" % (i,nEntries)
@@ -183,9 +185,10 @@ for i in range(nEntries):
         #look here http://root.cern.ch/phpBB3/viewtopic.php?f=14&t=12570
 	branchDict['mc_channel_number'].GetEntry(i)
 	mc_ch_num = ch.mc_channel_number
+	
 	if (data == False):
-		ind = cut.getIndexOfSample(mc_ch_num, samples)
-		if ind == -1:
+		okSample = cut.checkIndexOfSample(mc_ch_num)
+		if not okSample:
 			continue
 	
 	cut.addCut(cutNum,cuts)
@@ -640,6 +643,12 @@ for i in range(nEntries):
 
 	label = ''
 	if (data == False):
+
+
+	if (data == False):
+		ind = cut.getIndexOfSample(mc_ch_num, samples)
+		if ind == -1:
+			continue
 		varStruct.xs = float(samples[ind][1])
 		varStruct.xscorr1 = float(samples[ind][2])
 		varStruct.xscorr2 = float(samples[ind][3])

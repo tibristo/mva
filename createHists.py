@@ -204,7 +204,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
                 allHistStack[rwcount].GetYaxis().SetTitle('# Events')
                 legendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 allLegendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
-                c1.SaveAs("histDict"+str(nameOfType)+str(subset)+str(rwcount)+".png")
+                #c1.SaveAs("histDict"+str(nameOfType)+str(subset)+str(rwcount)+".png")
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
         rwcount_outer += 1
     log.close()
@@ -316,7 +316,7 @@ def createHistsData(sample, foundVariables, allHistStack, allLegendStack, subset
                 histDict[rw][rwcount].draw('hist')
                 legendStack[rwcount].AddEntry( histDict[rw][rwcount], 'F')
                 allLegendStack[rwcount].AddEntry(histDict[rw][rwcount], 'F')
-                c1.SaveAs("histDictData"+str(subset)+str(rwcount)+".png")
+                #c1.SaveAs("histDictData"+str(subset)+str(rwcount)+".png")
                 log.write(rw + '['+str(rwcount)+'] entries: ' + str(histDict[rw][rwcount].GetEntries())+'\n')
     log.close()
 
@@ -381,7 +381,7 @@ def drawAllTestStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weightsP
             
             legend.Draw('same')
             c1.Write()
-            c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
+            #c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
             hist2idx+=1
         
         drawStack(testAStack, legendSigStack, signal.returnFoundVariables(), 'Sig', str('Test'+subset)) # draw histograms
@@ -442,7 +442,7 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weights
             
             legend.Draw('same')
             c1.Write()
-            c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
+            #c1.SaveAs(signal.returnFoundVariables()[hist2idx]+".png")
             hist2idx+=1
         
         drawStack(testAStack, legendSigStack, signal.returnFoundVariables(), 'Sig', str('Train'+subset)) # draw histograms
