@@ -472,7 +472,7 @@ for i in range(nEntries):
 			cutNum += 1
 		else:
 			continue
-		if m_Wpt < 120:
+		if False:#m_Wpt < 120:
 			eventType[1] = False
 			# continue here for cutflow comparison
 			continue

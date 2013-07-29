@@ -20,18 +20,18 @@ if len(sys.argv) < 1:
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
 if len(sys.argv) > 1:
     if sys.argv[1] == 'el':
-        sig = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_sig_el12_FullCutflow.root','Ntuple','sig')
+        sig = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_sig_el12_FullCutflow.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_bkg_el12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_bkg_el12.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_dataEl12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_dataEl12.root','Ntuple','data')
         print 'el channel'
     elif sys.argv[1] == 'mu':
-        sig = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_sig_mu12_FullCutflow.root','Ntuple','sig')
+        sig = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_sig_mu12_FullCutflow.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_bkg_mu12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_bkg_mu12.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/ttreecache/Ntuple120_TTreeCache_trigger_dataMu12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/newmtw/Ntuple120_newmtw_trigger_dataMu12.root','Ntuple','data')
         print 'mu channel'
     else:
         sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
@@ -179,12 +179,13 @@ createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A,
 from sklearn.tree import DecisionTreeClassifier
 
 print 'starting training on AdaBoostClassifier'
-raw_input()
+#raw_input()
 #class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)
 
 
 from sklearn.ensemble import AdaBoostClassifier
 from time import clock
+'''
 # Build a forest and compute the feature importances
 ada = AdaBoostClassifier(DecisionTreeClassifier(compute_importances=True,max_depth=4,min_samples_split=2,min_samples_leaf=100),n_estimators=400, learning_rate=0.5, algorithm="SAMME",compute_importances=True)
 start = clock()
@@ -216,7 +217,7 @@ print "Feature ranking:"
 
 for f in xrange(12):
     print "%d. feature %d (%f)" % (f + 1, indicesada[f], importancesada[indicesada[f]]) + " " +variableNamesSorted[f]
-
+'''
 
 # Plot the feature importances of the forest
 # We need this to run in batch because it complains about not being able to open display
@@ -226,7 +227,7 @@ import matplotlib.pyplot as plt
 from pylab import * 
 
 import pylab as pl
-
+'''
 pl.figure()
 pl.title("Feature importances Ada")
 pl.bar(xrange(len(variableNamesSorted)), importancesada[indicesada],
@@ -234,15 +235,15 @@ pl.bar(xrange(len(variableNamesSorted)), importancesada[indicesada],
 pl.xticks(xrange(12), variableNamesSorted)#indicesada)
 pl.xlim([-1, 12])
 pl.show()
-
+'''
 plot_colors = "rb"
 plot_step = 1000.0
 class_names = "AB"
 
 
-
-pl.figure(figsize=(15, 5))
 '''
+pl.figure(figsize=(15, 5))
+
 # Plot the decision boundaries
 pl.subplot(131)
 x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
@@ -274,7 +275,7 @@ pl.axis("tight")
 pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
-'''
+
 
 
 
@@ -322,6 +323,121 @@ endIdx = len(xtA)#/2
 #tpr is signal efficiency: num(s)/total(s)
 for i in range(1):
     probas_ = ada.predict_proba(xtA[beginIdx:endIdx])
+    # Compute ROC curve and area the curve
+    fpr, tpr, thresholds, rej = sc.roc_curve_rej(ytA[beginIdx:endIdx], probas_[:,1])
+    #mean_tpr += interp(mean_fpr, fpr, tpr)
+    #mean_tpr[0] = 0.0
+    roc_auc = auc(tpr,rej)#auc(fpr, tpr)
+    print i
+    pl.plot(tpr, rej, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc), color=plot_colors[i])
+    beginIdx = endIdx
+    endIdx = len(xtA)
+
+pl.show()
+raw_input()
+'''
+################################################################################
+################### Train SVM
+################################################################################
+
+from sklearn import svm
+
+# Build a forest and compute the feature importances
+clf = svm.SVC()
+start = clock()
+clf.fit(x, y, weights)
+
+
+elapsed = clock()-start
+print 'time taken for training: ' + str(elapsed)
+import copy
+xtA_D = copy.deepcopy(xtA)
+pred = clf.predict(xtA_D)
+print bincount(pred)
+#print pred
+print len(pred)
+print len(xtA_D)
+createHists.drawSigBkgDistrib(xtA_D, pred, sig.returnFoundVariables())
+
+#importancessvm = clf.coef_
+print clf.score(xtA,ytA)
+#std_mat = std([tree.feature_importances_ for tree in ada.estimators_],
+#             axis=0)
+'''
+indicessvm = argsort(importancessvm)[::-1]
+variableNamesSorted = []
+for i in indicessvm:
+    variableNamesSorted.append(foundVariables[i])
+
+# Print the feature ranking
+print "Feature ranking:"
+
+for f in xrange(12):
+    print "%d. feature %d (%f)" % (f + 1, indicessvm[f], importancessvm[indicessvm[f]]) + " " +variableNamesSorted[f]
+
+
+# Plot the feature importances of the forest
+# We need this to run in batch because it complains about not being able to open display
+
+pl.figure()
+pl.title("Feature importances SVM")
+pl.bar(xrange(len(variableNamesSorted)), importancessvm[indicessvm],
+       color="r", align="center")
+pl.xticks(xrange(12), variableNamesSorted)#indicesada)
+pl.xlim([-1, 12])
+pl.show()
+'''
+plot_colors = "rb"
+plot_step = 1000.0
+class_names = "AB"
+
+
+
+pl.figure(figsize=(15, 5))
+
+# Plot the class probabilities
+class_proba = clf.predict_proba(xtA)[:, -1]
+#pl.subplot(132)
+for i, n, c in zip(xrange(2), class_names, plot_colors):
+    pl.hist(class_proba[ytA == i],
+            bins=50,
+            range=(0, 1),
+            facecolor=c,
+            label='Class %s' % n)
+pl.legend(loc='upper center')
+pl.ylabel('Samples')
+pl.xlabel('Class Probability')
+
+# Plot the two-class decision scores
+twoclass_output = svm.decision_function(xtA)
+
+#reweight twoclass_output
+print twoclass_output
+
+for i in xrange(0,len(twoclass_output)):
+    twoclass_output[i] = twoclass_output[i]+1
+
+pl.subplot(133)
+for i, n, c in zip(xrange(2), class_names, plot_colors):
+    pl.hist(twoclass_output[ytA == i],
+            bins=50,
+            range=(0, 1),
+            facecolor=c,
+            label='Class %s' % n, normed=True)
+pl.legend(loc='upper right')
+pl.ylabel('Samples')
+pl.xlabel('Two-class Decision Scores')
+
+pl.subplots_adjust(wspace=0.25)
+mean_tpr = 0.0
+mean_fpr = linspace(0, 1, 100)
+pl.subplot(132)
+beginIdx = 0
+endIdx = len(xtA)#/2
+#need method to calculate rej: 1-num(b)/total(b)
+#tpr is signal efficiency: num(s)/total(s)
+for i in range(1):
+    probas_ = svm.predict_proba(xtA[beginIdx:endIdx])
     # Compute ROC curve and area the curve
     fpr, tpr, thresholds, rej = sc.roc_curve_rej(ytA[beginIdx:endIdx], probas_[:,1])
     #mean_tpr += interp(mean_fpr, fpr, tpr)
