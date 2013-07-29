@@ -462,12 +462,12 @@ for i in range(nEntries):
 		mtw = m_Wmass
 		ptv = m_Wpt
 		#next two if statements for cutflow comparison only
-		if True:#mtw > 40:# or m_Wpt > 160:
+		if mtw > 40:# or m_Wpt > 160:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
 			continue
-		if True: #mtw < 120: #m_Wpt > 120:
+		if mtw < 120: #m_Wpt > 120:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
@@ -531,16 +531,16 @@ for i in range(nEntries):
 		# ******* Mostly for cutflow comparison, might be useful to keep *********
 	if (jetdR > 0.7 and jetdR < 3.4) and m_Wpt < 90:
 		cut.addCut(cutNum, cuts)
-	elif jetdR < 3.0 and (m_Wpt >= 90 and m_Wpt < 120):
+	elif (jetdR > 0.7 and jetdR < 3.0) and (m_Wpt >= 90 and m_Wpt < 120):
 		cut.addCut(cutNum+1, cuts)
-	elif jetdR < 2.3 and (m_Wpt >= 120 and m_Wpt < 160):
+	elif (jetdR > 0.7 and  jetdR < 2.3) and (m_Wpt >= 120 and m_Wpt < 160):
 		cut.addCut(cutNum+2, cuts)
-	elif jetdR < 1.8 and (m_Wpt >= 160 and m_Wpt < 200):
+	elif (jetdR > 0.7 and jetdR < 1.8) and (m_Wpt >= 160 and m_Wpt < 200):
 		cut.addCut(cutNum+3, cuts)
 	elif jetdR < 1.4 and m_Wpt >= 200:
 		cut.addCut(cutNum+4, cuts)
-	elif jetdR > 0.7 and m_Wpt < 200:
-		removethiswhendonecheckingcutflow = 'okay'
+	#elif jetdR > 0.7:# and m_Wpt < 200:
+	#	removethiswhendonecheckingcutflow = 'okay'
 	else:
 		continue
 	cutNum +=5
