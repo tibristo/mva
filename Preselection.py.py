@@ -642,8 +642,6 @@ for i in range(nEntries):
 		varStruct.mLL = -9999
 
 	label = ''
-	if (data == False):
-
 
 	if (data == False):
 		ind = cut.getIndexOfSample(mc_ch_num, samples)
