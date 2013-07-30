@@ -62,7 +62,7 @@ outFile_in = inputFiles[0].split('/')[-1]
 outFile = "%s.root" % (treename+"_"+outFile_in[:outFile_in.find('.root')]+"_"+sys.argv[2]+"_"+channel)
 
 newFile = TFile(outFile, "RECREATE")
-h_n_events = ROOT.TH1D('h_n_events', '', 20, -0.5, 20.5)
+#h_n_events = ROOT.TH1D('h_n_events', '', 20, -0.5, 20.5)
 
 maxEntries = -1
 #maxEntries = 100
@@ -194,7 +194,7 @@ for i in range(nEntries):
 	cut.addCut(cutNum,cuts)
 	cutNum += 1
 
-	h_n_events.Fill(0) # Count all events
+#	h_n_events.Fill(0) # Count all events
 	#count and select all leptons
 	branchDict['mu_type'].GetEntry(i)
 	branchDict['el_type'].GetEntry(i)
@@ -232,16 +232,16 @@ for i in range(nEntries):
 		if (typeFull[0]): #loose lepton
 			numTypeMuons[0] += 1
 			muonTLorentzLoose.append(muVec.Clone())
-		if (typeFull[1]):#ZHmedium lepton
-			numTypeMuons[1] += 1
-			muonTLorentzMediumZ.append(muVec.Clone())
+#		if (typeFull[1]):#ZHmedium lepton
+#			numTypeMuons[1] += 1
+#			muonTLorentzMediumZ.append(muVec.Clone())
 		if (typeFull[2]):#WHmedium lepton
 			numTypeMuons[2] += 1
 			muonTLorentzMediumW.append(muVec.Clone())
 			mu_triggerMatched = ch.mu_triggermatched[x]
-		if typeFull[3]:#tight lepton
-			numTypeMuons[3] += 1
-			muonTLorentzSignal.append(muVec.Clone())
+#		if typeFull[3]:#tight lepton
+#			numTypeMuons[3] += 1
+#			muonTLorentzSignal.append(muVec.Clone())
 			
 	numTypeElectrons = [0,0,0,0]#loose, ZHsignal, WHsignal, WHMJ
         branchDict['el_pt'].GetEntry(i)
@@ -264,16 +264,16 @@ for i in range(nEntries):
 		if (typeFull[0]):#loose lepton
 			numTypeElectrons[0] += 1
 			electronTLorentzLoose.append(elVec.Clone())
-		if (typeFull[1]):#ZHmedium lepton
-			numTypeElectrons[1] += 1
-			electronTLorentzMediumZ.append(elVec.Clone())
+#		if (typeFull[1]):#ZHmedium lepton
+#			numTypeElectrons[1] += 1
+#			electronTLorentzMediumZ.append(elVec.Clone())
 		if (typeFull[2]):#WHmedium lepton
 			numTypeElectrons[2] += 1
 			electronTLorentzMediumW.append(elVec.Clone())
 			el_triggerMatched = ch.el_triggermatched[x]
-		if typeFull[3]:#tight lepton
-			electronTLorentzSignal.append(elVec.Clone())
-			numTypeElectrons[3] += 1
+#		if typeFull[3]:#tight lepton
+#			electronTLorentzSignal.append(elVec.Clone())
+#			numTypeElectrons[3] += 1
 	
 	
 	eventType = [False,False,False]#0 lepton, 1 lepton, 2 lepton
@@ -321,10 +321,10 @@ for i in range(nEntries):
 	else:
 		continue
 
-	if (numTypeMuons[3] + numTypeElectrons[3]) >= 1:
-		tightLeptons += 1
-	if (numTypeMuons[3] == 1 or numTypeElectrons[3] == 1) and numTypeElectrons[0]+numTypeMuons[0] == 0:
-		tightLeptonsPlusLoose += 1
+#	if (numTypeMuons[3] + numTypeElectrons[3]) >= 1:
+#		tightLeptons += 1
+#	if (numTypeMuons[3] == 1 or numTypeElectrons[3] == 1) and numTypeElectrons[0]+numTypeMuons[0] == 0:
+#		tightLeptonsPlusLoose += 1
 	
 	if cut.noEvent(eventType):
 		continue
@@ -382,6 +382,7 @@ for i in range(nEntries):
 		jetVector = TLorentzVector()
 		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)		
 		if jetVector.Mag() > jetE:
+			print 'complex jet found'
 			jetpt = ch.jet_pt[j]/1000.0
 			jeteta = ch.jet_eta[j]
 			jetphi = ch.jet_phi[j]
@@ -463,7 +464,7 @@ for i in range(nEntries):
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
 	# ********************** calculate mTW *****************************
-	ptv = met
+	#ptv = met
 	if eventType[1]:#check mTW
 		#next two if statements for cutflow comparison only
 		if m_Wmass > 40:# or m_Wpt > 160:
@@ -584,16 +585,8 @@ for i in range(nEntries):
 	if debug:
 		print 'passed jet cuts'
 	
-	if eventType[1]:
-		foundevent = True
+	foundevent = eventType[1]
 
-	if eventType[1]:
-		varStruct.category = 1.0
-		ptv = ptvArr[1]
-	else:
-		varStruct.category = -1.0
-		ptv = 0
-		
 	if cut.noEvent(eventType):
 		continue
 #	cut.addCut(cutNum,cuts)
@@ -607,13 +600,10 @@ for i in range(nEntries):
 	varStruct.dEtaBB = math.fabs(jet1.Eta()-jet2.Eta())
 	bb_phi = (jet1+jet2).Phi()
 	# do we use MET_phi for vbb for 0 lepton???
-
 	if eventType[1]:
+		varStruct.category = 1.0
+		ptv = ptvArr[1]
 		varStruct.dPhiVBB = cut.dPhi(m_Wphi,bb_phi)
-	else:
-		varStruct.dPhiVBB= -9999
-
-	if eventType[1]:
 		varStruct.dPhiLMET = cut.dPhi(lep1.Phi(),ch.MET_phi)
 		dPhiLB1 = cut.dPhi(lep1.Phi(),jet1.Phi())
 		dPhiLB2 = cut.dPhi(lep1.Phi(),jet2.Phi())
@@ -625,13 +615,16 @@ for i in range(nEntries):
 		varStruct.dPhiLMET = -9999
 		varStruct.mTW = -9999
 		varStruct.pTL = -9999
+		varStruct.dPhiVBB= -9999
+		varStruct.category = -1.0
+		ptv = 0
 	varStruct.pTV = ptv
 	varStruct.mBB = (jet1+jet2).M()
 	varStruct.HT = 0
-	if False:#eventType[0]:
-		varStruct.HT = (addJet).Et()+met
-	elif eventType[1]:
-		varStruct.HT = math.fabs(jet1.Pt())+math.fabs(jet2.Pt())+math.fabs(lep1.Pt()) + met
+#	if False:#eventType[0]:
+#		varStruct.HT = (addJet).Et()+met
+#	elif eventType[1]:
+	varStruct.HT = math.fabs(jet1.Pt())+math.fabs(jet2.Pt())+math.fabs(lep1.Pt()) + met
 
 	varStruct.pTB1 = max(jet1.Pt(),jet2.Pt())
 	varStruct.pTB2 = min(jet1.Pt(),jet2.Pt())
@@ -640,10 +633,7 @@ for i in range(nEntries):
 	if debug:
 		print 'set pTimbVH'
 	varStruct.MET = met
-	if eventType[2]:
-		varStruct.mLL = mll
-	else:
-		varStruct.mLL = -9999
+	varStruct.mLL = -9999
 
 	label = ''
 
@@ -679,6 +669,6 @@ cut.writeCuts(treename, '_'+outFile_in[:outFile_in.find('.root')]+'_'+sys.argv[2
 final_log = open('presel'+sys.argv[2]+'_'+channel+'_Final_Log.txt','w')
 final_log.write('nEntries: ' + str(nEntries)+'\n')
 final_log.write('totalFound: ' + str(totalFound)+'\n')
-final_log.write('tightLeptons: ' + str(tightLeptons)+'\n')
-final_log.write('tightLeptonsPlusLoose: ' + str(tightLeptonsPlusLoose))
+#final_log.write('tightLeptons: ' + str(tightLeptons)+'\n')
+#final_log.write('tightLeptonsPlusLoose: ' + str(tightLeptonsPlusLoose))
 final_log.close()
