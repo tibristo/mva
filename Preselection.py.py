@@ -570,8 +570,8 @@ for i in range(nEntries):
 		continue
 	cutNum += 5
 
-	if ptvArr[1] < 120:
-		eventType[1] = False
+	#if ptvArr[1] < 120:
+	#	eventType[1] = False
 		
 	if cut.noEvent(eventType):
 		continue
