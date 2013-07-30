@@ -374,23 +374,29 @@ for i in range(nEntries):
 		print 'numJets: ' +str(numJets)
 	for j in xrange(0,numJets):
 		isTagged = False
-		isSignal = False
-		jetpt = ch.jet_pt[j]/1000.0
-		jeteta = ch.jet_eta[j]
-		jetphi = ch.jet_phi[j]
-		jetE = ch.jet_E[j]/1000.0
+		jetpt = ch.jet_corrected_pt[j]/1000.0
+		jeteta = ch.jet_corrected_eta[j]
+		jetphi = ch.jet_corrected_phi[j]
+		jetE = ch.jet_corrected_E[j]/1000.0
 
-		if jetpt <= 25 or math.fabs(jeteta) >= 4.5:			
+		jetVector = TLorentzVector()
+		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)		
+		if jetVector.Mag() > jetE:
+			jetpt = ch.jet_pt[j]/1000.0
+			jeteta = ch.jet_eta[j]
+			jetphi = ch.jet_phi[j]
+			jetE = ch.jet_E[j]/1000.0
+			jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)
+
+		if jetpt <= 25 or math.fabs(jeteta) >= 4.5 or ch.jet_jvtxf[j] < 0.5:
 			continue
 		if ch.jet_flavor_weight_MV1[j] > 0.795: #
 			isTagged = True
 
-		jetVector = TLorentzVector()
-		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)		
+
 
 		if isTagged and math.fabs(jeteta) < 2.5:
 			numSignalJets += 1
-			isSignal = True
 			if jetpt > jet1.Pt():
 				jet2.SetPtEtaPhiE(jet1.Pt(), jet1.Eta(), jet1.Phi(), jet1.E())
 				jet1.SetPtEtaPhiE(jetpt, jeteta, jetphi, jetE)
@@ -448,26 +454,24 @@ for i in range(nEntries):
 		m_Wpt  = math.sqrt(m_Wpx*m_Wpx+m_Wpy*m_Wpy)
 		m_Wmass = math.sqrt(m_Wet*m_Wet-m_Wpt*m_Wpt)
 		m_Wphi = TMath.ATan2(m_Wpy, m_Wpx)
-		m_Wmass = (metVec+lepVec).M() # Taken from Freiburg code
+		#m_Wmass = (metVec+lepVec).M() # Taken from Freiburg code
 		misset = TVector2()
 		misset.SetMagPhi(met, metPhi)
 		lepv2 = TVector2()
 		lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
-		m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
+		#m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
 	# ********************** calculate mTW *****************************
 	ptv = met
 	if eventType[1]:#check mTW
-		mtw = m_Wmass
-		ptv = m_Wpt
 		#next two if statements for cutflow comparison only
-		if mtw > 40:# or m_Wpt > 160:
+		if m_Wmass > 40:# or m_Wpt > 160:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
 			continue
-		if mtw < 120: #m_Wpt > 120:
+		if m_Wmass < 120: #m_Wpt > 120:
 			cut.addCut(cutNum,cuts)
 			cutNum += 1
 		else:
