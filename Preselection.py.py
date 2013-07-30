@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+\#!/usr/bin/env python
 
 # Author:      T. Bristow (Edinburgh) <Timothy.Michael.Bristow@cern.ch>
 
@@ -608,7 +608,7 @@ for i in range(nEntries):
 		dPhiLB1 = cut.dPhi(lep1.Phi(),jet1.Phi())
 		dPhiLB2 = cut.dPhi(lep1.Phi(),jet2.Phi())
 		varStruct.dPhiLBMin = min(dPhiLB1, dPhiLB2)
-		varStruct.mTW = mtw
+		varStruct.mTW = m_Wmass#tw
 		varStruct.pTL  = lep1.Pt()
 	else:
 		varStruct.dPhiLBMin = -9999
