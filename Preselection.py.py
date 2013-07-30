@@ -1,4 +1,4 @@
-\#!/usr/bin/env python
+#!/usr/bin/env python
 
 # Author:      T. Bristow (Edinburgh) <Timothy.Michael.Bristow@cern.ch>
 
