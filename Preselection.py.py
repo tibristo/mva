@@ -509,7 +509,7 @@ for i in range(nEntries):
 		eventType[1] = False
 		eventType[2] = False
 		continue
-	if numSignalJets == 2 and numRecoJets <= 4:
+	if numSignalJets == 2 and numRecoJets == 2:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:
@@ -572,8 +572,8 @@ for i in range(nEntries):
 		continue
 	cutNum += 5
 
-	#if ptvArr[1] < 120:
-	#	eventType[1] = False
+	if ptvArr[1] < 120:
+		eventType[1] = False
 		
 	if cut.noEvent(eventType):
 		continue
