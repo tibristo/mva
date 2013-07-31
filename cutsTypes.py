@@ -5,8 +5,8 @@ indexDict = {}
 def createIndexDict(sample):
 	global indexDict
 	for x in sample:
-		if x[0] not in indexDict.keys():
-			indexDict[x[0]]=1
+		if str(x[0]) not in indexDict.keys():
+			indexDict[str(x[0])]=1
 
 def checkIndexOfSample(mc):
 	global indexDict

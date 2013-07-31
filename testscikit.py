@@ -20,18 +20,18 @@ if len(sys.argv) < 1:
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
 if len(sys.argv) > 1:
     if sys.argv[1] == 'el':
-        sig = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_sig_el12_FullCutflow.root','Ntuple','sig')
+        sig = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_sig_el12_FullCutflow.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuplesumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_bkg_el12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_bkg_el12.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_dataEl12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_dataEl12.root','Ntuple','data')
         print 'el channel'
     elif sys.argv[1] == 'mu':
-        sig = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_sig_mu12_FullCutflow.root','Ntuple','sig')
+        sig = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_sig_mu12_FullCutflow.root','Ntuple','sig')
 #bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_bkg_mu12.root','Ntuple','bkg')
+        bkg = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_bkg_mu12.root','Ntuple','bkg')
 #dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/mvaFiles/no120/Ntuple_newmtw_trigger_dataMu12.root','Ntuple','data')
+        dataSample = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_dataMu12.root','Ntuple','data')
         print 'mu channel'
     else:
         sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')

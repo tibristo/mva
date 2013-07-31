@@ -198,18 +198,17 @@ for i in range(nEntries):
 	#count and select all leptons
 	branchDict['mu_type'].GetEntry(i)
 	branchDict['el_type'].GetEntry(i)
-	numLep = len(ch.mu_type) + len(ch.el_type)
 	numTypeMuons = [0,0,0,0]#loose, ZHmedium, WHmedium, tight
 	lep1 = TLorentzVector()
 	muonTLorentzMediumW = []
-	muonTLorentzMediumZ = []
+	#muonTLorentzMediumZ = []
 	muonTLorentzLoose = []
-	muonTLorentzSignal = []
+	#muonTLorentzSignal = []
 	lep2 = TLorentzVector()
 	electronTLorentzMediumW = []
-	electronTLorentzMediumZ = []
+	#electronTLorentzMediumZ = []
 	electronTLorentzLoose = []
-	electronTLorentzSignal = []
+	#electronTLorentzSignal = []
 	branchDict['mu_pt'].GetEntry(i)
 	numMuons = len(ch.mu_pt)
 	el_triggerMatched = 0
@@ -223,8 +222,8 @@ for i in range(nEntries):
         branchDict['mu_phi'].GetEntry(i)
 	branchDict['mu_triggermatched'].GetEntry(i)
 	for x in xrange(0,numMuons):
-		type = ch.mu_type[x]
-		typeFull = cut.leptonType(type, ch.mu_trackIso[x], ch.mu_caloIso[x])
+		typemu = ch.mu_type[x]
+		typeFull = cut.leptonType(typemu, ch.mu_trackIso[x], ch.mu_caloIso[x])
 		pt = ch.mu_pt[x]/1000.0
 		eta = ch.mu_eta[x]
 		phi = ch.mu_phi[x]
@@ -255,8 +254,8 @@ for i in range(nEntries):
         branchDict['el_phi'].GetEntry(i)
         branchDict['el_triggermatched'].GetEntry(i)
 	for x in xrange(0,numElectrons):
-		type = ch.el_type[x]
-		typeFull = cut.leptonType(type, ch.el_trackIso[x], ch.el_caloIso[x])
+		typeel = ch.el_type[x]
+		typeFull = cut.leptonType(typeel, ch.el_trackIso[x], ch.el_caloIso[x])
 		pt = ch.el_pt[x]/1000.0
 		eta = ch.el_eta[x]
 		phi = ch.el_phi[x]
@@ -366,9 +365,10 @@ for i in range(nEntries):
 	jet45 = False
 	jet1 = TLorentzVector()
 	jet2 = TLorentzVector()
+	jetVector = TLorentzVector()
+		
 	totalJetPx = 0
 	totalJetPy = 0
-	addJet = TLorentzVector()
 	numRecoJets = 0
 	if debug == True:
 		print 'numJets: ' +str(numJets)
@@ -379,19 +379,17 @@ for i in range(nEntries):
 		jetphi = ch.jet_corrected_phi[j]
 		jetE = ch.jet_corrected_E[j]/1000.0
 
-		jetVector = TLorentzVector()
 		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)		
 		if jetVector.Mag() > jetE:
-			print 'complex jet found'
 			jetpt = ch.jet_pt[j]/1000.0
 			jeteta = ch.jet_eta[j]
 			jetphi = ch.jet_phi[j]
 			jetE = ch.jet_E[j]/1000.0
 			jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)
 
-		if jetpt <= 25 or math.fabs(jeteta) >= 4.5 or ch.jet_jvtxf[j] < 0.5:
+		if jetpt <= 20 or math.fabs(jeteta) >= 4.5 or (ch.jet_jvtxf[j] < 0.5 and jetpt < 50 and math.fabs(jeteta) < 2.4):
 			continue
-		if ch.jet_flavor_weight_MV1[j] > 0.795: #
+		if ch.jet_flavor_weight_MV1[j] > 0.8119: #
 			isTagged = True
 
 
@@ -410,7 +408,6 @@ for i in range(nEntries):
 			numOtherJets += 1
 
 		numRecoJets += 1
-		addJet = addJet+jetVector.Clone()
 		totalJetPx = totalJetPx + jetVector.Px()
 		totalJetPy = totalJetPy + jetVector.Py()
 
@@ -444,10 +441,10 @@ for i in range(nEntries):
 	metY = (met)*math.sin(metPhi)
 	m_Wpt = 0
 	m_Wmass = 0
-	metVec = TLorentzVector()
-	metVec.SetPtEtaPhiM(met, 0, metPhi, 0)
-	lepVec = TLorentzVector()
-	lepVec.SetPtEtaPhiM(lep1.Pt(),0,lep1.Eta(),0)
+	#metVec = TLorentzVector()
+	#metVec.SetPtEtaPhiM(met, 0, metPhi, 0)
+	#lepVec = TLorentzVector()
+	#lepVec.SetPtEtaPhiM(lep1.Pt(),0,lep1.Eta(),0)
 	if eventType[1]:
 		m_Wet  = lep1.Et() + met
 		m_Wpx  = lep1.Px() + metX
@@ -456,10 +453,10 @@ for i in range(nEntries):
 		m_Wmass = math.sqrt(m_Wet*m_Wet-m_Wpt*m_Wpt)
 		m_Wphi = TMath.ATan2(m_Wpy, m_Wpx)
 		#m_Wmass = (metVec+lepVec).M() # Taken from Freiburg code
-		misset = TVector2()
-		misset.SetMagPhi(met, metPhi)
-		lepv2 = TVector2()
-		lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
+		#misset = TVector2()
+		#misset.SetMagPhi(met, metPhi)
+		#lepv2 = TVector2()
+		#lepv2.SetMagPhi(lep1.Pt(), lep1.Phi())
 		#m_Wpt = (misset+lepv2).Mod() # Taken from Freiburg code
 
 	ptvArr = [met, m_Wpt, -999]#m_Zpt]
@@ -512,14 +509,14 @@ for i in range(nEntries):
 		eventType[1] = False
 		eventType[2] = False
 		continue
-	if numSignalJets == 2 and numRecoJets == 2:
+	if numSignalJets == 2 and numRecoJets <= 4:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:
 		continue
 
 	# ********************** jet dR *****************************
-	jetdR = cut.dR(jet1.Eta(), jet1.Phi(), jet2.Eta(), jet2.Phi())
+	jetdR = jet1.DeltaR(jet2)#cut.dR(jet1.Eta(), jet1.Phi(), jet2.Eta(), jet2.Phi())
 	if (eventType[1]):
 		if ptvArr[1] <= 200 and jetdR <= 0.7:
 			eventType[1] = False
@@ -594,7 +591,7 @@ for i in range(nEntries):
 	if debug:
 		print 'should be an event!!!!!!'
 
-	varStruct.dRBB = cut.dR(jet1.Eta(),jet1.Phi(),jet2.Eta(),jet2.Phi())
+	varStruct.dRBB = jet1.DeltaR(jet2)#cut.dR(jet1.Eta(),jet1.Phi(),jet2.Eta(),jet2.Phi())
 	if debug:
 		print 'set drBB'
 	varStruct.dEtaBB = math.fabs(jet1.Eta()-jet2.Eta())
@@ -630,8 +627,6 @@ for i in range(nEntries):
 	varStruct.pTB2 = min(jet1.Pt(),jet2.Pt())
 	pTBB = (jet1+jet2).Pt()
 	varStruct.pTimbVH = math.fabs(pTBB-ptv)/(pTBB+ptv)
-	if debug:
-		print 'set pTimbVH'
 	varStruct.MET = met
 	varStruct.mLL = -9999
 
