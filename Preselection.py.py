@@ -294,6 +294,7 @@ for i in range(nEntries):
 	if (numTypeMuons[0] + numTypeElectrons[0])  == 0:#goodElectrons + goodMuons == 1:#1 tight, 0 loose
                 #TODO:  check that this is right... should require exactly 1 loose lepton, is this just for stats?
 		# commenting this out for now, check that eventType[1] is True
+		print 'eventType loose lepton True'
 		eventType[1] = True
 		if numTypeElectrons[2] == 1:
 			lep1 = electronTLorentzMediumW[0]
@@ -301,7 +302,7 @@ for i in range(nEntries):
 			lep1 = muonTLorentzMediumW[0]
 		# lep2 = (0,0,0,0)
 	elif (numTypeMuons[0] + numTypeElectrons[0]) == 1:
-		eventType[1] = True
+		eventType[1] = False #True
 		if numTypeElectrons[2]== 1:
 			lep1 = electronTLorentzMediumW[0]
 		else:
@@ -379,13 +380,13 @@ for i in range(nEntries):
 		jetphi = ch.jet_corrected_phi[j]
 		jetE = ch.jet_corrected_E[j]/1000.0
 
-		jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)		
+		jetVector.SetPtEtaPhiE(jetpt, jeteta, jetphi, jetE)		
 		if jetVector.Mag() > jetE:
 			jetpt = ch.jet_pt[j]/1000.0
 			jeteta = ch.jet_eta[j]
 			jetphi = ch.jet_phi[j]
 			jetE = ch.jet_E[j]/1000.0
-			jetVector.SetPtEtaPhiM(jetpt, jeteta, jetphi, jetE)
+			jetVector.SetPtEtaPhiE(jetpt, jeteta, jetphi, jetE)
 
 		if jetpt <= 20 or math.fabs(jeteta) >= 4.5 or (ch.jet_jvtxf[j] < 0.5 and jetpt < 50 and math.fabs(jeteta) < 2.4):
 			continue
