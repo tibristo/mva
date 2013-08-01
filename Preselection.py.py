@@ -302,7 +302,7 @@ for i in range(nEntries):
 			lep1 = muonTLorentzMediumW[0]
 		# lep2 = (0,0,0,0)
 	elif (numTypeMuons[0] + numTypeElectrons[0]) == 1:
-		eventType[1] = False #True
+		eventType[1] = True
 		if numTypeElectrons[2]== 1:
 			lep1 = electronTLorentzMediumW[0]
 		else:
@@ -351,7 +351,7 @@ for i in range(nEntries):
 	else:
 		passTriggerMatch = cut.matchTriggerMuon(ch.trigger_mu, mu_triggerMatched, 1, runNumber)
 
-	if passTriggerMatch or data:
+	if passTriggerMatch:# or data:
 		cut.addCut(cutNum, cuts)
 		cutNum += 1
 	else:
