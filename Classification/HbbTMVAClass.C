@@ -128,9 +128,9 @@ void HbbTMVAClass( TString myMethodList = "" )
   // 
   // --- Boosted Decision Trees
   Use["BDT"]             = 1; // uses Adaptive Boost
-  Use["BDTG"]            = 1; // uses Gradient Boost
+  Use["BDTG"]            = 0; // uses Gradient Boost
   Use["BDTB"]            = 0; // uses Bagging
-  Use["BDTD"]            = 1; // decorrelation + Adaptive Boost
+  Use["BDTD"]            = 0; // decorrelation + Adaptive Boost
   // 
   // --- Friedman's RuleFit method, ie, an optimised series of cuts ("rules")
   Use["RuleFit"]         = 0;
@@ -242,32 +242,48 @@ void HbbTMVAClass( TString myMethodList = "" )
 
   // --- Read training and test data
   // (it is also possible to use ASCII format as input -> see TMVA Users Guide)
-    TString fsig_name_WH = "/media/Acer/Ntuplesignal.root";//"../BonnTMVATrainingSample_ZH125.root";
-    TString fback_name_TT = "/media/Acer/Ntuplebkg.root";//"../BonnTMVATrainingSample_ttbar.root";
+    TString fsig_name_WH = "/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow.root";
+    TString fback_name_TT  = "/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12.root";
+    TString dataSample = "/media/Acer/mvaFiles/trigger/Ntuple120_trigger_data12.root";
     // TString fback_name_TT = "/scratch/BonnTMVATrainingSample/BonnTMVATrainingSample_ttbar.root";
 
     TFile *sig_input_WH = TFile::Open( fsig_name_WH );
-    TFile *back_input_TT = TFile::Open( fback_name_TT );
+
     //  TFile *back_input_Wbb = TFile::Open( fback_name_Wbb);
  
  
     // --- Register the training and test trees
     TTree *signal_WH     = (TTree*)sig_input_WH->Get("Ntuple");//"TrainTree");
+    std::cout << signal_WH->ls() << std::endl;
+    gROOT->cd();
+    TFile *signal_input_A = TFile::Open("/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow_A.root", "RECREATE");
+    TTree *signal_WH_A = signal_WH->CopyTree("(EventNumber%2)==0");
+
+    TFile *signal_input_B = TFile::Open("/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow_B.root", "RECREATE");
+    TTree *signal_WH_B = signal_WH->CopyTree("EventNumber%2==1");
+    //signal_input_B->Close();
+    TFile *back_input_TT = TFile::Open( fback_name_TT );
     TTree *background_TT = (TTree*)back_input_TT->Get("Ntuple");//"TrainTree"); 
+    TFile *background_input_A = TFile::Open("/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12_A.root","RECREATE");
+    TTree *background_A = background_TT->CopyTree("EventNumber%2==0");
+    TFile *background_input_B = TFile::Open("/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12_B.root","RECREATE");
+    TTree *background_B = background_TT->CopyTree("EventNumber%2==1");
     // TTree * background_Wbb = (TTree*)back_input_Wbb->Get("OutputTree");
  
  
  
     // --- global event weights per tree (see below for setting event-wise weights)
     Double_t signalWeight_WH     = 1;
+
+    // Need to weight background properly according to xs
     Double_t backgroundWeight_TT = 1;
     //  Double_t backgroundWeight_Wbb= 1;
   
   
   
   // --- Here can add an arbitrary number of signal or background trees
-  factory->AddSignalTree    ( signal_WH,     signalWeight_WH     );
-  factory->AddBackgroundTree( background_TT, backgroundWeight_TT );
+  factory->AddSignalTree    ( signal_WH_A,     signalWeight_WH     );
+  factory->AddBackgroundTree( background_A, backgroundWeight_TT );
   //  factory->AddBackgroundTree( background_Wbb, backgroundWeight_Wbb);
   
    
@@ -498,7 +514,7 @@ void HbbTMVAClass( TString myMethodList = "" )
   std::clock_t end_t = std::clock();
   double timeTaken = (end_t - start_t)/ (double)CLOCKS_PER_SEC;
   // ---- Evaluate all MVAs using the set of test events
-  std::clock_lit startTraining = std::clock();
+  std::clock_t startTraining = std::clock();
   factory->TestAllMethods();
   double timeTakenTest = (std::clock() - startTraining)/ (double) CLOCKS_PER_SEC;
   // ----- Evaluate and compare performance of all configured MVAs
@@ -508,6 +524,13 @@ void HbbTMVAClass( TString myMethodList = "" )
 
   // Save the output
   outputFile->Close();
+  signal_input_A->Close();
+  signal_input_B->Close();
+  background_input_A->Close();
+  background_input_B->Close();
+  sig_input_WH->Close();
+  back_input_TT->Close();
+
 
   std::cout << "==> Wrote root file: " << outputFile->GetName() << std::endl;
   std::cout << "==> TMVAClassification is done!" << std::endl;

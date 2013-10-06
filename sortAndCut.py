@@ -160,7 +160,6 @@ def readInLabels():
         labelcodesNum.append(int(l[1]))
     f.close()
     labelcodesNum,labelcodes = zip(*sorted(zip(labelcodesNum,labelcodes)))
-    print labelcodes
     return labelcodes
 
 def readInNames(fname):
@@ -179,7 +178,6 @@ def sortMultiple(arr1, arr2):
     print 'sort Multiple'
     if len(arr1) > len(arr2):
         return -1
-    print 'start sort'
     for x in xrange(1,len(arr1)-1):
         val = arr1[x]
         val2 = arr2[x]
@@ -190,7 +188,7 @@ def sortMultiple(arr1, arr2):
             hole -= 1
         arr1[hole] = val
         arr2[hole] = val2
-        
+    print 'finished sort'
     return arr1,arr2
 
 
@@ -243,9 +241,9 @@ def cutTree(arr, training, pos, evNum, sampleVersion = 'R' ):
         elif sampleVersion == 'C':
             return arr
         elif (sampleVersion == 'A'):
-            return evenArr(arr, evNum, pos, False)
+            return oddArr(arr, evNum, pos, False)#this is odd so that training and testing are done on diff samples
         elif sampleVersion == 'B':
-            return oddArr(arr, evNum, pos, False)
+            return evenArr(arr, evNum, pos, False)
 
 def evenArr(arr, evNum, splitSize, training = True):
     """Return an array with only even EventNumber of size splitSize.
@@ -302,12 +300,29 @@ def oddArr(arr, evNum, splitSize, training = True):
 
 
 def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSample = False, labels = []):
+    """
+    Cut out the columns we need.
+
+    Keyword arguments:
+    arr -- Input array
+    varIdx -- Indices of all variables
+    rows -- Number of rows
+    cols -- Number of columns
+    varWIdx -- The indices of all of the weights
+    nEntries -- Number of entries in the sample
+    lumi -- Luminosity
+    calcWeightsPerSample -- Whether or not to calculate the weights for each sample
+    labels -- The label codes going from a number -> type of sample
+    bkgIndices -- Dictionary containing the indices of the different backgrounds in the full sample
+    """
     rowcount = 0
     #initialise a basic numpy array that we will return
     outarr = ones((int(rows),int(cols)))
     outweights = []
     outlabels = []
     weightsPerSample = {}
+    bkgIndices = {}
+    labidx = {}
     for row in arr:
         colcount = 0
         for col in varIdx:
@@ -316,22 +331,28 @@ def cutCols(arr, varIdx, rows, cols, varWIdx, nEntries, lumi, calcWeightPerSampl
         rowcount = rowcount + 1
         weight = float(row[int(varWIdx['final_xs'])]*lumi/row[int(varWIdx['AllEntries'])]) #nEntries)
         key = row[int(varWIdx['label_code'])]
-        if weight > 10000:
-            print '******************'
-            print varWIdx['final_xs']
-            print row[int(varWIdx['final_xs'])]
-            print labels[int(key)]
-            print weight
-            print '******************'
         outweights.append(weight)
         outlabels.append(int(key))
+        lab = str(labels[int(key)])
+        if lab in bkgIndices:
+            bkgIndices[lab][int(labidx[lab])] = int(rowcount-1)
+            labidx[lab]+=1
+        else:
+            #bkgIndices[lab] = [rowcount-1]
+            bkgIndices[lab] = empty([rows],dtype=int)
+            bkgIndices[lab][0] = int(rowcount-1)
+            labidx[lab]=1
         # there is a better way to do this, need to do it once, rather than many times since it'll be the same                      
-        if calcWeightPerSample and str(labels[int(key)]) not in weightsPerSample:
-            weightsPerSample[labels[int(key)]] = weight
+        if calcWeightPerSample and lab not in weightsPerSample:
+            weightsPerSample[labels[int(key)]] = weight            
+    for x in bkgIndices.keys():
+        bkgIndices[x] = resize(bkgIndices[x],[int(labidx[x])])
+        #print 'size of bkgIndices '
+        #print bkgIndices[x].shape
     if calcWeightPerSample:
-        return outarr, array(outweights), array(outlabels), weightsPerSample
+        return outarr, array(outweights), array(outlabels), weightsPerSample, bkgIndices
     else:
-        return outarr, array(outweights), array(outlabels)
+        return outarr, array(outweights), array(outlabels), bkgIndices
 
 def cutColsData(arr, varIdx, rows, cols, nEntries, lumi):
     rowcount = 0
@@ -379,7 +400,7 @@ def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeight
     varIdx -- the list of all indices of found variables
     varWeightsHash -- a dictionary of all corrections to be applied
     name -- the sample type - MC or data
-    
+    bkgIndices -- a dictionary storing indices of different background samples
     """
     xcount = 0
     evNum = 0
@@ -395,34 +416,84 @@ def getVariableIndices(dataset, variableNames, foundVariables, varIdx, varWeight
             evNum = xcount
         xcount = xcount + 1
 
-def setCorrWeights(sample, weights, subsample, trainSample = True):
-    if trainSample:
-        corrWeights = sample.returnTrainCorrectionWeights(subsample)
-    else:
-        corrWeights = sample.returnTestCorrectionWeights(subsample)
+def setCorrWeights(sample, weights, subsample, bkg_name, logfile, trainSample = True):
+    try:
+        if trainSample:
+            corrWeights = sample.returnTrainCorrectionWeights(subsample, bkg_name)
+        else:
+            corrWeights = sample.returnTestCorrectionWeights(subsample, bkg_name)
+    except:
+        logfile.write('Failed setCorrWeights on sample.returnTestCorrectionWeights')
+        return weights
     xcount = 0
-    for x in corrWeights:
-        weights[xcount]*=x
-        xcount+=1
+    try:
+        for x in corrWeights:
+            weights[xcount]*=x
+            xcount+=1
+    except TypeError:
+        logfile.write('corrWeights not iterable')
+        return weights
     return weights
 
-def combineWeights(sig, bkg, subsample, trainSample = True):
+def combineWeights(sig, bkg, subsample, bkg_name, trainSample = True, nparrays = False):
     """Add the training trees together, keeping track of which entries are signal and background."""
-    if trainSample:
-        sigTrain = sig.returnTrainingSample(subsample)
-        bkgTrain = bkg.returnTrainingSample(subsample)
-    if not trainSample:
-        sigTrain = sig.returnTestingSample(subsample)
-        bkgTrain = bkg.returnTestingSample(subsample)
-    xtA = vstack((sigTrain, bkgTrain))
-    ytA = transpose(hstack(( onesInt(len(sigTrain)), zerosInt(len(bkgTrain)) )))
+    log = open(bkg_name+'_' + str(subsample) +'_combineWeights.log','w')
+    log.write('obtaining sigTrain and bkgTrain')
+    try:
+        if nparrays:
+            if trainSample:
+                sigTrain = sig.returnTrainingSample(subsample)
+            else:
+                sigTrain = sig.returnTestingSample(subsample)
+            bkgTrain = bkg.returnBkg(subsample, trainSample, bkg_name)
+        else:
+            if trainSample:
+                sigTrain = sig.returnTrainingSample(subsample)
+                bkgTrain = bkg.returnTrainingSample(subsample)
+            else:
+                sigTrain = sig.returnTestingSample(subsample)
+                bkgTrain = bkg.returnTestingSample(subsample)
+        log.write('Obtained sigTrain and bkgTrain')
+    except:
+        log.write('Problem returning training samples, exiting')
+        log.close()
+        return self.error()
+
+    #print sigTrain.shape
+    #print bkgTrain.shape
+    log.write('Begin vstack and hstack')
+    try:
+        xtA = vstack((sigTrain, bkgTrain))
+        ytA = transpose(hstack(( onesInt(len(sigTrain)), zerosInt(len(bkgTrain)) )))
+        log.write('completed stacking')
+    except:
+        log.write('Error running stacking')
+        log.close()
+        return self.error()
     sigWeightA = 1.0 # float(1/float(len(sigTrain)))
     bkgWeightA = float(len(sigTrain))/float(len(bkgTrain)) # weight background as ratio
+    log.write ('Run setCorrWeights for bkg')
     weightsBkgA = setWeights(len(bkgTrain),bkgWeightA)
-    setCorrWeights(bkg, weightsBkgA, subsample, trainSample)
-    weightsSigA = setWeights(len(sigTrain),sigWeightA)
-    setCorrWeights(sig, weightsSigA, subsample, trainSample)
+    try:
+        # this won't work for when bkg is numpy array
+        setCorrWeights(bkg, weightsBkgA, subsample, bkg_name, log, trainSample)
+        log.write('completed setCorrWeights for bkg')
+    except:
+        log.write('Failed setCorrWeights for bkg')
+        log.close()
+        return self.error()
+    weightsSigA = setWeights(len(sigTrain),sigWeightA)  
+    log.write ('Run setCorrWeights for sig')
+    try:
+        setCorrWeights(sig, weightsSigA, subsample, bkg_name, log, trainSample)
+        log.write('Completed setCorrWeights for sig')
+    except:
+        log.write('Failed setCorrWeights for sig')
+        log.close()
+        return self.error()
     weightstA = transpose(hstack((weightsSigA,weightsBkgA)))
+    log.write('Completed combineWeights for ' + bkg_name + ' ' + str(subsample))
+    log.close()
     return xtA, ytA, weightstA
 
         
@@ -459,7 +530,6 @@ def applyCorrs(arr, labelCodes, varWIdx, nEntries):
         
         metCorr = row[varWIdx['weight_MET']]
         correctionWeights[count]=math.fabs(1.0*hNLOCorr*topptCorr*dphiCorr*mcCorr*metCorr*weight_lepton1)#*puCorr
-        if correctionWeights[count] < 0.5:
-            print correctionWeights[count]
+
         count+=1
     return correctionWeights

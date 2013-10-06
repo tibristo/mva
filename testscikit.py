@@ -1,4 +1,5 @@
 from numpy import *
+import adaBoost as ab
 from root_numpy import *
 import sys
 import createHists
@@ -10,6 +11,9 @@ from rootpy.io import root_open as ropen, DoesNotExist
 from rootpy.plotting import HistStack
 import ROOT
 import copy
+from sklearn.metrics import roc_curve, auc
+import ada_threading as a_t
+import threading
 ROOT.gROOT.SetBatch(True)
 
 if len(sys.argv) < 1:
@@ -20,32 +24,24 @@ if len(sys.argv) < 1:
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
 if len(sys.argv) > 1:
     if sys.argv[1] == 'el':
-        sig = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_sig_el12_FullCutflow.root','Ntuple','sig')
-#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuplesumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_bkg_el12.root','Ntuple','bkg')
-#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_dataEl12.root','Ntuple','data')
+        sig = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_sig_el12_FullCutflow.root','Ntuple','sig')
+        bkg = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_bkg_el12.root','Ntuple','bkg')
+        dataSample = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_dataEl12.root','Ntuple','data')
         print 'el channel'
     elif sys.argv[1] == 'mu':
-        sig = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_sig_mu12_FullCutflow.root','Ntuple','sig')
-#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_bkg_mu12.root','Ntuple','bkg')
-#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/mvaFiles/jvf/Ntuple_jvf_dataMu12.root','Ntuple','data')
+        sig = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_sig_mu12_FullCutflow.root','Ntuple','sig')
+        bkg = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_bkg_mu12.root','Ntuple','bkg')
+        dataSample = Sample.Sample('/media/Acer/mvaFiles/datatrig/Ntuple_jvf_dataMu12.root','Ntuple','data')
         print 'mu channel'
     else:
-        sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
-#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-        bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
-#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-        dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+        sig = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+        bkg = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+        dataSample = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
         print 'both channels'
 else:
-    sig = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
-#bkg = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_bkg12.root','Ntuple','bkg')
-    bkg = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
-#dataSample = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_data12.root','Ntuple','data')
-    dataSample = Sample.Sample('/media/Acer/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+    sig = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+    bkg = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+    dataSample = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
     print 'both channels'
 print 'Finished reading in all samples'
 
@@ -78,7 +74,6 @@ lumi = 13000.00#20300.0
 #lumi = 4700.00
 #lumi for 2012
 #lumi = 20300.0
-# need to weight nEntries by ratio since sig and bkg samples are split in half! len(A)/len(total)
 labelCodes = sc.readInLabels()
 
 sig.getTrainingData(sig.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
@@ -86,8 +81,8 @@ sig.getTrainingData(sig.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
 bkg.getTrainingData(bkg.returnFullLength()/2, 'A', nEntries, lumi, labelCodes)
 bkg.getTrainingData(bkg.returnFullLength()/2, 'B', nEntries, lumi, labelCodes)
 
-nEntriesA = 1.0/(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
-nEntriesB = 1.0/(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+#nEntriesA = 1.0/(float((sig.returnLengthTrain('A')+bkg.returnLengthTrain('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+#nEntriesB = 1.0/(float((sig.returnLengthTrain('B')+bkg.returnLengthTrain('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
 
 nEntriesSA = 1.0/(float((sig.returnLengthTrain('A')))/float(sig.returnFullLength()))
 nEntriesSB = 1.0/(float((sig.returnLengthTrain('B')))/float(sig.returnFullLength()))
@@ -106,9 +101,7 @@ bkg.sortTrainSamples()
 print 'Finished sorting training samples'
 
 # set up some training samples for A
-#xA, yA, weightsA = sc.combineWeights(sig.returnTrainingSample('A'), bkg.returnTrainingSample('A'), 'A', True)
 xA, yA, weightsA = sc.combineWeights(sig, bkg, 'A', True)
-#xB, yB, weightsB = sc.combineWeights(sig.returnTrainingSample('B'), bkg.returnTrainingSample('B'), 'B', True)
 xB, yB, weightsB = sc.combineWeights(sig, bkg, 'B', True)
 
 x = xA
@@ -116,34 +109,88 @@ y = yA
 weights = weightsA
 
 # Set up the testing samples
-#sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
-#bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
-sig.getTestingData(sig.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+sig.getTestingData(sig.returnFullLength(), 'A', nEntries, lumi, labelCodes)
 sig.getTestingData(sig.returnFullLength(), 'B', nEntries, lumi, labelCodes)
-bkg.getTestingData(bkg.returnFullLength(), 'C', nEntries, lumi, labelCodes)
+bkg.getTestingData(bkg.returnFullLength(), 'A', nEntries, lumi, labelCodes)
 bkg.getTestingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
 dataSample.getTestingDataForData(nEntries, lumi)
 
-#nEntriesA = 1.0/(float((sig.returnLengthTest('A')+bkg.returnLengthTest('A')))/float((sig.returnFullLength() + bkg.returnFullLength())))
-#nEntriesB = 1.0/(float((sig.returnLengthTest('B')+bkg.returnLengthTest('B')))/float((sig.returnFullLength() + bkg.returnFullLength())))
+############################################################# WORK IN PROGRESS #############################################
+
+
+
+nEntriesSA = 1.0/(float((sig.returnLengthTest('A')))/float(sig.returnFullLength()))
+nEntriesSB = 1.0/(float((sig.returnLengthTest('B')))/float(sig.returnFullLength()))
+nEntriesBA = 1.0/(float((bkg.returnTestingBkgLength('A',bkg_type)))/float(bkg.returnTestingFullBkgLength(bkg_type)))
+nEntriesBB = 1.0/(float((bkg.returnTestingBkgLength('B',bkg_type)))/float(bkg.returnTestingFullBkgLength(bkg_type)))
+
+x_A, y_A, weights_A = sc.combineWeights(sig, bkg.returnBkg('A', bkg_type), 'A', True)
+x_B, y_B, weights_B = sc.combineWeights(sig, bkg.returnBkg('B', bkg_type), 'B', True)
+
+xtA, ytA, weightstA = sc.combineWeights(sig, bkg.returnBkg('A', bkg_type), 'A', False)
+xtB, ytB, weightstB = sc.combineWeights(sig, bkg.returnBkg('B', bkg_type), 'B', False)
+
+trainWeights_A = hstack((sig.returnTrainWeights('A'), bkg.returnTrainBkgWeights('A', bkg_type)))
+weights_A =multiply(weights_A,trainWeights_A)
+for xi in xrange(0, len(sig.returnTrainingSample('A'))):
+    weights_A[xi] = 1.0*nEntriesSA
+for xii in xrange(len(sig.returnTrainingSample('A')), trainWeights_A.shape[0]):
+    weights_A[xii] *= nEntriesBA
+
+trainWeights_B = hstack((sig.returnTrainWeights('B'), bkg.returnTrainBkgWeights('B', bkg_type)))
+weights_B =multiply(weights_B,trainWeights_B)
+for xi in xrange(0, len(sig.returnTrainingSample('B'))):
+    weights_B[xi] = 1.0*nEntriesSB
+for xii in xrange(len(sig.returnTrainingSample('B')), trainWeights_B.shape[0]):
+    weights_B[xii] *= nEntriesBB
+
+ada1 = ab.adaBoost(sig.returnFoundVariables(), x_A, y_A, weights_A, xtA, ytA)
+ada2 = ab.adaBoost(sig.returnFoundVariables(), x_B, y_B, weights_B, xtB, ytB)
+#need to multithread this
+
+threadLock = threading.Lock()
+threads = []
+transformBDTs = True
+try:
+    # Create new threads
+    threadA = a_t.adaThread(1, "Thread-A", 1, ada1)
+    threadB = a_t.adaThread(2, "Thread-B", 2, ada2)
+    
+    # Start new Threads
+    threadA.start()
+    threadB.start()
+
+    # Add threads to thread list
+    threads.append(threadA)
+    threads.append(threadB)
+
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
+    print "Exiting Main Thread"
+
+except:
+    print "Unable to start thread"
+    transformBDTs = False
+
+if transformBDTs: #can't run if threads failed
+    createHists.createTransformedBDT(ada1.twoclass_output, ytA, ada2.twoclass_output, ytB)
+
+
+
+#############################################################################################################################
 
 nEntriesSA = 1.0/(float((sig.returnLengthTest('A')))/float(sig.returnFullLength()))
 nEntriesSB = 1.0/(float((sig.returnLengthTest('B')))/float(sig.returnFullLength()))
 nEntriesBA = 1.0/(float((bkg.returnLengthTest('A')))/float(bkg.returnFullLength()))
 nEntriesBB = 1.0/(float((bkg.returnLengthTest('B')))/float(bkg.returnFullLength()))
-print 'nEntriesSA: ' + str(nEntriesSA)
-print 'nEntriesBA: ' + str(nEntriesBA)
-print 'nEntriesSB: ' + str(nEntriesSB)
-print 'nEntriesBB: ' + str(nEntriesBB)
 
 sig.weightAllTestSamples('A', nEntriesSA)
 bkg.weightAllTestSamples('A', nEntriesBA)
 sig.weightAllTestSamples('B', nEntriesSB)
 bkg.weightAllTestSamples('B', nEntriesBB)
 
-#xtA, ytA, weightstA = sc.combineWeights(sig.returnTestingSample('A'), bkg.returnTestingSample('A'), 'A', False)
 xtA, ytA, weightstA = sc.combineWeights(sig, bkg, 'A', False)
-#xtB, ytB, weightstB = sc.combineWeights(sig.returnTestingSample('B'), bkg.returnTestingSample('B'), 'B', False)
 xtB, ytB, weightstB = sc.combineWeights(sig, bkg, 'B', False)
 
 sig.transposeTestSamples()
@@ -153,10 +200,18 @@ bkg.transposeTrainSamples()
 dataSample.transposeDataTest()
 
 trainWeightsXS_A = [dict(sig.returnTrainWeightsXS('A').items()), dict(bkg.returnTrainWeightsXS('A').items())]
-print trainWeightsXS_A
+#print trainWeightsXS_A
+trainWeights_A = hstack((sig.returnTrainWeights('A'), bkg.returnTrainWeights('A')))
+weights =multiply(weights,trainWeights_A)
+for xi in xrange(0, len(sig.returnTrainingSample('A'))):
+    weights[xi] = 1.0
 trainWeightsXS_B = [dict(sig.returnTrainWeightsXS('B').items()), dict(bkg.returnTrainWeightsXS('B').items())]
+trainWeights_B = hstack((sig.returnTrainWeights('B'), bkg.returnTrainWeights('B')))
+weightsB =multiply(weightsB,trainWeights_B)
+for xi in xrange(0, len(sig.returnTrainingSample('B'))):
+    weightsB[xi] = 1.0
 testWeightsXS_A = [dict(sig.returnTestWeightsXS('A').items()), dict(bkg.returnTestWeightsXS('A').items())]
-print testWeightsXS_A
+#print testWeightsXS_A
 testWeightsXS_B = [dict(sig.returnTestWeightsXS('B').items()), dict(bkg.returnTestWeightsXS('B').items())]
 
 trainCorrWeights_A = hstack((sig.returnTrainCorrectionWeights('A'), bkg.returnTrainCorrectionWeights('A')))
@@ -167,286 +222,47 @@ testCorrWeights_B = hstack((sig.returnTestCorrectionWeights('B'), bkg.returnTest
 # weightsPerSample = dict(list(weightsPerSigSample.items()) + list(weightsPerBkgSample.items()))
 
 # draw all training and testing histograms
-createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B, trainCorrWeights_A, trainCorrWeights_B)
-createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C', testCorrWeights_A, testCorrWeights_B)
+#createHists.drawAllTrainStacks(sig, bkg, dataSample, labelCodes, trainWeightsXS_A, trainWeightsXS_B, trainCorrWeights_A, trainCorrWeights_B)
+#createHists.drawAllTestStacks(sig, bkg, dataSample, labelCodes, testWeightsXS_A, testWeightsXS_B, 'C', testCorrWeights_A, testCorrWeights_B)
 
+import adaBoost as ab
+ada1 = ab.adaBoost(sig.returnFoundVariables(), x, y, weights, xtA, ytA)
+ada2 = ab.adaBoost(sig.returnFoundVariables(), xB, yB, weightsB, xtB, ytB)
+#need to multithread this
+import ada_threading as a_t
+import threading
+threadLock = threading.Lock()
+threads = []
+transformBDTs = True
+try:
+    # Create new threads
+    threadA = a_t.adaThread(1, "Thread-A", 1, ada1)
+    threadB = a_t.adaThread(2, "Thread-B", 2, ada2)
+    
+    # Start new Threads
+    threadA.start()
+    threadB.start()
 
-#x = xA
-#y = yA
-#weights = weightsA
+    # Add threads to thread list
+    threads.append(threadA)
+    threads.append(threadB)
 
+    # Wait for all threads to complete
+    for t in threads:
+        t.join()
+    print "Exiting Main Thread"
 
-from sklearn.tree import DecisionTreeClassifier
+except:
+    print "Unable to start thread"
+    transformBDTs = False
+ada1.plotScores()
+ada2.plotScores()
+if transformBDTs: #can't run if threads failed
+    createHists.createTransformedBDT(ada1.twoclass_output, ytA, ada2.twoclass_output, ytB)
 
-print 'starting training on AdaBoostClassifier'
-#raw_input()
-#class sklearn.tree.DecisionTreeClassifier(criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, min_density=0.10000000000000001, max_features=None, compute_importances=False, random_state=None)
-
-
-from sklearn.ensemble import AdaBoostClassifier
-from time import clock
-'''
-# Build a forest and compute the feature importances
-ada = AdaBoostClassifier(DecisionTreeClassifier(compute_importances=True,max_depth=4,min_samples_split=2,min_samples_leaf=100),n_estimators=400, learning_rate=0.5, algorithm="SAMME",compute_importances=True)
-start = clock()
-ada.fit(x, y, weights)
-elapsed = clock()-start
-print 'time taken for training: ' + str(elapsed)
-
-xtA_C = copy.deepcopy(xtA)
-pred = ada.predict(xtA_C)
-print bincount(pred)
-#print pred
-print len(pred)
-print len(xtA_C)
-createHists.drawSigBkgDistrib(xtA_C, pred, sig.returnFoundVariables())
-
-importancesada = ada.feature_importances_
-print importancesada
-print ada.score(xtA,ytA)
-print ada.get_params()
-std_mat = std([tree.feature_importances_ for tree in ada.estimators_],
-             axis=0)
-indicesada = argsort(importancesada)[::-1]
-variableNamesSorted = []
-for i in indicesada:
-    variableNamesSorted.append(foundVariables[i])
-
-# Print the feature ranking
-print "Feature ranking:"
-
-for f in xrange(12):
-    print "%d. feature %d (%f)" % (f + 1, indicesada[f], importancesada[indicesada[f]]) + " " +variableNamesSorted[f]
-'''
-
-# Plot the feature importances of the forest
-# We need this to run in batch because it complains about not being able to open display
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-import numpy as np
-import matplotlib.pyplot as plt
-from pylab import * 
-
-import pylab as pl
-'''
-pl.figure()
-pl.title("Feature importances Ada")
-pl.bar(xrange(len(variableNamesSorted)), importancesada[indicesada],
-       color="r", yerr=std_mat[indicesada], align="center")
-pl.xticks(xrange(12), variableNamesSorted)#indicesada)
-pl.xlim([-1, 12])
-pl.show()
-'''
-plot_colors = "rb"
-plot_step = 1000.0
-class_names = "AB"
-
-
-'''
-pl.figure(figsize=(15, 5))
-
-# Plot the decision boundaries
-pl.subplot(131)
-x_min, x_max = x[:, 0].min() - 1, x[:, 0].max() + 1
-y_min, y_max = x[:, 1].min() - 1, x[:, 1].max() + 1
-print 'xmin ' + str(x_min)
-print 'xmax ' + str(x_max)
-print 'ymin ' + str(y_min)
-print 'ymax ' + str(y_max)
-xx, yy = meshgrid(arange(x_min, x_max, plot_step),
-                     arange(y_min, y_max, plot_step))
-
-Z = ada.predict(c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
-pl.axis("tight")
-'''
-
-
-
-'''
-# Plot the training points
-pl.subplot(131)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    idx = where(y == i)
-    pl.scatter(xtA[idx, 0], xtA[idx, 1],
-               c=c, cmap=pl.cm.Paired,
-               label="Class %s" % n)
-pl.axis("tight")
-pl.legend(loc='upper right')
-pl.xlabel("Decision Boundary")
-
-
-
-
-
-# Plot the class probabilities
-class_proba = ada.predict_proba(xtA)[:, -1]
-#pl.subplot(132)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(class_proba[ytA == i],
-            bins=50,
-            range=(0, 1),
-            facecolor=c,
-            label='Class %s' % n)
-pl.legend(loc='upper center')
-pl.ylabel('Samples')
-pl.xlabel('Class Probability')
-
-# Plot the two-class decision scores
-twoclass_output = ada.decision_function(xtA)
-
-#reweight twoclass_output
-print twoclass_output
-
-for i in xrange(0,len(twoclass_output)):
-    twoclass_output[i] = twoclass_output[i]+1
-
-pl.subplot(133)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(twoclass_output[ytA == i],
-            bins=50,
-            range=(0, 1),
-            facecolor=c,
-            label='Class %s' % n, normed=True)
-pl.legend(loc='upper right')
-pl.ylabel('Samples')
-pl.xlabel('Two-class Decision Scores')
-
-pl.subplots_adjust(wspace=0.25)
-mean_tpr = 0.0
-mean_fpr = linspace(0, 1, 100)
-from sklearn.metrics import roc_curve, auc
-pl.subplot(132)
-beginIdx = 0
-endIdx = len(xtA)#/2
-#need method to calculate rej: 1-num(b)/total(b)
-#tpr is signal efficiency: num(s)/total(s)
-for i in range(1):
-    probas_ = ada.predict_proba(xtA[beginIdx:endIdx])
-    # Compute ROC curve and area the curve
-    fpr, tpr, thresholds, rej = sc.roc_curve_rej(ytA[beginIdx:endIdx], probas_[:,1])
-    #mean_tpr += interp(mean_fpr, fpr, tpr)
-    #mean_tpr[0] = 0.0
-    roc_auc = auc(tpr,rej)#auc(fpr, tpr)
-    print i
-    pl.plot(tpr, rej, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc), color=plot_colors[i])
-    beginIdx = endIdx
-    endIdx = len(xtA)
-
-pl.show()
+print 'type Enter to quit'
 raw_input()
-'''
+
 ################################################################################
 ################### Train SVM
 ################################################################################
-
-from sklearn import svm
-
-# Build a forest and compute the feature importances
-clf = svm.SVC()
-start = clock()
-clf.fit(x, y, weights)
-
-
-elapsed = clock()-start
-print 'time taken for training: ' + str(elapsed)
-import copy
-xtA_D = copy.deepcopy(xtA)
-pred = clf.predict(xtA_D)
-print bincount(pred)
-#print pred
-print len(pred)
-print len(xtA_D)
-createHists.drawSigBkgDistrib(xtA_D, pred, sig.returnFoundVariables())
-
-#importancessvm = clf.coef_
-print clf.score(xtA,ytA)
-#std_mat = std([tree.feature_importances_ for tree in ada.estimators_],
-#             axis=0)
-'''
-indicessvm = argsort(importancessvm)[::-1]
-variableNamesSorted = []
-for i in indicessvm:
-    variableNamesSorted.append(foundVariables[i])
-
-# Print the feature ranking
-print "Feature ranking:"
-
-for f in xrange(12):
-    print "%d. feature %d (%f)" % (f + 1, indicessvm[f], importancessvm[indicessvm[f]]) + " " +variableNamesSorted[f]
-
-
-# Plot the feature importances of the forest
-# We need this to run in batch because it complains about not being able to open display
-
-pl.figure()
-pl.title("Feature importances SVM")
-pl.bar(xrange(len(variableNamesSorted)), importancessvm[indicessvm],
-       color="r", align="center")
-pl.xticks(xrange(12), variableNamesSorted)#indicesada)
-pl.xlim([-1, 12])
-pl.show()
-'''
-plot_colors = "rb"
-plot_step = 1000.0
-class_names = "AB"
-
-
-
-pl.figure(figsize=(15, 5))
-
-# Plot the class probabilities
-class_proba = clf.predict_proba(xtA)[:, -1]
-#pl.subplot(132)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(class_proba[ytA == i],
-            bins=50,
-            range=(0, 1),
-            facecolor=c,
-            label='Class %s' % n)
-pl.legend(loc='upper center')
-pl.ylabel('Samples')
-pl.xlabel('Class Probability')
-
-# Plot the two-class decision scores
-twoclass_output = svm.decision_function(xtA)
-
-#reweight twoclass_output
-print twoclass_output
-
-for i in xrange(0,len(twoclass_output)):
-    twoclass_output[i] = twoclass_output[i]+1
-
-pl.subplot(133)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(twoclass_output[ytA == i],
-            bins=50,
-            range=(0, 1),
-            facecolor=c,
-            label='Class %s' % n, normed=True)
-pl.legend(loc='upper right')
-pl.ylabel('Samples')
-pl.xlabel('Two-class Decision Scores')
-
-pl.subplots_adjust(wspace=0.25)
-mean_tpr = 0.0
-mean_fpr = linspace(0, 1, 100)
-pl.subplot(132)
-beginIdx = 0
-endIdx = len(xtA)#/2
-#need method to calculate rej: 1-num(b)/total(b)
-#tpr is signal efficiency: num(s)/total(s)
-for i in range(1):
-    probas_ = svm.predict_proba(xtA[beginIdx:endIdx])
-    # Compute ROC curve and area the curve
-    fpr, tpr, thresholds, rej = sc.roc_curve_rej(ytA[beginIdx:endIdx], probas_[:,1])
-    #mean_tpr += interp(mean_fpr, fpr, tpr)
-    #mean_tpr[0] = 0.0
-    roc_auc = auc(tpr,rej)#auc(fpr, tpr)
-    print i
-    pl.plot(tpr, rej, lw=1, label='ROC fold %d (area = %0.2f)' % (i, roc_auc), color=plot_colors[i])
-    beginIdx = endIdx
-    endIdx = len(xtA)
-
-pl.show()
-

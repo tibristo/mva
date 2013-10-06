@@ -131,7 +131,9 @@ if (data == False):
 	#ch_new.Branch('name',AddressOf(varStruct,'name'),'Name');
 	#ch_new.Branch('name_code',AddressOf(varStruct,'name_code'),'Name Code');
 
-typeCodes = [0,1,2]
+typeCodes = [0,1,2] # 0 1 or 2 lepton analysis
+# labelcodes stores.....
+# namecodes stores....
 if sys.argv[2] == 'bkg':
 	samples,labelcodes,namecodes = read.readBkg('bkg')
 elif sys.argv[2] == 'ttbar' or sys.argv[2] == 'test':
@@ -173,6 +175,8 @@ for branchname in cacheBranches:
 	ch.AddBranchToCache(branchDict[branchname])
 
 cut.createIndexDict(samples)
+m_mu = 0.1057
+m_el = 0.511/1000.0
 
 for i in range(nEntries):
 	if i%1000==0:
@@ -214,7 +218,7 @@ for i in range(nEntries):
 	el_triggerMatched = 0
 	mu_triggerMatched = 0
 
-	m = 0.1057
+
 	muVec = TLorentzVector()
         branchDict['mu_trackIso'].GetEntry(i)
         branchDict['mu_caloIso'].GetEntry(i)
@@ -227,7 +231,7 @@ for i in range(nEntries):
 		pt = ch.mu_pt[x]/1000.0
 		eta = ch.mu_eta[x]
 		phi = ch.mu_phi[x]
-		muVec.SetPtEtaPhiM(pt, eta, phi, m)
+		muVec.SetPtEtaPhiM(pt, eta, phi, m_mu)
 		if (typeFull[0]): #loose lepton
 			numTypeMuons[0] += 1
 			muonTLorentzLoose.append(muVec.Clone())
@@ -245,7 +249,6 @@ for i in range(nEntries):
 	numTypeElectrons = [0,0,0,0]#loose, ZHsignal, WHsignal, WHMJ
         branchDict['el_pt'].GetEntry(i)
 	numElectrons = len(ch.el_pt)
-	m = 0.511/1000.0
 	elVec = TLorentzVector()
 	#get all electrons
         branchDict['el_trackIso'].GetEntry(i)
@@ -259,7 +262,7 @@ for i in range(nEntries):
 		pt = ch.el_pt[x]/1000.0
 		eta = ch.el_eta[x]
 		phi = ch.el_phi[x]
-		elVec.SetPtEtaPhiM(pt,eta,phi,m)
+		elVec.SetPtEtaPhiM(pt,eta,phi,m_el)
 		if (typeFull[0]):#loose lepton
 			numTypeElectrons[0] += 1
 			electronTLorentzLoose.append(elVec.Clone())

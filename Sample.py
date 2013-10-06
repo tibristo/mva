@@ -6,6 +6,11 @@ import createHists
 import copy
 
 
+def npsort(arr, perm):
+    for k in arr.keys():
+        for i in xrange(0,arr[k].shape[0]):
+            arr[k][i] = perm[arr[k][i]]
+# Need to include error handling in case an array hasn't been init.
 
 class Sample:
     __all__= ['getTrainingSample','returnFullLength','returnTestSample']
@@ -34,11 +39,13 @@ class Sample:
         self.sample_length = len(self.sample)
         self.variablesDone = False
         self.evNumIdx = 0
+        self.testBkgIndices = []
+        self.trainBkgIndices = []
         typeUpper = typeOfSample.upper()
         if (typeUpper!='DATA' and typeUpper!='SIG' and typeUpper!='BKG'):
             print 'Type ' + str(typeOfSample) + ' not known, setting to bkg mc'
             self.type = 'bkg'
-        self.type = typeOfSample
+        self.type = typeUpper
         
     def returnFullLength(self):
         """Return the length of the full input sample."""
@@ -92,6 +99,16 @@ class Sample:
         """Return length of temp sample."""
         return self.tempLen
 
+
+    def hasBkg(self, bkg_name, train = True):
+        if self.type != 'BKG':
+            return False
+        if train and (bkg_name in self.trainBkgIndices[0].keys() or bkg_name in self.trainBkgIndices[1].keys()):
+            return True
+        elif (not train) and (bkg_name in self.testBkgIndices[0].keys() or bkg_name in self.testBkgIndices[1].keys()):
+            return True
+        return False
+
     def setVariableNames(self, variableNames, foundVariables, varIdx, varWeightsHash):
         """Set the variable name values."""
         self.variableNames = copy.deepcopy(variableNames)
@@ -124,7 +141,7 @@ class Sample:
         """Get the subset of data, the associated weights and labels for training data."""
         self.splitTree(True, splitSize, subset)
         cw = sc.applyCorrs(self.returnTemp(), labelCodes, self.varWeightsHash, self.returnTempLength())
-        tr, we, lb, xs = sc.cutCols(self.returnTemp(), self.varIdx, self.returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi, True, labelCodes) # signal set A
+        tr, we, lb, xs, bkgs = sc.cutCols(self.returnTemp(), self.varIdx, self.returnTempLength(), len(self.variableNames), self.varWeightsHash, nEntriesA, lumi, True, labelCodes) # signal set A
         append = False
         if subset == 'A':
             trainIdx = 0
@@ -140,12 +157,16 @@ class Sample:
             self.trainLabels.append(copy.deepcopy(lb))
             self.trainWeightsXS.append(copy.deepcopy(xs))
             self.trainCorrectionWeights.append(copy.deepcopy(cw))
+            if self.type == 'BKG':
+                self.trainBkgIndices.append(copy.deepcopy(bkgs))
         else:
             self.train[trainIdx] = copy.deepcopy(tr)
             self.trainWeights[trainIdx] = copy.deepcopy(we)
             self.trainLabels[trainIdx] = copy.deepcopy(lb)
             self.trainWeightsXS[trainIdx] = copy.deepcopy(xs)
             self.trainCorrectionWeights[trainIdx] = copy.deepcopy(cw)
+            if self.type == 'BKG':
+                self.trainBkgIndices[trainIdx] = copy.deepcopy(bkgs)
         if trainIdx == 0:
             self.trainLengthA = len(self.train[0])
         else:
@@ -221,7 +242,7 @@ class Sample:
         """Set up a test sample."""
         self.splitTree(False, splitSize, sampleLabel)
         cw = sc.applyCorrs(self.tempSet, labelCodes, self.varWeightsHash, len(self.tempSet))
-        test, weights, labels, weightsXS = sc.cutCols(self.tempSet, self.varIdx, len(self.tempSet), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
+        test, weights, labels, weightsXS, bkgs = sc.cutCols(self.tempSet, self.varIdx, len(self.tempSet), len(self.variableNames), self.varWeightsHash, nEntries, lumi, True, labelCodes)
         print len(test)
         idx = 0
         append = False
@@ -242,12 +263,16 @@ class Sample:
             self.testLabels.append(copy.deepcopy(labels))
             self.testWeightsXS.append(copy.deepcopy(weightsXS))
             self.testCorrectionWeights.append(copy.deepcopy(cw))
+            if self.type == 'BKG':
+                self.testBkgIndices.append(copy.deepcopy(bkgs))
         else:
             self.test[idx] = (copy.deepcopy(test))
             self.testWeights[idx] = (copy.deepcopy(weights))
             self.testLabels[idx] = (copy.deepcopy(labels))
             self.testWeightsXS[idx] = (copy.deepcopy(weightsXS))
             self.testCorrectionWeights[idx] = copy.deepcopy(cw)
+            if self.type == 'BKG':
+                self.testBkgIndices[idx] = copy.deepcopy(bkgs)
             
         if idx == 0:
             self.testLengthA = len(self.test[0])
@@ -290,6 +315,8 @@ class Sample:
             self.testLabels[x] = self.testLabels[x][sortPermutation]
             self.testWeights[x] = self.testWeights[x][sortPermutation]
             self.testCorrectionWeights[x] = self.testCorrectionWeights[x][sortPermutation]
+            if self.type == 'BKG':
+                npsort(self.testBkgIndices[x],sortPermutation)
             #self.testWeightsXS[x] = self.testWeightsXS[x][sortPermutation]
 
     def transposeTestSamples(self):
@@ -300,6 +327,8 @@ class Sample:
             self.testLabels[x] = transpose(self.testLabels[x])
             self.testWeights[x] = transpose(self.testWeights[x])
             self.testCorrectionWeights[x] = transpose(self.testCorrectionWeights[x])
+            if self.type == 'BKG':
+                self.testBkgIndices[x] = transpose(self.testBkgIndices[x])
             #self.testWeightsXS[x] = transpose(self.testWeightsXS[x])
 
 
@@ -311,6 +340,8 @@ class Sample:
             self.trainLabels[x] = self.trainLabels[x][sortPermutation]
             self.trainWeights[x] = self.trainWeights[x][sortPermutation]
             self.trainCorrectionWeights[x] = self.trainCorrectionWeights[x][sortPermutation]
+            if self.type == 'BKG':
+                npsort(self.trainBkgIndices[x],sortPermutation)
             #self.trainWeightsXS[x] = self.trainWeightsXS[x][sortPermutation]
 
     def transposeTrainSamples(self):
@@ -321,6 +352,8 @@ class Sample:
             self.trainLabels[x] = transpose(self.trainLabels[x])
             self.trainWeights[x] = transpose(self.trainWeights[x])
             self.trainCorrectionWeights[x] = transpose(self.trainCorrectionWeights[x])
+            if self.type == 'BKG':
+                self.trainBkgIndices[x] = transpose(self.trainBkgIndices[x])
             #self.trainWeightsXS[x] = transpose(self.trainWeightsXS[x])
 
     def returnTrainWeightsXS(self, subset):
@@ -333,31 +366,72 @@ class Sample:
         else:
             return self.error()
 
-    def returnTestWeightsXS(self, subset):
+    def returnTrainWeights(self, subset, bkg_name='bkg'):
         """Return the array of per sample weights (xs)"""
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            if subset == 'A' and self.trainWeights:
+                return self.trainWeights[0]
+            elif len(self.trainWeights) > 1:
+                return self.trainWeights[1]
+        elif self.hasBkg(bkg_name):
+            if subset == 'A' and self.trainWeights:
+                return self.trainWeights[0][self.trainBkgIndices[0][bkg_name]]
+            elif len(self.trainWeights) > 1:
+                return self.trainWeights[1][self.trainBkgIndices[1][bkg_name]]
+        else:
+            return self.error()
+
+
+    def returnTestWeightsXS(self, subset):
+        """Return the array of per sample weights"""
         if subset == 'A' and self.testWeightsXS:
             return self.testWeightsXS[0]
         elif len(self.testWeightsXS) > 1:
             return self.testWeightsXS[1]
         return self.error()
 
-    def returnTrainCorrectionWeights(self, subset):
-        """Return the array of correction weights"""
-
-        if subset == 'A' and self.trainCorrectionWeights:
-            return self.trainCorrectionWeights[0]
-        elif len(self.trainCorrectionWeights) > 1:
-            return self.trainCorrectionWeights[1]
+    def returnTestWeights(self, subset):
+        """Return the array of per sample weights"""
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            if subset == 'A' and self.testWeights:
+                return self.testWeights[0]
+            elif len(self.testWeights) > 1:
+                return self.testWeights[1]
+        elif self.hasBkg(bkg_name):
+            if subset == 'A' and self.testWeights:
+                return self.testWeights[0][self.testBkgIndices[0][bkg_name]]
+            elif len(self.testWeights) > 1:
+                return self.testWeights[1][self.testBkgIndices[1][bkg_name]]
         else:
             return self.error()
 
-    def returnTestCorrectionWeights(self, subset):
+    def returnTrainCorrectionWeights(self, subset, bkg_name = 'bkg'):
         """Return the array of correction weights"""
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            if subset == 'A' and self.trainCorrectionWeights:
+                return self.trainCorrectionWeights[0]
+            elif len(self.trainCorrectionWeights) > 1:
+                return self.trainCorrectionWeights[1]
+        elif self.hasBkg(bkg_name):
+            if subset == 'A' and self.trainCorrectionWeights:
+                return self.trainCorrectionWeights[0][self.trainBkgIndices[0][bkg_name]]
+            elif len(self.trainCorrectionWeights) > 1:
+                return self.trainCorrectionWeights[1][self.trainBkgIndices[1][bkg_name]]
+        else:
+            return self.error()
 
-        if subset == 'A' and self.testCorrectionWeights:
-            return self.testCorrectionWeights[0]
-        elif len(self.testCorrectionWeights) > 1:
-            return self.testCorrectionWeights[1]
+    def returnTestCorrectionWeights(self, subset, bkg_name = 'bkg'):
+        """Return the array of correction weights"""
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            if subset == 'A' and self.testCorrectionWeights:
+                return self.testCorrectionWeights[0]
+            elif len(self.testCorrectionWeights) > 1:
+                return self.testCorrectionWeights[1]
+        elif self.hasBkg(bkg_name, False): #False since it is test, not train
+            if subset == 'A' and self.testCorrectionWeights:
+                return self.testCorrectionWeights[0][self.testBkgIndices[0][bkg_name]]
+            elif len(self.testCorrectionWeights) > 1:
+                return self.testCorrectionWeights[1][self.testBkgIndices[1][bkg_name]]
         else:
             return self.error()
 
@@ -405,3 +479,58 @@ class Sample:
     def error(self):
         print 'some error has occurred, returning -1'
         return -1
+    
+    def returnTrainingBkgLength(self, sample, bkg_name='bkg'):
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            return self.returnLengthTrain(sample)
+        if sample == 'A' and bkg_name in self.trainBkgIndices[0].keys():
+            return len(self.trainBkgIndices[0][bkg_name])
+        elif bkg_name in self.trainBkgIndices[1].keys():
+            return len(self.trainBkgIndices[1][bkg_name])
+        else:
+            return -1
+
+    def returnTestingBkgLength(self, sample, bkg_name = 'bkg'):
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            return self.returnLengthTest(sample)
+        if sample == 'A' and bkg_name in self.testBkgIndices[0].keys():
+            return len(self.testBkgIndices[0][bkg_name])
+        elif bkg_name in self.testBkgIndices[1].keys():
+            return len(self.testBkgIndices[1][bkg_name])
+        else:
+            return -1
+
+    def returnTrainingFullBkgLength(self, bkg_name='bkg'):
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            return self.returnFullLength()
+        if bkg_name in self.trainBkgIndices[0].keys() and bkg_name in self.trainBkgIndices[1].keys():
+            return len(self.trainBkgIndices[0][bkg_name]) + len(self.trainBkgIndices[1][bkg_name])
+        else:
+            return -1
+
+    def returnTestingFullBkgLength(self, bkg_name='bkg'):
+        if bkg_name == 'bkg' or self.type != 'BKG':
+            return self.returnFullLength()
+        if bkg_name in self.testBkgIndices[0].keys() and bkg_name in self.testBkgIndices[1].keys():
+            return len(self.testBkgIndices[0][bkg_name])+len(self.testBkgIndices[1][bkg_name])
+        else:
+            return -1
+
+    def returnBkg(self, sample, train, bkg_name='bkg'):
+
+        if train:
+            if bkg_name == 'bkg' or self.type != 'BKG':
+                return self.returnTestingSample(sample)
+            elif sample == 'A' and bkg_name in self.trainBkgIndices[0].keys():
+                return self.train[0][self.trainBkgIndices[0][bkg_name]]
+            elif bkg_name in self.trainBkgIndices[1].keys():
+                return self.train[1][self.trainBkgIndices[1][bkg_name]]
+        else:
+            if bkg_name == 'bkg' or self.type != 'BKG':
+                return self.returnTrainingSample(sample)
+            elif sample == 'A' and bkg_name in self.testBkgIndices[0].keys():
+                return self.test[0][self.testBkgIndices[0][bkg_name]]
+            elif bkg_name in self.testBkgIndices[1].keys():
+                return self.test[1][self.testBkgIndices[1][bkg_name]]
+        print 'Error in returnBkg: bkg_name: '+str(bkg_name) + ' sample shape:'
+        return self.error()

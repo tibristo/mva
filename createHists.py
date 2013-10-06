@@ -1,6 +1,7 @@
-from numpy import argmax,argmin,ones
+from numpy import argmax,argmin,ones,save
+from tempfile import TemporaryFile
 import sortAndCut as sc
-from numpy import transpose,bincount
+from numpy import transpose,bincount,array
 from rootpy.interactive import wait
 from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
 from rootpy.io import root_open as ropen, DoesNotExist
@@ -56,8 +57,6 @@ def drawSigBkgDistrib(sample, classif, foundVariables):
     numzero = binc[0]
     numone = binc[1]
     global histLimits
-    print len(sample2)
-    print sample2
     for x in sample2:
         x = transpose(x)
         variableName = foundVariables[histidx]
@@ -170,7 +169,7 @@ def createHists(sample, labelCodes, nameOfType, labelsForSample, weightsPerSampl
                 histDict[lbl][histidx].fill(i,corrWeights[histidx])
                 #histDict[lbl][histidx].scale(corrWeights[histidx])
             lblcount += 1
-      
+            
         histidx+=1
 
     # create stacks and legends
@@ -418,7 +417,7 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weights
             weightsPerSample = weightsPerSampleB
             corrWeights = corrWeightsB
         f = ropen('outputTrain'+str(subset)+'.root','recreate')
-        print subset
+
         c1 = Canvas()
         c1.cd()
 
@@ -450,4 +449,75 @@ def drawAllTrainStacks(signal, bkg, data, labelCodes, weightsPerSampleA, weights
         drawStack(allStack, legendAllStack, signal.returnFoundVariables(), 'All', str('Train' + subset))
         
     f.close()
+
+def createTransformedBDT(bdt_in, classes, bdt_in_B, classes_B, name_A, name_B, bkg_name):
+    import HistoTransform_ext as ht
+    from numpy import argmax,argmin,ones,save
+    from numpy import transpose,bincount,array
+    from rootpy.interactive import wait
+    from rootpy.plotting import Canvas, Hist, Hist2D, Hist3D, Legend
+    from rootpy.io import root_open as ropen, DoesNotExist
+    from rootpy.plotting import HistStack
+    print 'saving files as npy'
+    save('bdt_output_scores_'+name_A+'.npy', bdt_in)
+    save('bdt_output_classes_'+name_A+'.npy', classes)
+    save('bdt_output_scores_'+name_B+'.npy', bdt_in_B)
+    save('bdt_output_classes_'+name_B+'.npy', classes_B)
+    #need to assign names that follow correct naming convention
+    return "Going to stop here for now until HistoTransform is fixed"
+    names = [ bkg_name+'_2tag2jet_mva', 'WlvH125_2tag2jet_mva']
+    name_x = [name_A, name_B]
+    for j in xrange(2):
+        bdtx_inFile_name = "bdt_inFile_"+name_x[j]+'_'+str(j)+"of2.root"
+        bdtx_inFile = ropen('bdt_inFile_'+name_x[j]+'_'+str(j)+'of2.root','recreate')
+        bdtxarr = []
+        for i in xrange(2):
+            bdtxarr.append(Hist (1000,-1,1, name=names[i], title=names[i]))
+            bdtxarr[i].fill_array(bdt_in[classes == i])
+            bdtxarr[i].Write()
+        
+        bdtx_inFile.close()
+
+    for count in xrange(2):
+        #try:
+        bdtx_tx = ht.HistoTransform('bdt_inFile_'+name_x[count]+'_'+str(count)+'of2.root', "bdt_outFile_"+name_x[count]+'_'+str(count)+"of2.root")
+        #except:
+        #    return "Could not create object"
+        bdtx_tx.transformBkgBDTs = False
+        bdtx_tx.doMergeKFolds = False
+        bdtx_tx.doTransformBeforeMerging = False
+        try:
+            subDir = bdtx_tx.addSubDirectory("")
+        except:
+            return "failed addsubdir"
+        if count == 1:
+            bdtx_tx.transformAlgorithm = 5
+            try:
+                bdtx_tx.setSignal(subDir, names[0])
+            except:
+                return "failed setsignal"
+        else:
+            bdtx_tx.transformAlgorithm = 1
+        try:
+            bdtx_tx.addBackground(subDir, bkg_name)#"bkg");
+        except:
+            return "Failed addBackground"
+        nFold = 2
+        maxUncFactor = 1
+        print 'starting run'
+        try:
+            bdtx_tx.addRegion(subDir, "2tag2jet_mva", 0.05 * maxUncFactor, nFold);
+        except:
+            return "addRegion failed"
+
+        try:
+            bdtx_tx.run()
+            return "it ran"
+            print 'done run ' + str(count) + ' for ' + name_x[count]
+        except:
+            print 'Error whilst running HistoTransform run() for ' + name_x[count]
+            return "Something Failed in .run()"
+    return "Success!"
+
+
 
