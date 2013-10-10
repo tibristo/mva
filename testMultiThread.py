@@ -2,6 +2,7 @@
 #import numpy
 import adaBoost as ab
 import pickle
+import copy
 from root_numpy import *
 import sys
 import createHists
@@ -87,15 +88,7 @@ def createObjects(bkg_type, identity = ''):
     dataSample.getTestingDataForData(nEntries, lumi)
     
     adas = trainBDTs.trainBDTs(bkg_type, sig, bkg, identity)
-    '''
-    for x in adas:
-        print 'running ada ' + x.name
-        try:
-            x.run()
-        except:
-            print 'run failed!'
-        print 'done run'
-    '''
+
     return adas
 
 #@lview.parallel(block=False)
@@ -119,7 +112,7 @@ def runFits(ada):
 #bkg_ref = p.Reference('bkg')
 
 adas = []
-labelCode_test = ['bkg']#,'bkg']#,'bkg','bkg']#,'Wc']
+labelCode_test = ['bkg','bkg']#,'bkg','bkg']#,'Wc']
 
 if __name__ == '__main__':
     arlist = []
@@ -155,20 +148,37 @@ for x in adas:
 print 'Looping through adas to do fitting'
 fit_list = []
 #import runFits
+names = []
 for a in adas:
-    print a
-    try:
-        print 'Running for ' + a[0].returnName() + ' and ' + a[1].returnName()
-        fit_list.append(lview.apply_async(runFits, str(a[0].returnName()+'.pickle')))
-        fit_list.append(lview.apply_async(runFits, str(a[1].returnName()+'.pickle')))
-    except:
-        print 'Error starting async subprocess'
+    names.append((a[0].returnName()+'.pickle'))
+    names.append((a[1].returnName()+'.pickle'))
+#for a in adas:
+#    print a
+try:
+        #print 'Running for ' + a[0].returnName() + ' and ' + a[1].returnName()
+#        print 'Running for ' + a[0] + ' and ' + a[1]
+    fit = lview.map_async(runFits, names)
+        #fit_list.append(lview.apply_async(runFits, str(a[0].returnName()+'.pickle')))
+        #fit_list.append(lview.apply_async(runFits, str(a[1].returnName()+'.pickle')))
+except:
+    print 'Error starting async subprocess'
 
 print 'Wait for fitting to complete'
-lview.wait(fit_list)
+lview.wait(fit)
+#lview.wait(fit_list)
 
 adas2 = []
-for x in xrange(0,len(fit_list),2):
+fit_list2 = fit.get()
+temp = []
+for i,r in enumerate(fit_list2):
+    with open(r,'r') as f:
+        a1 = pickle.load(f)
+    temp.append(a1)
+    if len(temp)==2:
+        adas2.append(copy.deepcopy(temp))
+        temp = []
+'''
+for x in xrange(0,len(fit_list)):#,2):
     x1 = fit_list[x].get()
     x2 = fit_list[x+1].get()
     print x1
@@ -179,17 +189,19 @@ for x in xrange(0,len(fit_list),2):
         a2 = pickle.load(g)
     adas2.append([a1,a2])
     #adas2.append([x1,x2])
+'''
 bkg_name_dict = {}
 print 'Looping through adas'
 for a in adas2:
     print 'Time taken for fitting: ' + str(a[0].name) + ' ' +  str(a[0].elapsed)
     print 'Time taken for fitting: ' + str(a[1].name) + ' ' +  str(a[1].elapsed)
-    #print 'Time taken for fitting B: ' + str(a[1].elapsed)
     print 'Doing plotting'
     #a[0].plotDecisionBoundaries()
     #a[1].plotDecisionBoundaries()
-    #roc_output = a[0].plotROC(True)  # pass True so that ROC curve data is returned, which allows both a[0] and a[1] plots to be overlaid
-    #a[1].plotROC(False, roc_output)
+    roc_output = a[0].plotROC(True)  # pass True so that ROC curve data is returned, which allows both a[0] and a[1] plots to be overlaid
+    a[1].plotROC(False, roc_output)
+    a[0].plotBDTScores()
+    a[1].plotBDTScores()
     #try:
     #    print 'Creating transformed BDT for ' + a[0].returnName() + ' and ' + a[1].returnName()
     #    tx_list.append(lview.apply_async(createHists.createTransformedBDT, a[0].twoclass_output, a[0].testingClasses, a[1].twoclass_output, a[1].testingClasses, a[0].returnName(), a[1].returnName(), a[0].bkg_name))

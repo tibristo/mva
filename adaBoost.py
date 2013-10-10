@@ -168,11 +168,33 @@ class adaBoost:
 
         pl.show()
 
+    def plotBDTScores(self):
+        from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+        import matplotlib.pyplot as plt
+        import pylab as pl
+
+        plot_colors = "rb"
+        plot_step = 1000.0
+        alpha_h = [1.0, 0.7]
+        class_names = ['Background', 'Signal']
+        for i, n, c in zip(xrange(2), class_names, plot_colors):
+            pl.hist(self.twoclass_output[self.testingClasses == i],
+                    bins=50,
+                    range=(-1, 1),
+                    facecolor=c,
+                    alpha=alpha_h[i],
+                    label='Class %s' % n, normed=True)
+        pl.legend(loc='upper right')
+        pl.ylabel('Samples')
+        pl.xlabel('BDT Scores')        
+        pl.savefig('BDTScores'+self.name+'.png')
+
     def plotROC(self, returnROC = False, rocInput = []):
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         import matplotlib.pyplot as plt
         import pylab as pl
         from sklearn.metrics import roc_curve, auc
+
         beginIdx = 0
         endIdx = len(self.testingData)#/2
         plot_colors = "rb"
@@ -184,8 +206,8 @@ class adaBoost:
         rej_arr = []
         names = []
 
-        pl.xlabel("Efficiency")
-        pl.ylabel("Rejection") 
+        pl.xlabel("Signal Efficiency")
+        pl.ylabel("Background Rejection") 
         pl.title("ROC curves")
 
         for i in range(1):
@@ -202,14 +224,22 @@ class adaBoost:
             roc_auc_arr.append(roc_auc)
             rej_arr.append(rej)
             names.append(self.name)
-            if not returnROC:
-                pl.plot(tpr_arr[i], rej_arr[i], lw=1, label='ROC %s (area = %0.2f)' % (self.name, roc_auc_arr[i]), color=plot_colors[i])
+
             beginIdx = endIdx
             endIdx = len(self.testingData)
         if len(rocInput)>0:
-            pl.plot(rocInput[1][0], rocInput[3][0], lw=1, label='ROC %s (area = %0.2f)' % (rocInput[4][0], rocInput[2][0]), color=plot_colors[1])
-            pl.legend(loc='lower left')
-            pl.savefig("roc_combined_"+self.name+".png")
+            label_bkg = rocInput[4][0]
+            if '_A' in rocInput[4][0]:
+                label_bkg = 'even event number'
+            pl.plot(rocInput[1][0], rocInput[3][0], lw=1, label='ROC %s (area = %0.2f)' % (label_bkg, rocInput[2][0]), color=plot_colors[1])
+    
+        if not returnROC:
+            label_bkg = self.name
+            if '_B' in self.name:
+                label_bkg = 'odd event number'
+            pl.plot(tpr_arr[i], rej_arr[i], lw=1, label='ROC %s (area = %0.2f)' % (label_bkg, roc_auc_arr[i]), color=plot_colors[i])
+        pl.legend(loc='lower left')
+        pl.savefig("roc_combined_"+self.name+".png")
         if returnROC:
             return [fpr_arr, tpr_arr, roc_auc_arr, rej_arr, names]
         pl.show()
