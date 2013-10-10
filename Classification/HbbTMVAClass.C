@@ -220,7 +220,7 @@ void HbbTMVAClass( TString myMethodList = "" )
     factory->AddVariable("HT","HT","HT",'F');
     factory->AddVariable("pTB1","pTB1","pT(b1)",'F');
     factory->AddVariable("pTB2","pTB2","pT(b2)",'F');
-    factory->AddVariable("pTimbVH","pTimbVH","pT imbalance VH",'F');//#[pt(bb)-pT(V)]/[pT(bb)+pT(V)];
+    //factory->AddVariable("pTimbVH","pTimbVH","pT imbalance VH",'F');//#[pt(bb)-pT(V)]/[pT(bb)+pT(V)];
     factory->AddVariable("mTW","mTW","mT(W)",'F');//#1 lep only;
     factory->AddVariable("pTL","pTL","pT(l)",'F');//#1 lep only;
     factory->AddVariable("MET","MET","MET",'F');//#same as pTV for 0 lep
@@ -282,8 +282,8 @@ void HbbTMVAClass( TString myMethodList = "" )
   
   
   // --- Here can add an arbitrary number of signal or background trees
-  factory->AddSignalTree    ( signal_WH_A,     signalWeight_WH     );
-  factory->AddBackgroundTree( background_A, backgroundWeight_TT );
+  factory->AddSignalTree    ( signal_WH,     signalWeight_WH     );
+  factory->AddBackgroundTree( background_TT, backgroundWeight_TT );
   //  factory->AddBackgroundTree( background_Wbb, backgroundWeight_Wbb);
   
    

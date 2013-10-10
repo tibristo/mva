@@ -1,4 +1,4 @@
-def trainBDTs(bkg_type, sig, bkg):
+def trainBDTs(bkg_type, sig, bkg, identity=''):
     #global sig,bkg
     import numpy, sortAndCut, adaBoost
     # sometimes -1 can be returned!
@@ -42,8 +42,8 @@ def trainBDTs(bkg_type, sig, bkg):
         weights_B[xi] = 1.0*nEntriesSB
     for xii in xrange(len(sig.returnTrainingSample('B')), trainWeights_B.shape[0]):
         weights_B[xii] *= nEntriesBB
-    ada1_name = bkg_type+str('_A')
-    ada2_name = bkg_type+str('_B')
+    ada1_name = bkg_type+str('_A')+identity
+    ada2_name = bkg_type+str('_B')+identity
     ada1 = adaBoost.adaBoost(sig.returnFoundVariables(), x_A, y_A, weights_A, xtA, ytA, ada1_name, bkg_type)
     ada2 = adaBoost.adaBoost(sig.returnFoundVariables(), x_B, y_B, weights_B, xtB, ytB, ada2_name, bkg_type)
     return [ada1,ada2]

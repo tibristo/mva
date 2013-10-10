@@ -1,6 +1,7 @@
 #from multiprocessing import Process, Pipe
 #import numpy
 import adaBoost as ab
+import pickle
 from root_numpy import *
 import sys
 import createHists
@@ -20,64 +21,9 @@ if len(sys.argv) < 1:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
 
-
-
-def trainBDTs(bkg_type, sig, bkg):
-    #global sig,bkg
-    import numpy, sortAndCut, adaBoost
-    # sometimes -1 can be returned!
-    # nEntries is part of the relative weighting of events, used to be included in the the XS reweighting
-    nEntriesSA = 1.0/(float((sig.returnLengthTrain('A')))/float(sig.returnFullLength()))
-    nEntriesSB = 1.0/(float((sig.returnLengthTrain('B')))/float(sig.returnFullLength()))
-    nEntriesBA = 1.0/(float((bkg.returnTrainingBkgLength('A',bkg_type)))/float(bkg.returnTrainingFullBkgLength(bkg_type)))
-    nEntriesBB = 1.0/(float((bkg.returnTrainingBkgLength('B',bkg_type)))/float(bkg.returnTrainingFullBkgLength(bkg_type)))
-
-    # Weights here used as ratio for BDT training weights
-    if bkg_type == 'bkg':
-        bkg_is_nparray = False
-    else:
-        bkg_is_nparray = True
-    try: 
-        x_A, y_A, weights_A = sortAndCut.combineWeights(sig, bkg, 'A', bkg_type, True, bkg_is_nparray)
-        x_B, y_B, weights_B = sortAndCut.combineWeights(sig, bkg, 'B', bkg_type, True, bkg_is_nparray)
-    except:
-        error = 'Caught exception whilst running combineWeights on training data'
-        error += ' Bkg_type: ' + str(bkg_type)
-        print error
-        return error
-    try:
-        xtA, ytA, weightstA = sortAndCut.combineWeights(sig, bkg, 'A', bkg_type, False, bkg_is_nparray)
-        xtB, ytB, weightstB = sortAndCut.combineWeights(sig, bkg, 'B', bkg_type, False, bkg_is_nparray)
-    except:
-        error = 'Caught exception whilst running combineWeights on testing data'
-        error += ' Bkg_type: ' + str(bkg_type)
-        print error
-        return error
-    trainWeights_A = numpy.hstack((sig.returnTrainWeights('A'), bkg.returnTrainWeights('A', bkg_type)))
-    weights_A =numpy.multiply(weights_A,trainWeights_A)
-    for xi in xrange(0, len(sig.returnTrainingSample('A'))):
-        weights_A[xi] = 1.0*nEntriesSA
-    for xii in xrange(len(sig.returnTrainingSample('A')), trainWeights_A.shape[0]):
-        weights_A[xii] *= nEntriesBA
-
-    trainWeights_B = numpy.hstack((sig.returnTrainWeights('B'), bkg.returnTrainWeights('B', bkg_type)))
-    weights_B =numpy.multiply(weights_B,trainWeights_B)
-    for xi in xrange(0, len(sig.returnTrainingSample('B'))):
-        weights_B[xi] = 1.0*nEntriesSB
-    for xii in xrange(len(sig.returnTrainingSample('B')), trainWeights_B.shape[0]):
-        weights_B[xii] *= nEntriesBB
-    ada1_name = bkg_type+str('_A')
-    ada2_name = bkg_type+str('_A')
-    ada1 = adaBoost.adaBoost(sig.returnFoundVariables(), x_A, y_A, weights_A, xtA, ytA, ada1_name, bkg_type)
-    ada2 = adaBoost.adaBoost(sig.returnFoundVariables(), x_B, y_B, weights_B, xtB, ytB, ada2_name, bkg_type)
-    return [ada1,ada2]
-    #conn.send([ada1,ada2])
-    #conn.close()
-
-
 # read in samples and convert to numpy arrays
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
-def createObjects(bkg_type):
+def createObjects(bkg_type, identity = ''):
     import numpy
     import root_numpy
     import sys
@@ -140,7 +86,7 @@ def createObjects(bkg_type):
     bkg.getTestingData(bkg.returnFullLength(), 'B', nEntries, lumi, labelCodes)
     dataSample.getTestingDataForData(nEntries, lumi)
     
-    adas = trainBDTs.trainBDTs(bkg_type, sig, bkg)
+    adas = trainBDTs.trainBDTs(bkg_type, sig, bkg, identity)
     '''
     for x in adas:
         print 'running ada ' + x.name
@@ -153,73 +99,68 @@ def createObjects(bkg_type):
     return adas
 
 #@lview.parallel(block=False)
+def runFits(ada):
+    import pickle
+    try:
+        with open(ada,'r') as f:
+            adax = pickle.load(f)
+    #adax = copy.deepcopy(ada)
+        adax.run()
+        adaNew = ada[:len(ada)-7]+'_trained.pickle'
+        with open(adaNew, 'w') as g:
+            pickle.dump(adax, g)
+        return adaNew
+    except:
+        return 'error doing adaBoost training!'
+    
 
 #need to multithread this
 #sig_ref = p.Reference('sig')
 #bkg_ref = p.Reference('bkg')
 
-#for r in rc:
-#    r['sig'] = sig
-#    r['bkg'] = bkg
-    #with r.sync_imports():
-    #    import numpy
-    #    import sortAndCut        
 adas = []
-labelCode_test = ['bkg']
+labelCode_test = ['bkg']#,'bkg']#,'bkg','bkg']#,'Wc']
 
 if __name__ == '__main__':
     arlist = []
+    count = 0
     #Need to add extra labelCode for full bkg#
     for x in labelCode_test:#labelCodes:
         #if not bkg.hasBkg(x):
         #    continue
         print 'begin process for ' + x
 
-        arlist.append(lview.apply_async(createObjects, x))#[x,sig,bkg]))
+        arlist.append(lview.apply_async(createObjects, x, str(count)))#[x,sig,bkg]))
+        count+=1
 
-
-        #parent_conn, child_conn = Pipe()
-        #p = Process(target=trainBDTs, args=(child_conn,x))
-        #p.start()
-        #parent_conns.append(parent_conn)
-        #procs.append(p)
-        #child_conn.close()
     print 'Waiting for processes to finish'
     lview.wait(arlist)
     for x in arlist:
         print 'Getting next process output'
         adas.append(x.get())
-    #pollVal = False
-    #while not pollVal:
-     #   c.poll
-    #for b,c in zip(procs,parent_conns):
-        #pollVal = False
-        #while not pollVal:
-        #    c.poll()
-        #adas.append(c.recv())
-        #b.join()
+ 
 tx_list = []
 
 #for r in rc:
 #    r.clear()
 print "save adaBoost objects to file"
-import pickle
+
 for x in adas:
-    with open(str(x[0].returnName()+'_A.pickle'),'w') as f:
+    with open(str(x[0].returnName()+'.pickle'),'w') as f:
         pickle.dump(x[0],f)
-    with open(str(x[1].returnName()+'_B.pickle'),'w') as g:
+    with open(str(x[1].returnName()+'.pickle'),'w') as g:
         pickle.dump(x[1],g)
 
 
 print 'Looping through adas to do fitting'
 fit_list = []
-import runFits
+#import runFits
 for a in adas:
     print a
     try:
         print 'Running for ' + a[0].returnName() + ' and ' + a[1].returnName()
-        fit_list.append(lview.apply_async(runFits.runFits, str(a[0].returnName()+'_A.pickle')))
-        fit_list.append(lview.apply_async(runFits.runFits, str(a[1].returnName()+'_B.pickle')))
+        fit_list.append(lview.apply_async(runFits, str(a[0].returnName()+'.pickle')))
+        fit_list.append(lview.apply_async(runFits, str(a[1].returnName()+'.pickle')))
     except:
         print 'Error starting async subprocess'
 
@@ -244,15 +185,20 @@ for a in adas2:
     print 'Time taken for fitting: ' + str(a[0].name) + ' ' +  str(a[0].elapsed)
     print 'Time taken for fitting: ' + str(a[1].name) + ' ' +  str(a[1].elapsed)
     #print 'Time taken for fitting B: ' + str(a[1].elapsed)
-    try:
-        print 'Creating transformed BDT for ' + a[0].returnName() + ' and ' + a[1].returnName()
-        tx_list.append(lview.apply_async(createHists.createTransformedBDT, a[0].twoclass_output, a[0].testingClasses, a[1].twoclass_output, a[1].testingClasses, a[0].returnName(), a[1].returnName(), a[0].bkg_name))
-        bkg_name_dict[a[0].bkg_name]=[a[0].returnName(), a[1].returnName()]
-    except:
-        print 'Error starting async subprocess'
+    print 'Doing plotting'
+    #a[0].plotDecisionBoundaries()
+    #a[1].plotDecisionBoundaries()
+    #roc_output = a[0].plotROC(True)  # pass True so that ROC curve data is returned, which allows both a[0] and a[1] plots to be overlaid
+    #a[1].plotROC(False, roc_output)
+    #try:
+    #    print 'Creating transformed BDT for ' + a[0].returnName() + ' and ' + a[1].returnName()
+    #    tx_list.append(lview.apply_async(createHists.createTransformedBDT, a[0].twoclass_output, a[0].testingClasses, a[1].twoclass_output, a[1].testingClasses, a[0].returnName(), a[1].returnName(), a[0].bkg_name))
+    #    bkg_name_dict[a[0].bkg_name]=[a[0].returnName(), a[1].returnName()]
+    #except:
+    #    print 'Error starting async subprocess'
 print 'Wait for createTransformedBDT output'
-lview.wait(tx_list)
-for x in tx_list:
-    print x.get()
+#lview.wait(tx_list)
+#for x in tx_list:
+#    print x.get()
 print 'done multiprocessing'
 #raw_input()
