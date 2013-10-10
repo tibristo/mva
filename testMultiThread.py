@@ -22,6 +22,7 @@ if len(sys.argv) < 1:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
 
+workingDir = '/Disk/speyside8/lhcb/atlas/tibristo/'
 # read in samples and convert to numpy arrays
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
 def createObjects(bkg_type, identity = ''):
@@ -32,9 +33,9 @@ def createObjects(bkg_type, identity = ''):
     import sortAndCut as sc
     import Sample
     import trainBDTs
-    sig = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
-    bkg = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
-    dataSample = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
+    sig = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+    bkg = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+    dataSample = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
 
     print 'Finished reading in all samples'
 
@@ -139,9 +140,9 @@ tx_list = []
 print "save adaBoost objects to file"
 
 for x in adas:
-    with open(str(x[0].returnName()+'.pickle'),'w') as f:
+    with open(str(workingDir+x[0].returnName()+'.pickle'),'w') as f:
         pickle.dump(x[0],f)
-    with open(str(x[1].returnName()+'.pickle'),'w') as g:
+    with open(str(workingDir+x[1].returnName()+'.pickle'),'w') as g:
         pickle.dump(x[1],g)
 
 
@@ -150,24 +151,25 @@ fit_list = []
 #import runFits
 names = []
 for a in adas:
-    names.append((a[0].returnName()+'.pickle'))
-    names.append((a[1].returnName()+'.pickle'))
-#for a in adas:
-#    print a
-try:
-        #print 'Running for ' + a[0].returnName() + ' and ' + a[1].returnName()
+    names.append((workingDir+a[0].returnName()+'.pickle'))
+    names.append((workingDir+a[1].returnName()+'.pickle'))
+for a in adas:
+    print a
+    try:
+        print 'Running for ' + a[0].returnName() + ' and ' + a[1].returnName()
 #        print 'Running for ' + a[0] + ' and ' + a[1]
-    fit = lview.map_async(runFits, names)
-        #fit_list.append(lview.apply_async(runFits, str(a[0].returnName()+'.pickle')))
-        #fit_list.append(lview.apply_async(runFits, str(a[1].returnName()+'.pickle')))
-except:
-    print 'Error starting async subprocess'
+    #fit = lview.map_async(runFits, names)
+        fit_list.append(lview.apply_async(runFits, str(a[0].returnName()+'.pickle')))
+        fit_list.append(lview.apply_async(runFits, str(a[1].returnName()+'.pickle')))
+    except:
+        print 'Error starting async subprocess'
 
 print 'Wait for fitting to complete'
-lview.wait(fit)
-#lview.wait(fit_list)
+#lview.wait(fit)
+lview.wait(fit_list)
 
 adas2 = []
+'''
 fit_list2 = fit.get()
 temp = []
 for i,r in enumerate(fit_list2):
@@ -189,7 +191,7 @@ for x in xrange(0,len(fit_list)):#,2):
         a2 = pickle.load(g)
     adas2.append([a1,a2])
     #adas2.append([x1,x2])
-'''
+
 bkg_name_dict = {}
 print 'Looping through adas'
 for a in adas2:
