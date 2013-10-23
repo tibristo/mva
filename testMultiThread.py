@@ -22,7 +22,8 @@ if len(sys.argv) < 1:
     print 'not enough arguments supplied, need argument for type of sample'
     sys.exit("not enough args supplied")
 
-workingDir = '/Disk/speyside8/lhcb/atlas/tibristo/'
+#workingDir = '/Disk/speyside8/lhcb/atlas/tibristo/'
+workingDir = ''
 # read in samples and convert to numpy arrays
 #sig = Sample.Sample('/Disk/speyside8/lhcb/atlas/tibristo/Ntuple120_sumet_sig12_FullCutflow.root','Ntuple','sig')
 def createObjects(bkg_type, identity = ''):
@@ -33,10 +34,14 @@ def createObjects(bkg_type, identity = ''):
     import sortAndCut as sc
     import Sample
     import trainBDTs
+    '''
     sig = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
     bkg = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
     dataSample = Sample.Sample('/Home/s1214155/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
-
+    '''
+    sig = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_sig12_FullCutflow.root','Ntuple','sig')
+    bkg = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_bkg12.root','Ntuple','bkg')
+    dataSample = Sample.Sample('/media/Acer/mvaFiles/trigger/Ntuple120_trigger_data12.root','Ntuple','data')
     print 'Finished reading in all samples'
 
 # keep indices of variables we want
@@ -113,7 +118,7 @@ def runFits(ada):
 #bkg_ref = p.Reference('bkg')
 
 adas = []
-labelCode_test = ['bkg','bkg']#,'bkg','bkg']#,'Wc']
+labelCode_test = ['bkg']#,'bkg']#,'bkg','bkg']#,'Wc']
 
 if __name__ == '__main__':
     arlist = []
@@ -180,7 +185,7 @@ for i,r in enumerate(fit_list2):
         adas2.append(copy.deepcopy(temp))
         temp = []
 '''
-for x in xrange(0,len(fit_list)):#,2):
+for x in xrange(0,len(fit_list),2):
     x1 = fit_list[x].get()
     x2 = fit_list[x+1].get()
     print x1

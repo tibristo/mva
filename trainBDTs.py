@@ -32,14 +32,14 @@ def trainBDTs(bkg_type, sig, bkg, identity=''):
     trainWeights_A = numpy.hstack((sig.returnTrainWeights('A'), bkg.returnTrainWeights('A', bkg_type)))
     weights_A =numpy.multiply(weights_A,trainWeights_A)
     for xi in xrange(0, len(sig.returnTrainingSample('A'))):
-        weights_A[xi] *= nEntriesSA # = nEntriesSA
+        weights_A[xi]  = nEntriesSA
     for xii in xrange(len(sig.returnTrainingSample('A')), trainWeights_A.shape[0]):
         weights_A[xii] *= nEntriesBA
 
     trainWeights_B = numpy.hstack((sig.returnTrainWeights('B'), bkg.returnTrainWeights('B', bkg_type)))
     weights_B =numpy.multiply(weights_B,trainWeights_B)
     for xi in xrange(0, len(sig.returnTrainingSample('B'))):
-        weights_B[xi] *= nEntriesSB
+        weights_B[xi] = nEntriesSB
     for xii in xrange(len(sig.returnTrainingSample('B')), trainWeights_B.shape[0]):
         weights_B[xii] *= nEntriesBB
     ada1_name = bkg_type+str('_A')+identity
