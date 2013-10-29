@@ -1,10 +1,10 @@
-import ROOT
+import ROOT,sys
 selectedFolders = ['SelectedPosMuTrig','SelectedNegMuTrig', 'SelectedPosElTrig', 'SelectedNegElTrig']
 
 log = open('log.txt','rw')
-inFile = TFile('','READ')
+inFile = TFile(sys.argv[1],'READ')
 inFile_curr = ''
-outFile = TFile('','RECREATE')
+outFile = TFile(str('slimmed_'+sys.argv[1]),'RECREATE')
 
 def getAllEntries(dirIn, key):
     global log
