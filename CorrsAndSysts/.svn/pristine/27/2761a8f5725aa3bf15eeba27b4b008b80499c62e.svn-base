@@ -1,0 +1,795 @@
+#include "CorrsAndSysts.hpp"
+#include <algorithm>
+#include <cmath>
+
+#include <TVector2.h>
+
+/*
+ * See header file for description
+ *
+ */
+
+CorrsAndSysts::CorrsAndSysts(TString name) :
+  m_debug(0),
+  m_draw(true), // draw corrections applied
+  m_zero(false),
+  m_one(false),
+  m_two(false),
+  m_seven(false),
+  m_eight(false)
+{
+  // set analysis basesd on contentes of name
+  if(name.Contains("Zero") || name.Contains("zero") || name.Contains("ZERO")) { m_zero = true; }
+  if(name.Contains("One")  || name.Contains("one")  || name.Contains("ONE"))  { m_one  = true; }
+  if(name.Contains("Two")  || name.Contains("two")  || name.Contains("TWO"))  { m_two  = true; }
+
+  // check lepton selection chosen correctly
+  if((m_zero && m_one) || (m_zero && m_two) || (m_one && m_two)) {
+    std::cout << "CorrsAndSysts initialized for multiple analyses" << std::endl;
+    exit(-1);
+  }
+  if(!m_zero && !m_one && !m_two) {
+    std::cout << "CorrsAndSysts initialized for none of the analyses" << std::endl;
+    exit(-1);
+  }
+
+  // set year
+  if(name.Contains("7TeV")) { m_seven = true; }
+  if(name.Contains("8TeV")) { m_eight = true; }
+
+  // check year is set correctly
+  if(m_seven && m_eight) {
+    std::cout << "CorrsAndSysts initialized for 7 and 8 TeV" << std::endl;
+    exit(-1);
+  }
+  if(!m_seven && !m_eight) {
+    std::cout << "CorrsAndSysts initialized for neither 7 nor 8 TeV" << std::endl;
+    exit(-1);
+  }
+
+  // write some stuff so users can be confident they did this correctly
+  std::cout << "Initalize CorrsAndSysts for ";
+  if(m_zero) {  std::cout << "Zero"; }
+  if(m_one)  {  std::cout << "One";  }
+  if(m_two)  {  std::cout << "Two";  }
+  std::cout << " Lepton ";
+  if(m_seven) { std::cout << "7"; }
+  if(m_eight) { std::cout << "8"; }
+  std::cout << " TeV analysis" << std::endl;
+
+  // initalize the corrections and systematics
+  Initialize();
+
+} // CorrsAndSysts
+
+CorrsAndSysts::CorrsAndSysts(int channel, int year) :
+  m_debug(0),
+  m_draw(true), // draw corrections applied
+  m_zero(false),
+  m_one(false),
+  m_two(false),
+  m_seven(false),
+  m_eight(false)
+{
+  switch(channel) {
+    case 0:
+      m_zero = true;
+    break;
+    case 1:
+      m_one = true;
+    break;
+    case 2:
+      m_two = true;
+    break;
+    default:
+      std::cout << "CorrsAndSysts initialized for none of the analyses" << std::endl;
+      exit(-1);
+  }
+  switch(year) {
+    case 2011:
+      m_seven = true;
+    break;
+    case 2012:
+      m_eight = true;
+    break;
+    default:
+      std::cout << "CorrsAndSysts initialized for neither 7 nor 8 TeV" << std::endl;
+      exit(-1);
+  }
+
+  // write some stuff so users can be confident they did this correctly
+  std::cout << "Initalize CorrsAndSysts for ";
+  if(m_zero) {  std::cout << "Zero"; }
+  if(m_one)  {  std::cout << "One";  }
+  if(m_two)  {  std::cout << "Two";  }
+  std::cout << " Lepton ";
+  if(m_seven) { std::cout << "7"; }
+  if(m_eight) { std::cout << "8"; }
+  std::cout << " TeV analysis" << std::endl;
+
+  // initalize the corrections and systematics
+  Initialize();
+
+
+} // CorrsAndSysts
+
+CorrsAndSysts::~CorrsAndSysts() {
+  delete m_h_WHlvbbNLOEWKCorrection;
+  delete m_h_ZHllbbNLOEWKCorrection;
+  delete m_h_ZHvvbbNLOEWKCorrection;
+  delete m_h_WpTCorrection;
+  delete m_h_ZpTCorrection;
+  delete m_h_ttbarpTCorrection;
+  delete m_h_WDeltaPhiCorrection;
+
+  delete m_h_SysWbbPtW;
+  delete m_h_SysTopPt;
+  delete m_h_SysWccPtW;
+  delete m_h_SysZbbPtZ;
+  delete m_h_SysZccPtZ;
+
+  delete m_h_SysTheoryWHlvbbPt;
+  delete m_h_SysTheoryZHllbbPt;
+  delete m_h_SysTheoryZHvvbbPt;
+  delete m_h_SysWMbb;
+  delete m_f_SysWllPtW;
+  delete m_f_SysZllPtZ;
+  delete m_f_SysZbbMbb;
+  delete m_f_SysWbbMbb;
+  delete m_h_SysZDeltaPhi;
+
+}
+
+void CorrsAndSysts::Initialize() {
+  // initialize the mappings to event types
+  m_typeNames["WHlvbb"] = CAS::WHlvbb;
+  m_typeNames["ZHllbb"] = CAS::ZHllbb;
+  m_typeNames["ZHvvbb"] = CAS::ZHvvbb;
+  m_typeNames["WlvH"] = CAS::WHlvbb;
+  m_typeNames["ZllH"] = CAS::ZHllbb;
+  m_typeNames["ZvvH"] = CAS::ZHvvbb;
+  m_typeNames["signalWH"] = CAS::WHlvbb;
+  m_typeNames["signalZHll"] = CAS::ZHllbb;
+  m_typeNames["signalZHvv"] = CAS::ZHvvbb;
+  m_typeNames["Wb"] = CAS::Wb;
+  m_typeNames["Wbb"] = CAS::Wb;
+  m_typeNames["Wbc"] = CAS::Wb;
+  m_typeNames["Wbl"] = CAS::Wb;
+  m_typeNames["Wc"] = CAS::Wc;
+  m_typeNames["Wcl"] = CAS::Wc;
+  m_typeNames["Wcc"] = CAS::Wcc;
+  m_typeNames["Wl"] = CAS::Wl;
+  m_typeNames["Wll"] = CAS::Wl;
+  m_typeNames["Zb"] = CAS::Zb;
+  m_typeNames["Zbb"] = CAS::Zb;
+  m_typeNames["Zbc"] = CAS::Zb;
+  m_typeNames["Zbl"] = CAS::Zb;
+  m_typeNames["Zc"] = CAS::Zc;
+  m_typeNames["Zcc"] = CAS::Zc;
+  m_typeNames["Zcl"] = CAS::Zc;
+  m_typeNames["Zl"] = CAS::Zl;
+  m_typeNames["Zll"] = CAS::Zl;
+  m_typeNames["top"] = CAS::ttbar;
+  m_typeNames["ttbar"] = CAS::ttbar;
+  m_typeNames["stop"] = CAS::stop;
+  m_typeNames["WW"] = CAS::diboson;
+  m_typeNames["WZ"] = CAS::diboson;
+  m_typeNames["ZZ"] = CAS::diboson;
+
+  m_systNames[CAS::Nominal] = "";
+  m_systNames[CAS::SysTheoryWHlvbbPt] = "SysTheoryWHlvbbPt";
+  m_systNames[CAS::SysTheoryZHllbbPt] = "SysTheoryZHllbbPt";
+  m_systNames[CAS::SysTheoryZHvvbbPt] = "SysTheoryZHvvbbPt";
+  m_systNames[CAS::SysTopPt] = "SysTopPt";
+  m_systNames[CAS::SysWbbPtW] = "SysWbbPtW";
+  m_systNames[CAS::SysWccPtW] = "SysWccPtW";
+  m_systNames[CAS::SysZbbPtZ] = "SysZbbPtZ";
+  m_systNames[CAS::SysZccPtZ] = "SysZccPtZ";
+  m_systNames[CAS::SysWllPtW] = "SysWllPtW";
+  m_systNames[CAS::SysZllPtZ] = "SysZllPtZ";
+  m_systNames[CAS::SysZbbMbb] = "SysZbbMbb";
+  m_systNames[CAS::SysWbbMbb] = "SysWbbMbb";
+  m_systNames[CAS::SysWMbb] = "SysWMbb";
+  m_systNames[CAS::SysWDPhi] = "SysWDPhi";
+  m_systNames[CAS::SysWccDPhi] = "SysWccDPhi";
+  m_systNames[CAS::SysWbDPhi] = "SysWbDPhi";
+  m_systNames[CAS::SysZDPhi] = "SysZDPhi";
+  m_systNames[CAS::SysZcDPhi] = "SysZcDPhi";
+  m_systNames[CAS::SysZbDPhi] = "SysZbDPhi";
+
+  m_varNames[CAS::Up] = "Up";
+  m_varNames[CAS::Do] = "Do";
+
+  m_binNames[CAS::None] = "";
+  m_binNames[CAS::Any] = "";
+  m_binNames[CAS::Bin0] = "Bin0";
+  m_binNames[CAS::Bin1] = "Bin1";
+  m_binNames[CAS::Bin2] = "Bin2";
+  m_binNames[CAS::Bin3] = "Bin3";
+  m_binNames[CAS::Bin4] = "Bin4";
+
+  m_systFromNames = Utils::reverseMap<CAS::Systematic, std::string>(m_systNames);
+  m_varFromNames = Utils::reverseMap<CAS::SysVar, std::string>(m_varNames);
+  // resolve ambiguity
+  m_binFromNames = Utils::reverseMap<CAS::SysBin, std::string>(m_binNames);
+  m_binFromNames[""] = CAS::Any;
+
+  // V pT bins. For now 5 bins as in cut-based
+  pTbins[0] = 0.;
+  pTbins[1] = 50.e3;
+  pTbins[2] = 100.e3;
+  pTbins[3] = 150.e3;
+  pTbins[4] = 200.e3;
+  pTbins[5] = 500.e3;
+
+
+  /*********************************************
+   *
+   *    CORRECTIONS
+   *    These should be applied to the nominal
+   *
+   *    Below the histograms which contain the
+   *    values of the correction are created
+   *
+  *********************************************/
+
+  // signal NLO EW corrections
+  m_h_WHlvbbNLOEWKCorrection = new TH1F("WHlvbbpTCorr","WHlvbbpTCorr",95 ,25.e3, 500.e3);
+  m_h_WHlvbbNLOEWKCorrection->SetDirectory(0);
+  m_h_ZHllbbNLOEWKCorrection = new TH1F("ZHllbbpTCorr","ZHllbbpTCorr",95 ,25.e3, 500.e3);
+  m_h_ZHllbbNLOEWKCorrection->SetDirectory(0);
+  m_h_ZHvvbbNLOEWKCorrection = new TH1F("ZHvvbbpTCorr","ZHvvbbpTCorr",95 ,25.e3, 500.e3);
+  m_h_ZHvvbbNLOEWKCorrection->SetDirectory(0);
+
+  if(m_seven) {
+    Float_t a_whlvbbcorr[95] = {0.00224198, -0.000370526, -0.00169178, -0.00189401, -0.00200129, -0.00301404, -0.00325795, -0.0041637, -0.00587139, -0.00739039, -0.00917371, -0.0112332, -0.0134147, -0.0152704, -0.0175308, -0.0194987, -0.021615, -0.0233439, -0.0251813, -0.0278489, -0.0296617, -0.0324331, -0.0347805, -0.0362031, -0.0376821, -0.0403375, -0.042188, -0.0439056, -0.045399, -0.0482114, -0.0505533, -0.0524687, -0.0556041, -0.0565102, -0.0585783, -0.0618502, -0.0639255, -0.0660007, -0.068076, -0.0701513, -0.0722265, -0.0743018, -0.0763771, -0.0784523, -0.0805276, -0.0826029, -0.0846781, -0.0867534, -0.0888287, -0.0909039, -0.0929792, -0.0950545, -0.0971297, -0.099205, -0.10128, -0.103356, -0.105431, -0.107506, -0.109581, -0.111657, -0.113732, -0.115807, -0.117882, -0.119958, -0.122033, -0.124108, -0.126183, -0.128259, -0.130334, -0.132409, -0.134485, -0.13656, -0.138635, -0.14071, -0.142786, -0.144861, -0.146936, -0.149011, -0.151087, -0.153162, -0.155237, -0.157312, -0.159388, -0.161463, -0.163538, -0.165614, -0.167689, -0.169764, -0.171839, -0.173915, -0.17599, -0.178065, -0.18014, -0.182216, -0.184291};
+    Utils::FillTH1F(95, a_whlvbbcorr, m_h_WHlvbbNLOEWKCorrection, m_allHists);
+    Float_t a_zhllbbcorr[95] = {0.000369691, -0.00311954, -0.00814806, -0.0101356, -0.0133924, -0.015624, -0.0188796, -0.0212749, -0.0233653, -0.0254506, -0.0270923, -0.028222, -0.0284564, -0.0287463, -0.0294866, -0.031416, -0.0304275, -0.0317627, -0.0329827, -0.0322219, -0.0339739, -0.0323855, -0.0329175, -0.0336001, -0.033455, -0.0350176, -0.0341059, -0.0383008, -0.0375261, -0.0404764, -0.0405512, -0.0410093, -0.0432318, -0.0475565, -0.0498079, -0.0470666, -0.0544329, -0.0534824, -0.055241, -0.0582209, -0.0604063, -0.0625916, -0.064777, -0.0669624, -0.0691477, -0.0713331, -0.0735185, -0.0757038, -0.0778892, -0.0800746, -0.0822599, -0.0844453, -0.0866307, -0.088816, -0.0910014, -0.0931868, -0.0953721, -0.0975575, -0.0997429, -0.101928, -0.104114, -0.106299, -0.108484, -0.11067, -0.112855, -0.11504, -0.117226, -0.119411, -0.121597, -0.123782, -0.125967, -0.128153, -0.130338, -0.132523, -0.134709, -0.136894, -0.139079, -0.141265, -0.14345, -0.145636, -0.147821, -0.150006, -0.152192, -0.154377, -0.156562, -0.158748, -0.160933, -0.163119, -0.165304, -0.167489, -0.169675, -0.17186, -0.174045, -0.176231, -0.178416};
+    Utils::FillTH1F(95, a_zhllbbcorr, m_h_ZHllbbNLOEWKCorrection, m_allHists);
+    Float_t a_zhvvbbcorr[95] = {0.0148102, 0.0137398, 0.0127929, 0.0117756, 0.011091, 0.0100978, 0.0094288, 0.0083615, 0.00791759, 0.00740715, 0.00712286, 0.00672918, 0.00662655, 0.00650805, 0.00671416, 0.00694015, 0.00738593, 0.00741676, 0.00850807, 0.00886493, 0.010138, 0.011426, 0.0122657, 0.0125201, 0.01283, 0.0127657, 0.0135671, 0.0126575, 0.0118711, 0.0115731, 0.0104059, 0.0108386, 0.00905639, 0.00774211, 0.00647519, 0.00545708, 0.00377601, 0.00251831, 0.00148805, 5.26677e-06, -0.00186611, -0.0037375, -0.00560888, -0.00748026, -0.00935164, -0.011223, -0.0130944, -0.0149658, -0.0168372, -0.0187085, -0.0205799, -0.0224513, -0.0243227, -0.0261941, -0.0280655, -0.0299368, -0.0318082, -0.0336796, -0.035551, -0.0374224, -0.0392937, -0.0411651, -0.0430365, -0.0449079, -0.0467793, -0.0486507, -0.050522, -0.0523934, -0.0542648, -0.0561362, -0.0580076, -0.0598789, -0.0617503, -0.0636217, -0.0654931, -0.0673645, -0.0692359, -0.0711072, -0.0729786, -0.07485, -0.0767214, -0.0785928, -0.0804641, -0.0823355, -0.0842069, -0.0860783, -0.0879497, -0.0898211, -0.0916924, -0.0935638, -0.0954352, -0.0973066, -0.099178, -0.101049, -0.102921};
+    Utils::FillTH1F(95, a_zhvvbbcorr, m_h_ZHvvbbNLOEWKCorrection, m_allHists);
+  }
+  else if(m_eight) {
+    Float_t a_whlvbbcorr[95] = {0.00200484, -9.13928e-05, -0.00219974, -0.00202884, -0.00219318, -0.00299564, -0.00336771, -0.00409143, -0.0059936, -0.00750034, -0.00881597, -0.0111589, -0.0135328, -0.0151878, -0.0178145, -0.0189559, -0.0215716, -0.0233429, -0.0250507, -0.0278028, -0.0291708, -0.0319617, -0.0341056, -0.0365647, -0.0381327, -0.0399857, -0.0405974, -0.0444237, -0.0454833, -0.0482596, -0.0486239, -0.0534461, -0.0539187, -0.0559509, -0.0596689, -0.0610085, -0.0633554, -0.0639406, -0.0672306, -0.0699078, -0.0719664, -0.0740249, -0.0760835, -0.078142, -0.0802005, -0.0822591, -0.0843176, -0.0863761, -0.0884347, -0.0904932, -0.0925517, -0.0946103, -0.0966688, -0.0987273, -0.100786, -0.102844, -0.104903, -0.106961, -0.10902, -0.111079, -0.113137, -0.115196, -0.117254, -0.119313, -0.121371, -0.12343, -0.125488, -0.127547, -0.129605, -0.131664, -0.133722, -0.135781, -0.13784, -0.139898, -0.141957, -0.144015, -0.146074, -0.148132, -0.150191, -0.152249, -0.154308, -0.156366, -0.158425, -0.160483, -0.162542, -0.1646, -0.166659, -0.168718, -0.170776, -0.172835, -0.174893, -0.176952, -0.17901, -0.181069, -0.183127};
+    Utils::FillTH1F(95, a_whlvbbcorr, m_h_WHlvbbNLOEWKCorrection, m_allHists);
+    Float_t a_zhllbbcorr[95] = {0.000664024, -0.00357095, -0.00767076, -0.00967366, -0.0134844, -0.0157148, -0.0181885, -0.0209647, -0.0232788, -0.0252373, -0.0265634, -0.0275069, -0.0285776, -0.0281683, -0.0294206, -0.0299975, -0.0308047, -0.0311716, -0.030913, -0.0324821, -0.0323192, -0.0324639, -0.0319356, -0.0322621, -0.0331146, -0.0338905, -0.0345189, -0.0358591, -0.0358407, -0.040018, -0.0396389, -0.0407177, -0.0445103, -0.0441406, -0.0471215, -0.0463301, -0.0513777, -0.0536773, -0.0546446, -0.0568508, -0.0590333, -0.0612157, -0.0633981, -0.0655805, -0.067763, -0.0699454, -0.0721278, -0.0743103, -0.0764927, -0.0786751, -0.0808575, -0.08304, -0.0852224, -0.0874048, -0.0895872, -0.0917697, -0.0939521, -0.0961345, -0.098317, -0.100499, -0.102682, -0.104864, -0.107047, -0.109229, -0.111412, -0.113594, -0.115776, -0.117959, -0.120141, -0.122324, -0.124506, -0.126689, -0.128871, -0.131053, -0.133236, -0.135418, -0.137601, -0.139783, -0.141965, -0.144148, -0.14633, -0.148513, -0.150695, -0.152878, -0.15506, -0.157242, -0.159425, -0.161607, -0.16379, -0.165972, -0.168155, -0.170337, -0.172519, -0.174702, -0.176884};
+    Utils::FillTH1F(95, a_zhllbbcorr, m_h_ZHllbbNLOEWKCorrection, m_allHists);
+    Float_t a_zhvvbbcorr[95] = {0.0146846, 0.0136521, 0.0125801, 0.0117771, 0.010976, 0.00989665, 0.00929942, 0.00836484, 0.00781992, 0.00733247, 0.00688885, 0.00666833, 0.0063354, 0.00637412, 0.00662595, 0.0069015, 0.00716689, 0.00760953, 0.00823267, 0.00914484, 0.00960494, 0.0110894, 0.0122241, 0.0127155, 0.0126892, 0.0125873, 0.01278, 0.0128243, 0.0118519, 0.0116125, 0.0102697, 0.00960959, 0.00929141, 0.00807739, 0.00588976, 0.00522135, 0.00365527, 0.00214147, 0.000569382, 0.000322672, -0.0015679, -0.00345846, -0.00534903, -0.0072396, -0.00913017, -0.0110207, -0.0129113, -0.0148019, -0.0166924, -0.018583, -0.0204736, -0.0223641, -0.0242547, -0.0261453, -0.0280358, -0.0299264, -0.031817, -0.0337076, -0.0355981, -0.0374887, -0.0393793, -0.0412698, -0.0431604, -0.045051, -0.0469415, -0.0488321, -0.0507227, -0.0526132, -0.0545038, -0.0563944, -0.0582849, -0.0601755, -0.0620661, -0.0639566, -0.0658472, -0.0677378, -0.0696283, -0.0715189, -0.0734095, -0.0753001, -0.0771906, -0.0790812, -0.0809718, -0.0828623, -0.0847529, -0.0866435, -0.088534, -0.0904246, -0.0923152, -0.0942057, -0.0960963, -0.0979869, -0.0998774, -0.101768, -0.103659};
+    Utils::FillTH1F(95, a_zhvvbbcorr, m_h_ZHvvbbNLOEWKCorrection, m_allHists);
+  }
+
+  // W, Z and top backgrounds pT corrections
+  m_h_WpTCorrection = new TH1F("WpTCorr","WpTCorr",5 ,pTbins);
+  m_h_WpTCorrection->SetDirectory(0);
+  m_h_ZpTCorrection = new TH1F("ZpTCorr","ZpTCorr",5 ,pTbins);
+  m_h_ZpTCorrection->SetDirectory(0);
+  m_h_ttbarpTCorrection = new TH1F("ttbarpTCorr","ttbarpTCorr",5 ,pTbins);
+  m_h_ttbarpTCorrection->SetDirectory(0);
+
+  if(m_seven) {
+    Float_t a_wcorr[5] = {0.04, -0.03, -0.10, -0.10, -0.10};
+    Utils::FillTH1F(5, a_wcorr, m_h_WpTCorrection, m_allHists);
+    Float_t a_zcorr[5] = {0.05, -0.03, -0.05, -0.05, -0.05};
+    Utils::FillTH1F(5, a_zcorr, m_h_ZpTCorrection, m_allHists);
+    Float_t a_ttbarcorr[5] = {0.05, -0.02, -0.01, -0.19, -0.18};
+    Utils::FillTH1F(5, a_ttbarcorr, m_h_ttbarpTCorrection, m_allHists);
+  }
+  else if(m_eight) {
+    Float_t a_wcorr[5] = {0.02, -0.04, -0.05, -0.05, -0.05};
+    Utils::FillTH1F(5, a_wcorr, m_h_WpTCorrection, m_allHists);
+    Float_t a_zcorr[5] = {0.07, -0.04, -0.04, -0.04, -0.04};
+    Utils::FillTH1F(5, a_zcorr, m_h_ZpTCorrection, m_allHists);
+    Float_t a_ttbarcorr[5] = {0.01, 0.04, -0.05, -0.19, -0.19};
+    Utils::FillTH1F(5, a_ttbarcorr, m_h_ttbarpTCorrection, m_allHists);
+  }
+
+
+  // W, backgrounds DeltaPhi corrections
+  m_h_WDeltaPhiCorrection = new TH1F("WDeltaPhiCorr","WDeltaPhiCorr", 16, 0, 3.2);
+  m_h_WDeltaPhiCorrection->SetDirectory(0);
+
+  // numbers from Garabed. 06/04/2013
+  Float_t a_wlcorr[16] = {-0.16747, -0.16552, -0.12909, -0.13032, -0.11397, -0.10880,
+    -0.07345, -0.05034, -0.02892, -0.02198, 0.01886, 0.04924, 0.06800, 0.08941, 0.09224,
+    0.07784};
+  Utils::FillTH1F(16, a_wlcorr, m_h_WDeltaPhiCorrection, m_allHists);
+
+
+
+  /*********************************************
+   *
+   *    SYSTEMATICS
+   *    These should be applied to the nominal
+   *
+   *    Below the histograms which contain the
+   *    values of the correction are created
+   *
+  *********************************************/
+
+  m_h_SysTheoryWHlvbbPt = new TH1F("SysTheoryWHlvbbPt", "SysTheoryWHlvbbPt", 95, 25.e3, 500.e3);
+  m_h_SysTheoryWHlvbbPt->SetDirectory(0);
+  m_h_SysTheoryZHllbbPt = new TH1F("SysTheoryZHllbbPt", "SysTheoryZHllbbPt", 95, 25.e3, 500.e3);
+  m_h_SysTheoryZHllbbPt->SetDirectory(0);
+  m_h_SysTheoryZHvvbbPt = new TH1F("SysTheoryZHvvbbPt", "SysTheoryZHvvbbPt", 95, 25.e3, 500.e3);
+  m_h_SysTheoryZHvvbbPt->SetDirectory(0);
+  if(m_seven) {
+    Float_t hw7_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0201801, 0.0207736, 0.0213758, 0.0219865, 0.0226059, 0.0232338, 0.0238704, 0.0245155, 0.0251693, 0.0258317, 0.0265027, 0.0271822, 0.0278704, 0.0285672, 0.0292726, 0.0299866, 0.0307092, 0.0314403, 0.0321801, 0.0329285, 0.0336855, 0.0344511, 0.0352254, 0.0360082, 0.0367996, 0.0375996, 0.0384082, 0.0392254, 0.0400513, 0.0408857, 0.0417287, 0.0425803, 0.0434406, 0.0443094, 0.0451869, 0.0460729, 0.0469675, 0.0478708, 0.0487827, 0.0497031, 0.0506322, 0.0515698, 0.0525161, 0.053471, 0.0544344, 0.0554065, 0.0563872, 0.0573764, 0.0583743, 0.0593808, 0.0603959, 0.0614196, 0.0624519, 0.0634928, 0.0645423, 0.0656004};
+    Utils::FillTH1F(95, hw7_errors, m_h_SysTheoryWHlvbbPt, m_allHists);
+    Float_t hll7_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0203477, 0.0209749, 0.0216116, 0.0222579, 0.0229137, 0.023579, 0.0242538, 0.0249381, 0.025632, 0.0263354, 0.0270483, 0.0277707, 0.0285026, 0.0292441, 0.0299951, 0.0307556, 0.0315256, 0.0323051, 0.0330942, 0.0338928, 0.0347009, 0.0355185, 0.0363457, 0.0371823, 0.0380285, 0.0388842, 0.0397495, 0.0406242, 0.0415085, 0.0424023, 0.0433056, 0.0442184, 0.0451408, 0.0460727, 0.0470141, 0.047965, 0.0489254, 0.0498954, 0.0508749, 0.0518639, 0.0528624, 0.0538704};
+    Utils::FillTH1F(95, hll7_errors, m_h_SysTheoryZHllbbPt, m_allHists);
+    Float_t hnn7_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0202857, 0.0208312, 0.0213839, 0.0219438, 0.022511, 0.0230854, 0.023667, 0.0242559, 0.024852};
+    Utils::FillTH1F(95, hnn7_errors, m_h_SysTheoryZHvvbbPt, m_allHists);
+  }
+  else if(m_eight) {
+    Float_t	hw8_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0201193, 0.0207066, 0.0213024, 0.0219067, 0.0225194, 0.0231405, 0.0237701, 0.0244082, 0.0250547, 0.0257096, 0.026373, 0.0270449, 0.0277252, 0.0284139, 0.0291111, 0.0298168, 0.0305309, 0.0312534, 0.0319844, 0.0327239, 0.0334718, 0.0342281, 0.0349929, 0.0357662, 0.0365479, 0.037338, 0.0381367, 0.0389437, 0.0397592, 0.0405832, 0.0414156, 0.0422564, 0.0431057, 0.0439635, 0.0448297, 0.0457044, 0.0465875, 0.047479, 0.048379, 0.0492875, 0.0502044, 0.0511298, 0.0520636, 0.0530058, 0.0539565, 0.0549157, 0.0558833, 0.0568594, 0.0578439, 0.0588369, 0.0598383, 0.0608481, 0.0618664, 0.0628932, 0.0639284, 0.0649721};
+    Utils::FillTH1F(95, hw8_errors, m_h_SysTheoryWHlvbbPt, m_allHists);
+    Float_t hll8_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0205646, 0.0211945, 0.021834, 0.022483, 0.0231415, 0.0238095, 0.024487, 0.025174, 0.0258705, 0.0265765, 0.027292, 0.028017, 0.0287516, 0.0294956, 0.0302491, 0.0310122, 0.0317847, 0.0325667, 0.0333583, 0.0341594, 0.0349699, 0.03579, 0.0366195, 0.0374586, 0.0383072, 0.0391653, 0.0400329, 0.0409099, 0.0417965, 0.0426926, 0.0435982, 0.0445134, 0.045438, 0.0463721, 0.0473157, 0.0482688, 0.0492315, 0.0502036, 0.0511852, 0.0521764, 0.053177};
+    Utils::FillTH1F(95, hll8_errors, m_h_SysTheoryZHllbbPt, m_allHists);
+    Float_t hnn8_errors[95] = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.02, 0.0202975, 0.0208415, 0.0213928, 0.0219513, 0.0225169, 0.0230898, 0.0236698, 0.0242571, 0.0248515};
+    Utils::FillTH1F(95, hnn8_errors, m_h_SysTheoryZHvvbbPt, m_allHists);
+  }
+
+  m_h_SysTopPt = new TH1F("SysTopPt", "SysTopPt", 5, pTbins);
+  m_h_SysTopPt->SetDirectory(0);
+  m_h_SysWbbPtW = new TH1F("SysWbbPtW", "SysWbbPtW", 5, pTbins);
+  m_h_SysWbbPtW->SetDirectory(0);
+  m_h_SysWccPtW = new TH1F("SysWccPtW", "SysWccPtW", 5, pTbins);
+  m_h_SysWccPtW->SetDirectory(0);
+  m_h_SysZbbPtZ = new TH1F("SysZbbPtZ", "SysZbbPtZ", 5, pTbins);
+  m_h_SysZbbPtZ->SetDirectory(0);
+  m_h_SysZccPtZ = new TH1F("SysZccPtZ", "SysZccPtZ", 5, pTbins);
+  m_h_SysZccPtZ->SetDirectory(0);
+  // Mbb histogram
+  m_h_SysWMbb = new TH1F("SysWMbb", "SysWMbb", 23, 20.e3, 250.e3);
+  m_h_SysWMbb->SetDirectory(0);
+  // DeltaPhi histogram
+  m_h_SysZDeltaPhi = new TH1F("SysZDPhi","SysZDPhi", 16, 0, 3.2);
+  m_h_SysZDeltaPhi->SetDirectory(0);
+
+  Float_t a_SysTopPt[5] = { 0.05, 0.05, 0.05, 0.075, 0.10};
+  Utils::FillTH1F(5, a_SysTopPt, m_h_SysTopPt, m_allHists);
+  Float_t a_SysWbbPtW[5] = { 0.05, 0.05, 0.05, 0.10, 0.10};
+  Utils::FillTH1F(5, a_SysWbbPtW, m_h_SysWbbPtW, m_allHists);
+  Float_t a_SysWccPtW[5] = { 0.05, 0.05, 0.05, 0.10, 0.10};
+  Utils::FillTH1F(5, a_SysWccPtW, m_h_SysWccPtW, m_allHists);
+  Float_t a_SysZbbPtW[5] = { 0.05, 0.05, 0.05, 0.05, 0.05};
+  Utils::FillTH1F(5, a_SysZbbPtW, m_h_SysZbbPtZ, m_allHists);
+  Float_t a_SysZccPtW[5] = { 0.05, 0.05, 0.05, 0.05, 0.05};
+  Utils::FillTH1F(5, a_SysZccPtW, m_h_SysZccPtZ, m_allHists);
+
+  // SysWMbb
+  float Wvar[23] = { 1.01366, 0.936449, 0.907257, 0.907951, 0.935004, 0.961918, 0.975183, 0.985031, 0.993212, 1.00042, 1.00687, 1.01089, 1.01473, 1.02184, 1.02887, 1.03273, 1.03736, 1.04112, 1.04467, 1.04622, 1.05677, 1.05168, 1.06391};
+  // extend to flat variation beyond the computed values
+  m_h_SysWMbb->SetBinContent(0, 1.01366);
+  m_h_SysWMbb->SetBinContent(24, 1.06391);
+  Utils::FillTH1F(23, Wvar, m_h_SysWMbb, m_allHists);
+
+  // SysZDeltaPhi
+  // numbers from Kevin. 06/04/2013
+  Float_t a_SysZDeltaPhi[16] = { -0.0921185, -0.09367, -0.0558405, -0.0604569, -0.0640671,
+    -0.056368, -0.0333354, -0.00744723, 0.00363669, 0.0440983, 0.00986802, 0.0481942,
+    0.0446088, 0.0492207, 0.0512695, 0.0457427};
+  Utils::FillTH1F(16, a_SysZDeltaPhi, m_h_SysZDeltaPhi, m_allHists);
+
+
+  // Continuus systematics
+
+  // numbers from ryuhei
+  m_f_SysWllPtW = new TF1("f_SysWllPtW","[0] +  [1]*(x/1.e3 - 25)", 0, pTbins[5]);
+  m_f_SysWllPtW->SetParameter(0, 0.02);
+  m_f_SysWllPtW->SetParameter(1, -4.97e-4);
+
+  m_f_SysZllPtZ = new TF1("f_SysZllPtZ","[0] +  [1]*(x/1.e3 - 25)", 0, pTbins[5]);
+  m_f_SysZllPtZ->SetParameter(0, 0.04);
+  m_f_SysZllPtZ->SetParameter(1, -6.35e-4);
+
+  m_f_SysZbbMbb = new TF1("f_SysZbbMbb","[0] * (x/1.e3 - [1])", 0, pTbins[5]);
+  m_f_SysZbbMbb->SetParameter(0, 0.001);
+  m_f_SysZbbMbb->SetParameter(1, 100.);
+
+  // original parametrization
+  //int massbin = i%23 ;
+  //double massFit = ((10 + massbin * 10.) -20.)/10 ;
+  //float scale = 0.800285+(0.0190471 + 0.00371954)*massFit;
+  // center of bin i is 25 + 10*(i-1)
+  // should be equivalent to
+  m_f_SysWbbMbb = new TF1("f_SysWbbMbb", "0.800285+(0.0190471 + 0.00371954)*(x/1.e3 - 25)/10 - 1", 0, pTbins[5]);
+
+  Utils::SaveHist(m_f_SysWllPtW, m_allHists);
+  Utils::SaveHist(m_f_SysZllPtZ, m_allHists);
+  Utils::SaveHist(m_f_SysZbbMbb, m_allHists);
+  Utils::SaveHist(m_f_SysWbbMbb, m_allHists);
+
+  if(m_draw) {
+    TString fname("CorrsAndSysts_");
+    if(m_zero) {  fname.Append("Zero"); }
+    if(m_one)  {  fname.Append("One");  }
+    if(m_two)  {  fname.Append("Two");  }
+    fname.Append("Lep_");
+    if(m_seven) { fname.Append("7"); }
+    if(m_eight) { fname.Append("8"); }
+    fname.Append("TeV.root");
+    WriteHistsToFile(fname);
+  }
+
+
+} // Initialize
+
+CAS::EventType CorrsAndSysts::GetEventType(TString name) {
+  if( m_typeNames.find(name.Data()) == m_typeNames.end() ) {
+    std::cout << "CorrsAndSysts::ERROR - unknown event type " << name << std::endl;
+    exit(-1);
+  }
+  return m_typeNames[name.Data()];
+} // GetEventType
+
+CAS::SysBin CorrsAndSysts::GetSysBin(float vpt) {
+  if(vpt < pTbins[0]) {
+    std::cout << "CorrsAndSysts::ERROR - V pT " << vpt << " is smaller than lowest bin boundary " <<  pTbins[0] << std::endl;
+  }
+  if(vpt < pTbins[1]) { return CAS::Bin0; }
+  if(vpt < pTbins[2]) { return CAS::Bin1; }
+  if(vpt < pTbins[3]) { return CAS::Bin2; }
+  if(vpt < pTbins[4]) { return CAS::Bin3; }
+  return CAS::Bin4;
+
+} // GetSysBin
+
+/*********************************************
+ *
+ *  CORRECTIONS continued - functions below
+ *
+ *********************************************/
+
+float CorrsAndSysts::Get_HiggsNLOEWKCorrection(CAS::EventType type, float VpT) {
+  float scale=0;
+  switch(type) {
+    case CAS::WHlvbb:
+      scale = Utils::GetScale(VpT, m_h_WHlvbbNLOEWKCorrection);
+      break;
+    case CAS::ZHllbb:
+      scale = Utils::GetScale(VpT, m_h_ZHllbbNLOEWKCorrection);
+      break;
+    case CAS::ZHvvbb:
+      scale = Utils::GetScale(VpT, m_h_ZHvvbbNLOEWKCorrection);
+      break;
+    default:
+      scale=0;
+      break;
+  }
+  return 1+scale;
+}
+
+float CorrsAndSysts::Get_BkgpTCorrection(CAS::EventType type, float VpT) {
+  std::cout << "CorrsAndSysts::WARNING BkgPtCorrections are obsolete ! return 1" << std::endl;
+  return 1;
+
+  float scale=0;
+  switch(type) {
+    case CAS::Wb: case CAS::Wc: case CAS::Wcc: case CAS::Wl:
+      scale = Utils::GetScale(VpT, m_h_WpTCorrection);
+      break;
+    case CAS::Zb: case CAS::Zc: case CAS::Zl:
+      scale = Utils::GetScale(VpT, m_h_ZpTCorrection);
+      break;
+    case CAS::ttbar:
+      scale = Utils::GetScale(VpT, m_h_ttbarpTCorrection);
+      break;
+    default:
+      scale=0;
+      break;
+  }
+  return 1+scale;
+}
+
+float CorrsAndSysts::Get_BkgDeltaPhiCorrection(CAS::EventType type, float DeltaPhi) {
+  DeltaPhi = fabs(TVector2::Phi_mpi_pi(DeltaPhi));
+  float scale=0;
+  switch(type) {
+    case CAS::Wl:
+    case CAS::Wc:
+    case CAS::Wcc:
+    case CAS::Wb:
+      scale = Utils::GetScale(DeltaPhi, m_h_WDeltaPhiCorrection);
+      break;
+    default:
+      scale=0;
+      break;
+  }
+  return 1+scale;
+}
+
+/*********************************************
+ *
+ *  SYSTEMATICS continued - functions below
+ *
+ *********************************************/
+
+
+float CorrsAndSysts::Get_SystematicWeight(CAS::EventType type, float VpT, float Mbb, float DeltaPhi, CAS::Systematic sys, CAS::SysVar var, CAS::SysBin bin) {
+  // no systematics
+  if(sys == CAS::Nominal)
+    return 1;
+
+  if(sys == CAS::PTBINNED || sys == CAS::CONTINUOUS) {
+    std::cout << "CorrsAndSysts::ERROR Using a systematic enum which should not be used" << std::endl;
+    exit(-1);
+  }
+
+  if(bin == CAS::None) {
+    std::cout << "CorrsAndSysts: no indication of type of binning given for systematics ! Exiting..." << std::endl;
+    exit(-1);
+  }
+
+  // sanity check: binned / continuous systematics
+  if(sys < CAS::CONTINUOUS && bin == CAS::Any) {
+    std::cout << "CorrsAndSysts: asked no binning for a systematic which is binned ! Exiting..." << std::endl;
+    exit(-1);
+  }
+  if(sys >= CAS::CONTINUOUS && sys < CAS::LAST && bin != CAS::Any) {
+    std::cout << "CorrsAndSysts: asked specific bin for a systematic which is not binned ! Exiting..." << std::endl;
+    exit(-1);
+  }
+
+
+  // for binned systematics, check if the pT bin matches. else return 1
+  if(sys > CAS::PTBINNED && sys < CAS::CONTINUOUS) {
+    int ptbin = m_h_WpTCorrection->FindBin(VpT) - 1;
+    if(ptbin != bin)
+      return 1;
+  }
+
+  float scale = 0;
+
+  int sgn = 2*var-1;
+
+  switch(sys) {
+    case CAS::SysTheoryWHlvbbPt:
+      if(type != CAS::WHlvbb)
+        return 1;
+      scale = Utils::GetScale(VpT, m_h_SysTheoryWHlvbbPt);
+    break;
+
+    case CAS::SysTheoryZHllbbPt:
+      if(type != CAS::ZHllbb)
+        return 1;
+      scale = Utils::GetScale(VpT, m_h_SysTheoryZHllbbPt);
+    break;
+
+    case CAS::SysTheoryZHvvbbPt:
+      if(type != CAS::ZHvvbb)
+        return 1;
+      scale = Utils::GetScale(VpT, m_h_SysTheoryZHvvbbPt);
+    break;
+
+    case CAS::SysTopPt:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::ttbar && type != CAS::stop)
+        return 1;
+      scale = m_h_SysTopPt->GetBinContent(bin+1);
+    break;
+
+    case CAS::SysWbbPtW:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Wb)
+        return 1;
+      scale = m_h_SysWbbPtW->GetBinContent(bin+1);
+    break;
+
+    case CAS::SysWccPtW:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Wc && type != CAS::Wcc)
+        return 1;
+      scale = m_h_SysWbbPtW->GetBinContent(bin+1);
+    break;
+
+    case CAS::SysZbbPtZ:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Zb)
+        return 1;
+      scale = m_h_SysZbbPtZ->GetBinContent(bin+1);
+    break;
+
+    case CAS::SysZccPtZ:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Zc)
+        return 1;
+      scale = m_h_SysZccPtZ->GetBinContent(bin+1);
+    break;
+
+    // now continuus systematics
+
+    case CAS::SysWllPtW:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Wl)
+        return 1;
+      scale = m_f_SysWllPtW->Eval(VpT);
+    break;
+
+    case CAS::SysZllPtZ:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Zl)
+        return 1;
+      scale = m_f_SysZllPtZ->Eval(VpT);
+    break;
+
+    case CAS::SysZbbMbb:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Zb)
+        return 1;
+      scale = m_f_SysZbbMbb->Eval(Mbb);
+    break;
+
+    case CAS::SysWbbMbb:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Wb)
+        return 1;
+      scale = m_f_SysWbbMbb->Eval(Mbb);
+    break;
+
+    case CAS::SysWMbb:
+      std::cout << "CorrsAndSysts::WARNING Obsolete systematics" << std::endl;
+      return 1;
+      if(type != CAS::Wl)
+        return 1;
+      scale = Utils::GetScale(Mbb, m_h_SysWMbb);
+    break;
+
+    case CAS::SysWDPhi:
+      if(type != CAS::Wl && type !=CAS::Wc)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_WDeltaPhiCorrection);
+      scale = scale/(1+scale); // DO is 0% of correction, UP is 200%
+    break;
+
+    case CAS::SysWccDPhi:
+      if(type != CAS::Wcc)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_WDeltaPhiCorrection);
+      scale = scale/(1+scale); // DO is 0% of correction, UP is 200%
+    break;
+
+    case CAS::SysWbDPhi:
+      if(type != CAS::Wb)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_WDeltaPhiCorrection);
+      scale = scale/(1+scale); // DO is 0% of correction, UP is 200%
+    break;
+
+    case CAS::SysZDPhi:
+      if(type != CAS::Zl)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_SysZDeltaPhi);
+    break;
+
+    case CAS::SysZcDPhi:
+      if(type != CAS::Zc)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_SysZDeltaPhi);
+    break;
+
+    case CAS::SysZbDPhi:
+      if(type != CAS::Zb)
+        return 1;
+      scale = Utils::GetScale(DeltaPhi, m_h_SysZDeltaPhi);
+    break;
+
+    default:
+      return 1;
+    break;
+  }
+
+  // generic case: symmetric uncertainties
+  scale*=sgn;
+
+  return 1+scale;
+
+} // Get_SystematicWeight
+
+// if using this function
+//  need to have Up or Do as the last two characters of the syst name
+//  the string Bin in the name if necessary
+float CorrsAndSysts::Get_SystematicWeight(CAS::EventType type, float VpT, float Mbb, float DeltaPhi, TString sysName) {
+  CAS::Systematic sys;
+  CAS::SysBin bin;
+  CAS::SysVar var;
+  GetSystFromName(sysName, sys, bin, var);
+  return Get_SystematicWeight(type, VpT, Mbb, DeltaPhi, sys, var, bin);
+}
+
+// if using this function
+//  need to have Up or Do as the last two characters of the syst name
+//  the string Bin in the name if necessary
+void CorrsAndSysts::GetSystFromName(TString name, CAS::Systematic& sys, CAS::SysBin& bin, CAS::SysVar& var) {
+  var = m_varFromNames[name(name.Length()-2, 2).Data()];
+  name.Remove(name.Length()-2);
+  if(name.Contains("Bin")) {
+    bin = m_binFromNames[name(name.Length()-4, 4).Data()];
+    name.Remove(name.Length()-4);
+  }
+  else {
+    bin = CAS::Any;
+  }
+  sys = m_systFromNames[name.Data()];
+}
+
+void CorrsAndSysts::WriteHistsToFile(TString fname) {
+  TFile *file = new TFile(fname,"RECREATE");
+  for(std::map<TString,TObject*>::iterator hists=m_allHists.begin(); hists!=m_allHists.end(); hists++) {
+    hists->second->Write();
+  }
+  file->Close();
+  delete file;
+} // WriteHistsToFile
+
+
+
+/*
+ *
+ *  UTILITY FUNCTIONS
+ *
+ */
+
+namespace Utils {
+  TH1F* BuildTH1F(std::vector<Double_t> contents, TString hname, float min, float max, std::map<TString, TObject*>& hists) {
+    TH1F* tmp = new TH1F(hname,hname,contents.size(),min,max);
+    for(unsigned int i = 1; i<contents.size()+1; i++) {
+      tmp->SetBinContent(i, contents[i-1]);
+    }
+    if(tmp->GetBinContent( tmp->GetNbinsX()+1 ) == 0) {
+      tmp->SetBinContent( tmp->GetNbinsX()+1, tmp->GetBinContent( tmp->GetNbinsX() ) );
+    }
+    SaveHist(tmp,hists);
+    return tmp;
+  }
+
+  void  FillTH1F(std::vector<Float_t> contents, TH1F* h, std::map<TString, TObject*>& hists) {
+    if( contents.size() != static_cast<unsigned int>(h->GetNbinsX()) ){
+      std::cout << "CorrsAndSysts: filling the histogram " << h->GetName() << " with a wrong number of bins" << std::endl;
+      exit(-1);
+    }
+    for(int i=0; i<h->GetNbinsX(); i++) {
+      h->SetBinContent(i+1, contents[i]);
+    }
+    if(h->GetBinContent( h->GetNbinsX()+1 ) == 0) {
+      h->SetBinContent( h->GetNbinsX()+1, h->GetBinContent( h->GetNbinsX() ) );
+    }
+    SaveHist(h,hists);
+  }
+
+  void  FillTH1F(int len, Float_t* contents, TH1F* h, std::map<TString, TObject*>& hists) {
+    if( len != h->GetNbinsX() ){
+      std::cout << "CorrsAndSysts: filling the histogram " << h->GetName() << " with a wrong number of bins" << std::endl;
+      exit(-1);
+    }
+    for(int i=0; i<h->GetNbinsX(); i++) {
+      h->SetBinContent(i+1, contents[i]);
+    }
+    if(h->GetBinContent( h->GetNbinsX()+1 ) == 0) {
+      h->SetBinContent( h->GetNbinsX()+1, h->GetBinContent( h->GetNbinsX() ) );
+    }
+    SaveHist(h,hists);
+  }
+
+  void SaveHist(TObject* h, std::map<TString, TObject*>& hists) {
+    if(hists.find(h->GetName()) != hists.end()) {
+      std::cout << "CorrsAndSysts::ERROR - non-unique name of histogram/function is being used - please correct" << std::endl;
+      exit(-1);
+    }
+    hists[h->GetName()] = h;
+  } //SaveHist
+
+  inline float GetScale(float value, TH1F* h) {
+    return h->GetBinContent( h->FindBin(value) );
+  }
+
+}

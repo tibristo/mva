@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "CorrsAndSysts.py", line 2, in <module>
+    import CorrsAndSysts_ext
+ImportError: /media/Acer/tim@bristow.za.net/Physics PhD/Hbb/MVA/CorrsAndSysts/test/CorrsAndSysts_ext.so: undefined symbol: _ZN4TH1FC1EPKcS1_idd
+
+EXIT STATUS: 1

@@ -1,0 +1,211 @@
+#| *Dataset id* | *Process* | *Generator* | *cross section*BR* | k-factor | name 
+
+# signals
+161822 | Pythia8_AU2CTEQ6L1_ZH100_llbb        | Pythia8     | 0.61597   | 1     | 1    | ZllH100
+161823 | Pythia8_AU2CTEQ6L1_ZH105_llbb        | Pythia8     | 0.05255   | 1     | 1    | ZllH105 
+161824 | Pythia8_AU2CTEQ6L1_ZH110_llbb    		| Pythia8 		| 0.04409 	| 1 	  | 1 	 | ZllH110
+161825 | Pythia8_AU2CTEQ6L1_ZH115_llbb    		| Pythia8 		| 0.03632 	| 1 	  | 1 	 | ZllH115
+161826 | Pythia8_AU2CTEQ6L1_ZH120_llbb    		| Pythia8 		| 0.02933 	| 1 	  | 1 	 | ZllH120
+161827 | Pythia8_AU2CTEQ6L1_ZH125_llbb    		| Pythia8 		| 0.02297 	| 1 	  | 1 	 | ZllH125
+161828 | Pythia8_AU2CTEQ6L1_ZH130_llbb    		| Pythia8 		| 0.01732 	| 1  	  | 1  	 | ZllH130
+161829 | Pythia8_AU2CTEQ6L1_ZH135_llbb    		| Pythia8 		| 0.01254 	| 1  	  | 1  	 | ZllH135
+161830 | Pythia8_AU2CTEQ6L1_ZH140_llbb    		| Pythia8 		| 0.00868 	| 1  	  | 1  	 | ZllH140
+161831 | Pythia8_AU2CTEQ6L1_ZH145_llbb        | Pythia8     | 0.00568   | 1     | 1    | ZllH145
+161832 | Pythia8_AU2CTEQ6L1_ZH150_llbb        | Pythia8     | 0.00342   | 1     | 1    | ZllH150
+
+161800 | Pythia8_AU2CTEQ6L1_WH100_lnubb       | Pythia8     | 0.36607 	| 1  	 | 1   	| WlvH100
+161801 | Pythia8_AU2CTEQ6L1_WH105_lnubb       | Pythia8     | 0.30701 	| 1  	 | 1   	| WlvH105
+161802 | Pythia8_AU2CTEQ6L1_WH110_lnubb   		| Pythia8 		| 0.25552 	| 1  	 | 1 		| WlvH110
+161803 | Pythia8_AU2CTEQ6L1_WH115_lnubb   		| Pythia8 		| 0.20875 	| 1  	 | 1 		| WlvH115
+161804 | Pythia8_AU2CTEQ6L1_WH120_lnubb   		| Pythia8 		| 0.16725 	| 1  	 | 1 		| WlvH120
+161805 | Pythia8_AU2CTEQ6L1_WH125_lnubb   		| Pythia8 		| 0.13023 	| 1  	 | 1 		| WlvH125
+161806 | Pythia8_AU2CTEQ6L1_WH130_lnubb   		| Pythia8 		| 0.09755 	| 1  	 | 1  	| WlvH130
+161807 | Pythia8_AU2CTEQ6L1_WH135_lnubb   		| Pythia8 		| 0.07004 	| 1  	 | 1  	| WlvH135
+161808 | Pythia8_AU2CTEQ6L1_WH140_lnubb   		| Pythia8 		| 0.04810 	| 1  	 | 1  	| WlvH140
+161809 | Pythia8_AU2CTEQ6L1_WH145_lnubb       | Pythia8     | 0.03130 	| 1  	 | 1   	| WlvH145
+161810 | Pythia8_AU2CTEQ6L1_WH150_lnubb       | Pythia8     | 0.01872 	| 1  	 | 1   	| WlvH150
+
+161813 | WH->lnubb mH=110GeV ptH>100GeV       | Pythia8     | 1.060     | 1     | 0.2413        | WlvH110_backup1
+161814 | WH->lnubb mH=115GeV ptH>100GeV       | Pythia8     | 0.9165    | 1     | 0.2284        | WlvH115_backup1
+161815 | WH->lnubb mH=120GeV ptH>100GeV       | Pythia8     | 0.7966    | 1     | 0.2102        | WlvH120_backup1
+161816 | WH->lnubb mH=125GeV ptH>100GeV       | Pythia8     | 0.6966    | 1     | 0.1872        | WlvH125_backup1
+161817 | WH->lnubb mH=130GeV ptH>100GeV       | Pythia8     | 0.6095    | 1     | 0.1600        | WlvH130_backup1                                                                                               
+
+
+161844 | Pythia8_AU2CTEQ6L1_ZH100_nunubb      | Pythia8     | 0.1232  | 1 | 1     | ZvvH100
+161845 | Pythia8_AU2CTEQ6L1_ZH105_nunubb      | Pythia8     | 0.1041  | 1 | 1     | ZvvH105
+161846 | Pythia8_AU2CTEQ6L1_ZH110_nunubb  		| Pythia8 		| 0.0873 	| 1 | 1  		| ZvvH110
+161847 | Pythia8_AU2CTEQ6L1_ZH115_nunubb  		| Pythia8 		| 0.0719 	| 1 | 1  		| ZvvH115
+161848 | Pythia8_AU2CTEQ6L1_ZH120_nunubb  		| Pythia8 		| 0.0581 	| 1 | 1  		| ZvvH120
+161849 | Pythia8_AU2CTEQ6L1_ZH125_nunubb  		| Pythia8 		| 0.0455 	| 1 | 1  		| ZvvH125
+161850 | Pythia8_AU2CTEQ6L1_ZH130_nunubb  		| Pythia8 		| 0.0343 	| 1 | 1  		| ZvvH130
+161851 | Pythia8_AU2CTEQ6L1_ZH135_nunubb  		| Pythia8 		| 0.0248 	| 1 | 1  		| ZvvH135
+161852 | Pythia8_AU2CTEQ6L1_ZH140_nunubb  		| Pythia8 		| 0.0172 	| 1 | 1  		| ZvvH140
+161853 | Pythia8_AU2CTEQ6L1_ZH145_nunubb      | Pythia8     | 0.0112  | 1 | 1     | ZvvH145
+161854 | Pythia8_AU2CTEQ6L1_ZH150_nunubb      | Pythia8     | 0.00678 | 1 | 1     | ZvvH150
+
+128975 | Z->ee, HF jets in ME, massive HQ 		| Sherpa 		| 58.78 	| 1.12 | 1 		| Zbcl
+128976 | Z->mumu, HF jets in ME massive HQ 		| Sherpa 		| 58.786 	| 1.12 | 1 		| Zbcl
+128977 | Z->tautau, HF jets in ME, massive HQ 	| Sherpa 		| 58.794 	| 1.12 | 1 		| Zbcl
+128979 | Z->nunu, HF jets in ME, massive HQ 	| Sherpa 		| 315.37 	| 1.12 | 1 		| Zbcl
+
+109300 | Z(ee)+bb - 0 partons                                   | AlpGenJimmy   | 6.5666        | 1.25  | 1         | Zbb_backup1
+109301 | Z(ee)+bb - 1 partons                                   | AlpGenJimmy   | 2.4800        | 1.25  | 1         | Zbb_backup1
+109302 | Z(ee)+bb - 2 partons                                   | AlpGenJimmy   | 0.8900        | 1.25  | 1         | Zbb_backup1
+109303 | Z(ee)+bb - 3 partons                                   | AlpGenJimmy   | 0.3900        | 1.25  | 1         | Zbb_backup1
+109305 | Z(mumu)+bb - 0 partons                                 | AlpGenJimmy   | 6.5666        | 1.25  | 1         | Zbb_backup1
+109306 | Z(mumu)+bb - 1 partons                                 | AlpGenJimmy   | 2.4800        | 1.25  | 1         | Zbb_backup1
+109307 | Z(mumu)+bb - 2 partons                                 | AlpGenJimmy   | 0.8900        | 1.25  | 1         | Zbb_backup1
+109308 | Z(mumu)+bb - 3 partons                                 | AlpGenJimmy   | 0.3900        | 1.25  | 1         | Zbb_backup1
+109310 | Z(tautau)+bb - 0 partons                               | AlpGenJimmy   | 6.5666        | 1.25  | 1         | Zbb_backup1
+109311 | Z(tautau)+bb - 1 partons                               | AlpGenJimmy   | 2.4800        | 1.25  | 1         | Zbb_backup1
+109312 | Z(tautau)+bb - 2 partons                               | AlpGenJimmy   | 0.8900        | 1.25  | 1        | Zbb_backup1
+109313 | Z(tautau)+bb - 3 partons                               | AlpGenJimmy   | 0.3900        | 1.25  | 1        | Zbb_backup1
+
+157537 | Z->nunu, Zpt>70, massless HF                   | Sherpa                | 1.8463E+2 | 1.2     | 1     | Zbb_backup2
+157538 | Z->nunu, Zpt>140, massless HF                  | Sherpa                | 2.3409E+1 | 1.2     | 1     | Zbb_backup2
+157539 | Z->nunu, Zpt>280, massless HF                  | Sherpa                | 1.377E+00 | 1.2     | 1     | Zbb_backup2
+157540 | Z->nunu, Zpt>500, massless HF                  | Sherpa                | 6.8989E-02| 1.2     | 1     | Zbb_backup2
+                                                                                                      
+126414 | Z(ee)+cc - 0 partons                                   | AlpGenJimmy   | 1.5654E-02 | 1.25   | 1   | Zcc_backup1
+126415 | Z(ee)+cc - 1 partons                                   | AlpGenJimmy   | 6.8946E-03 | 1.25   | 1   | Zcc_backup1
+126416 | Z(ee)+cc - 2 partons                                   | AlpGenJimmy   | 2.9204E-03 | 1.25   | 1   | Zcc_backup1
+126417 | Z(ee)+cc - 3 partons                                   | AlpGenJimmy   | 1.1411E-03 | 1.25   | 1   | Zcc_backup1
+126418 | Z(mumu)+cc - 0 partons                                 | AlpGenJimmy   | 1.5649E-02 | 1.25   | 1   | Zcc_backup1
+126419 | Z(mumu)+cc - 1 partons                                 | AlpGenJimmy   | 6.8930E-03 | 1.25   | 1   | Zcc_backup1
+126420 | Z(mumu)+cc - 2 partons                                 | AlpGenJimmy   | 2.9176E-03 | 1.25   | 1   | Zcc_backup1
+126421 | Z(mumu)+cc - 3 partons                                 | AlpGenJimmy   | 1.1377E-03 | 1.25   | 1   | Zcc_backup1                                                                                                                   
+117706 | Z(tautau)+cc - 0 partons                               | AlpGenJimmy   | 1.5652E-02 | 1.25   | 1   | Zcc_backup1
+117707 | Z(tautau)+cc - 1 partons                               | AlpGenJimmy   | 6.8979E-03 | 1.25   | 1  | Zcc_backup1
+117708 | Z(tautau)+cc - 2 partons                               | AlpGenJimmy   | 2.9100E-03  | 1.25  | 1  | Zcc_backup1
+117709 | Z(tautau)+cc - 3 partons                               | AlpGenJimmy   | 1.1340E-03 | 1.25   | 1  | Zcc_backup1
+
+
+
+146820 | Z->ee, Light jets in ME				| Sherpa 		| 1051.2 	| 1.12 	| 1 	| Zcl
+146821 | Z->mumu, Light jets in ME 				| Sherpa 		| 1052.3 	| 1.12 | 1 		| Zcl
+146822 | Z->tautau, Light jets in ME 			| Sherpa 		| 1051.3 	| 1.12 | 1 		| Zcl
+146823 | Z->nunu, Light jets in ME 				| Sherpa 		| 5679.8 	| 1.12 | 1 		| Zcl
+
+
+147770 | Z->ee , using NLO ME                                   | Sherpa                | 1.2079E+03 | 1.2      | 1        | Z_backup1
+147771 | Z->mumu, using NLO ME                                  | Sherpa                | 1.2078E+03 | 1.2      | 1        | Z_backup1
+147772 | Z->tautau, using NLO ME                                | Sherpa                | 1.2071E+03 | 1.2      | 1        | Z_backup1
+147773 | Z->nunu, using NLO ME                                  | Sherpa                | 6.5214E+03 | 1.2      | 1        | Z_backup1
+
+107650 | Z(ee)+jets - 0 partons                                 | AlpGenJimmy   | 711.8733      | 1.25    | 1      | Zll_backup1
+107651 | Z(ee)+jets - 1 partons                                 | AlpGenJimmy   | 155.0233      | 1.25    | 1      | Zll_backup1
+107652 | Z(ee)+jets - 2 partons                                 | AlpGenJimmy   | 48.8203       | 1.25    | 1      | Zll_backup1
+107653 | Z(ee)+jets - 3 partons                                 | AlpGenJimmy   | 14.2036       | 1.25    | 1      | Zll_backup1
+107654 | Z(ee)+jets - 4 partons                                 | AlpGenJimmy   | 3.7725        | 1.25    | 1      | Zll_backup1
+107655 | Z(ee)+jets - 5 partons                                 | AlpGenJimmy   | 1.1085        | 1.25    | 1      | Zll_backup1                                                                                                           
+107660 | Z(mumu)+jets - 0 partons                               | AlpGenJimmy   | 711.8733      | 1.25    | 1      | Zll_backup1
+107661 | Z(mumu)+jets - 1 partons                               | AlpGenJimmy   | 155.0233      | 1.25    | 1      | Zll_backup1
+107662 | Z(mumu)+jets - 2 partons                               | AlpGenJimmy   | 48.8203       | 1.25    | 1      | Zll_backup1
+107663 | Z(mumu)+jets - 3 partons                               | AlpGenJimmy   | 14.2036       | 1.25    | 1      | Zll_backup1
+107664 | Z(mumu)+jets - 4 partons                               | AlpGenJimmy   | 3.7725        | 1.25    | 1      | Zll_backup1
+107665 | Z(mumu)+jets - 5 partons                               | AlpGenJimmy   | 1.1085        | 1.25    | 1      | Zll_backup1
+107670 | Z(tautau)+jets - 0 partons                     | AlpGenJimmy   | 711.8733      | 1.25     | 1     | Zll_backup1
+107671 | Z(tautau)+jets - 1 partons                     | AlpGenJimmy   | 155.0233      | 1.25     | 1     | Zll_backup1
+107672 | Z(tautau)+jets - 2 partons                     | AlpGenJimmy   | 48.8203       | 1.25     | 1     | Zll_backup1
+107673 | Z(tautau)+jets - 3 partons                     | AlpGenJimmy   | 14.2036       | 1.25     | 1     | Zll_backup1
+107674 | Z(tautau)+jets - 4 partons                     | AlpGenJimmy   | 3.7725        | 1.25     | 1     | Zll_backup1
+107675 | Z(tautau)+jets - 5 partons                     | AlpGenJimmy   | 1.1085        | 1.25     | 1     | Zll_backup1
+156803 | Z(nunu)+jets - 0 partons                               | AlpGenJimmy   | 26.8029       | 1.25   | 1       | Zll_backup1
+156804 | Z(nunu)+jets - 1 partons                               | AlpGenJimmy   | 406.5197      | 1.25   | 1       | Zll_backup1
+156809 | Z(nunu)+jets - 2 partons                               | AlpGenJimmy   | 214.5615      | 1.25   | 1       | Zll_backup1
+156814 | Z(nunu)+jets - 3 partons                               | AlpGenJimmy   | 74.3262       | 1.25   | 1       | Zll_backup1
+156819 | Z(nunu)+jets - 4 partons                               | AlpGenJimmy   | 20.9212       | 1.25   | 1       | Zll_backup1
+156824 | Z(nunu)+jets - 5 partons                               | AlpGenJimmy   | 6.5269        | 1.25   | 1       | Zll_backup1
+
+167000 | Wp->enubb 								| PowHeg 		| 27.588 	| 1 	| 1 	| Wbb
+167001 | Wp->munubb 							| PowHeg 		| 27.796 	| 1 	| 1 	| Wbb 
+167002 | Wp->taunubb 							| PowHeg 		| 27.467 	| 1 	| 1 	| Wbb
+167003 | Wm->enubb 								| PowHeg 		| 17.67 	| 1 	| 1 	| Wbb
+167004 | Wm->munubb 							| PowHeg 		| 17.708 	| 1 	| 1 	| Wbb
+167005 | Wm->taunubb 							| PowHeg 		| 17.529 	| 1 	| 1 	| Wbb
+
+107280 | Wbb+0 partons                                                  | AlpGenJimmy   | 55.682        | 1.20      | 1    | Wbb_backup1
+107281 | Wbb+1 parton                                                   | AlpGenJimmy   | 45.243        | 1.20      | 1    | Wbb_backup1
+107282 | Wbb+2 partons                                                  | AlpGenJimmy   | 23.246        | 1.20      | 1    | Wbb_backup1
+107283 | Wbb+3 partons                                                  | AlpGenJimmy   | 11.144        | 1.20      | 1    | Wbb_backup1
+
+117284 | Wcc+0 partons 							| AlpGenJimmy 	| 150.19 	| 1.20 	| 1	| Wcc
+117285 | Wcc+1 parton 							| AlpGenJimmy 	| 132.68 	| 1.20 	| 1	| Wcc
+117286 | Wcc+2 partons 							| AlpGenJimmy 	| 71.807 	| 1.20 	| 1	| Wcc
+117287 | Wcc+3 partons 							| AlpGenJimmy 	| 30.264 	| 1.20 	| 1	| Wcc   
+
+117293 | Wc+0 partons 							| AlpGenJimmy 	| 807.77 	| 1.52 | 1	| Wcl
+117294 | Wc+1 parton 							  | AlpGenJimmy 	| 267.61 	| 1.52 | 1	| Wcl
+117295 | Wc+2 partons 							| AlpGenJimmy 	| 69.823 	| 1.52 | 1	| Wcl
+117296 | Wc+3 partons 							| AlpGenJimmy 	| 20.547 	| 1.52 | 1	| Wcl
+117297 | Wc+4 partons 							| AlpGenJimmy 	| 4.3069 	| 1.52 | 1	| Wcl
+                                           								
+107680 | W(enu)+jets - 0 partons 				| AlpGenJimmy 	| 8037.6333 | 1.20 | 1		| Wll
+107681 | W(enu)+jets - 1 parton 				| AlpGenJimmy 	| 1579.7666 | 1.20 | 1		| Wll
+107682 | W(enu)+jets - 2 partons 				| AlpGenJimmy 	| 477.4166 	| 1.20 | 1		| Wll
+107683 | W(enu)+jets - 3 partons 				| AlpGenJimmy 	| 133.8866 	| 1.20 | 1		| Wll
+107684 | W(enu)+jets - 4 partons 				| AlpGenJimmy 	| 35.6136 	| 1.20 | 1		| Wll
+107685 | W(enu)+jets - 5 partons 				| AlpGenJimmy 	| 10.5546 	| 1.20 | 1		| Wll
+                                                   								
+107690 | W(munu)+jets - 0 partons 				| AlpGenJimmy 	| 8037.6333 | 1.20 	| 1	| Wll
+107691 | W(munu)+jets - 1 parton 				  | AlpGenJimmy 	| 1579.7666 | 1.20 	| 1	| Wll
+107692 | W(munu)+jets - 2 partons 				| AlpGenJimmy 	| 477.4166 	| 1.20 	| 1	| Wll
+107693 | W(munu)+jets - 3 partons 				| AlpGenJimmy 	| 133.8866	| 1.20 	| 1	| Wll
+107694 | W(munu)+jets - 4 partons 				| AlpGenJimmy 	| 35.6136 	| 1.20 	| 1	| Wll
+107695 | W(munu)+jets - 5 partons 				| AlpGenJimmy 	| 10.5546 	| 1.20 	| 1	| Wll   
+                                                 								
+107700 | W(taunu)+jets - 0 partons 				| AlpGenJimmy 	| 8037.6333 | 1.20 | 1 		| Wll
+107701 | W(taunu)+jets - 1 parton 				| AlpGenJimmy 	| 1579.7666 | 1.20 | 1 		| Wll
+107702 | W(taunu)+jets - 2 partons 				| AlpGenJimmy 	| 477.4166 	| 1.20 | 1 		| Wll
+107703 | W(taunu)+jets - 3 partons 				| AlpGenJimmy 	| 133.8866 	| 1.20 | 1 		| Wll
+107704 | W(taunu)+jets - 4 partons 				| AlpGenJimmy 	| 35.6136 	| 1.20 | 1 		| Wll
+107705 | W(taunu)+jets - 5 partons 				| AlpGenJimmy 	| 10.5546 	| 1.20 | 1 		| Wll  
+
+105200 | semileptonic ttbar 					| McAtNlo 		| 112.94 	| 1.1446 	| 1 | top
+105860 | semileptonic ttbar                                     | Powheg+fHerwig| 114.46        | 1.1293     | 1   | top_backup1
+105861 | semileptonic ttbar                                     | Powheg+Pythia | 114.46        | 1.1293     | 1   | top_backup2
+
+108343 | single t s-channel (W->enu) 			| McAtNlo 		| 0.564 	| 1.0744 	| 1 | stop
+108344 | single t s-channel (W->munu) 			| McAtNlo 		| 0.564 	| 1.0737 	| 1 | stop
+108345 | single t s-channel (W->taunu) 			| McAtNlo 		| 0.564 	| 1.0736 	| 1 | stop
+108346 | Wt 									              | McAtNlo 		| 20.66 	| 1.0828 	| 1 | stop
+117360 | single t t-channel (W->enu) 			| AcerMc 		| 8.589 	| 1 | 1.1035 	| stop
+117361 | single t t-channel (W->munu) 			| AcerMc 		| 8.585 	| 1.104 	| 1 | stop
+117362 | single t t-channel (W->taunu) 			| AcerMc 		| 8.582 	| 1.1045 	| 1 | stop
+
+147774 | W->enu, using NLO ME, massless HF              | Sherpa        | 11878 | 1.02 | 1 | Wcl_backup1
+147775 | W->munu, using NLO ME and massless HF  | Sherpa        | 11879 | 1.02 | 1 | Wcl_backup1
+147776 | W->taunu, using NLO ME and massless HF | Sherpa        | 11872| 1 | 1 | Wcl_backup1
+157534 | W->enu, Wpt>200, massless HF,                  | Sherpa        | 8.0672 | 1 | 1 | Wbb_backup2
+
+167150 | W->enu, Wpt>0, massive B, B-Filter     | Sherpa        | 11.03E+03 | 0.01664 | 1 | W_backup1
+167151 | W->munu, Wpt>0, massive B, B-Filter    | Sherpa        | 11.03E+03 | 0.01664 | 1 | W_backup1
+167152 | W->taunu, Wpt>0, massive B, B-Filter   | Sherpa        | 11.03E+03  | 0.01664 | 1 | W_backup1
+167153 | W->enu, Wpt>0, massive B, B-Veto               | Sherpa        | 11.03E+03  | 9.8328E-01  | 1 | W_backup1
+167154 | W->munu, Wpt>0, massive B, B-Veto              | Sherpa        | 11.03E+03 | 9.8328E-01 | 1 | W_backup1
+167155 | W->taunu, Wpt>0, massive B, B-Veto     | Sherpa        | 11.03E+03 | 9.8328E-01 | 1 | W_backup1
+
+167156 | W->enu, Wpt>140, massive B, B-Filter   | Sherpa        | 3.3150E+01 |          6.5963E-02 | 1 | W_backup1
+167157 | W->munu, Wpt>140, massive B, B-Filter  | Sherpa        | 3.3150E+01 |          6.5963E-02 | 1 | W_backup1
+167158 | W->taunu, Wpt>140, massive B, B-Filter | Sherpa        | 3.3150E+01 |          6.5963E-02 | 1 | W_backup1
+167159 | W->enu, Wpt>140, massive B, B-Veto     | Sherpa        |3.3150E+01 | 9.3429E-01  | 1 | W_backup1
+167160 | W->munu, Wpt>140, massive B, B-Veto    | Sherpa        |3.3150E+01 | 9.3429E-01  | 1 | W_backup1
+167161 | W->taunu, Wpt>140, massive B,  B-Veto  | Sherpa        | 3.3150E+01 | 9.3429E-01  | 1 | W_backup1
+                                                          								
+161995 | Herwig_AUET2CTEQ6L1_WW_NoLeptonFilter  | Herwig                | 55.4270       | 1  | 1             | WW_backup1
+161997 | Herwig_AUET2CTEQ6L1_ZZ_NoLeptonFilter  | Herwig                | 7.3586        | 1  | 1             | ZZ_backup1
+161996 | Herwig_AUET2CTEQ6L1_WZ_NoLeptonFilter  | Herwig                | 22.6942       | 1  | 1             | WZ_backup1
+146902 | ZZ Inclusive                           | Pythia8               | 1             | 1  | 1          | ZZ_backup2
+146900 | WW Inclusive                           | Pythia8               | 1             | 1  | 1          | WW_backup2
+105985 | WW 									                  | Herwig 		| 12.42 	| 1.48 	| 1	| WW
+105986 | ZZ 									                  | Herwig 		| 0.993 	| 1.3 	| 1	| ZZ
+105987 | WZ 									                  | Herwig 		| 3.668 	| 1.6 	| 1	| WZ
+                                                       	
+
+
+
+end
+
+157535 | W->munu, Wpt>200, massless HF					| Sherpa 	| 1 | | | 
+157536 | W->taunu, Wpt>200, massless HF 					| Sherpa 	| 1 | | | 
