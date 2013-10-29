@@ -1,10 +1,10 @@
-import ROOT,sys
+import ROOT,sys,copy
 selectedFolders = ['SelectedPosMuTrig','SelectedNegMuTrig', 'SelectedPosElTrig', 'SelectedNegElTrig']
 
-log = open('log.txt','rw')
-inFile = TFile(sys.argv[1],'READ')
+log = open('log_slimmedout.txt','w')
+inFile = ROOT.TFile(sys.argv[1],'READ')
 inFile_curr = ''
-outFile = TFile(str('slimmed_'+sys.argv[1]),'RECREATE')
+outFile = ROOT.TFile(str(sys.argv[1]+'_slimmed.root'),'RECREATE')
 
 def getAllEntries(dirIn, key):
     global log
@@ -23,38 +23,43 @@ def getAllEntries(dirIn, key):
     log.write(str(key.GetName()) + ' ' + str(entries))
     #return entries
 
-def combineTrees(dirIn, pid, chain):xs
+def combineTrees(dirIn, pid, chain):
     for key in dirIn.GetListOfKeys():
         cl_name = dirIn.Get(key.GetName()).ClassName()
         if key.GetName() in selectedFolders:
             new_dir = dirIn.Get(key.GetName())
             print 'adding ntuple'
-            tree = new_dir.Get(key.GetName()).Clone()
-            tree.SetName('Ntuple')
-            chain.Add(tree)
+            print new_dir
+            #tree = new_dir.Get(key.GetName()+'Ntuple').Clone()
+            #tree.SetName('Ntuple')
+            chain.Add(new_dir.Get(key.GetName()+'Ntuple'))#tree)
             #get the ntuple!
-        if cl_name == 'TDirectoryFile':
+        elif cl_name == 'TDirectoryFile':
             combineTrees(dirIn.Get(key.GetName()), pid, chain)
         elif (cl_name == 'TH1F' or cl_name == 'TH1D') and key.GetName().endswith('BaselineOneLepton'):
             getAllEntries(dirIn, key)
 
 def readPIDs(dirIn, pid):
     global inFile,outFile,inFile_curr
-    inFile_curr = dirIn
+    inFile_curr = copy.deepcopy(dirIn.GetName())
     for key in dirIn.GetListOfKeys():
         entries = 0
+        cl_name = dirIn.Get(key.GetName()).ClassName()
         if key.GetName().find("pid") != -1:
             #print 'found pid'
             pid = key.GetName()
             print pid
-            chain = TChain('Ntuple')
-            combineTrees(dirIn.Get(key.GetName()), key.GetName(), chain)
+            #chain = ROOT.TChain('Ntuple')
+            treelist = ROOT.TList()
+            combineTrees(dirIn.Get(key.GetName()), key.GetName(), treelist)
+            outFile.cd()
             outFile.mkdir(pid)
             outFile.cd(pid)
-            chain.Write()
+            outTree = ROOT.TTree.MergeTrees(treelist)#.Write()
+            outTree.Write()
+            print inFile_curr
             inFile.cd(inFile_curr)
-        cl_name = dirIn.Get(key.GetName()).ClassName()
-        if cl_name == 'TDirectoryFile':
+        elif cl_name == 'TDirectoryFile':
             readPIDs(dirIn.Get(key.GetName()),pid)
 
 if __name__ == '__main__':
