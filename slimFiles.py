@@ -5,6 +5,32 @@ log = open('log_slimmedout.txt','w')
 inFile = ROOT.TFile(sys.argv[1],'READ')
 inFile_curr = ''
 outFile = ROOT.TFile(str(sys.argv[1]+'_slimmed.root'),'RECREATE')
+all_xsec = {}
+
+
+def stripPID(pid):
+    if pid.isdigit():
+        return pid
+    new_pid = ''
+    for x in pid:
+        if x.isdigit():
+            new_pid+=x
+    return new_pid
+
+def getXSec(pid):
+    #strip non-integer parts off pid
+    new_pid = stripPID(pid)
+    if all_xsec:
+        return all_xsec[new_pid]
+    f = open('2012_hcp_cross_sections.txt','r')
+    for line in f:
+        line_arr = line.split('|')
+        if len(line_arr) == 7:
+            for i in xrange(len(line_arr)):
+                line_arr[i] = line_arr[i].strip()
+            all_xsec[str(line_arr[0]).strip()] = line_arr[1:]
+    f.close()
+    return all_xsec[new_pid]
 
 def getAllEntries(dirIn, key):
     global log
@@ -55,14 +81,36 @@ def readPIDs(dirIn, pid):
             outFile.cd()
             outFile.mkdir(pid)
             outFile.cd(pid)
-            outTree = ROOT.TTree.MergeTrees(treelist)#.Write()
+            mergeTree = ROOT.TTree.MergeTrees(treelist)#.Write()
+            # add new branch with xsec and pid
+            xsec = getXSec(pid)
+            new_pid = stripPID(pid)
+            varStruct = Vars()
+            outTree = mergeTree.CloneTree(0)
+            outTree.Branch('xsec', ROOT.AddressOf(varStruct, 'xsec'), 'xsec')
+            outTree.Branch('pid', ROOT.AddressOf(varStruct, 'pid'), 'pid')
+            # Loop through all entries and add values
+            # Need to set entries, says Rob
+            outTree.SetEntries(mergeTree.GetEntries())
+            varStruct.xsec = xsec
+            varStruct.pid = pid
+            for i in xrange(size):
+                outTree.Fill()
             outTree.Write()
             print inFile_curr
             inFile.cd(inFile_curr)
         elif cl_name == 'TDirectoryFile':
             readPIDs(dirIn.Get(key.GetName()),pid)
 
+
 if __name__ == '__main__':
+    # ProcessLine for adding xsec and pid
+    gROOT.ProcessLine(\
+        "struct Vars{\
+        Float_t xsec;\
+        Int_t pid;\
+        };")
+    
     readPIDs(inFile, '')
     inFile.Close()
     outFile.Close()
