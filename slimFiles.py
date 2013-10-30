@@ -1,7 +1,7 @@
 import ROOT,sys,copy
 selectedFolders = ['SelectedPosMuTrig','SelectedNegMuTrig', 'SelectedPosElTrig', 'SelectedNegElTrig']
 
-log = open('log_slimmedout.txt','w')
+log = open(sys.argv[1]+'_slimmed_log.txt','w')
 inFile = ROOT.TFile(sys.argv[1],'READ')
 inFile_curr = ''
 outFile = ROOT.TFile(str(sys.argv[1]+'_slimmed.root'),'RECREATE')
@@ -24,6 +24,7 @@ def stripPID(pid):
 def getXSec(pid):
     #strip non-integer parts off pid
     new_pid = stripPID(pid)
+    global all_xsec
     if all_xsec:
         if new_pid in all_xsec.keys():
             return all_xsec[new_pid]
@@ -38,7 +39,11 @@ def getXSec(pid):
                 line_arr[i] = line_arr[i].strip()
             all_xsec[str(line_arr[0]).strip()] = line_arr[1:]
     f.close()
-    return all_xsec[new_pid]
+    if new_pid in all_xsec.keys():
+        return all_xsec[new_pid]
+    else:
+        log.write("No xsec available for "+ new_pid)
+        return ['NONE','NONE',1,1,1,'NONE']
 
 def getAllEntries(dirIn, key):
     global log
