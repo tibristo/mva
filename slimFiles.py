@@ -6,7 +6,11 @@ inFile = ROOT.TFile(sys.argv[1],'READ')
 inFile_curr = ''
 outFile = ROOT.TFile(str(sys.argv[1]+'_slimmed.root'),'RECREATE')
 all_xsec = {}
-
+ROOT.gROOT.ProcessLine(\
+    "struct Vars{\
+    Float_t xsec;\
+    Int_t pid;\
+    };")
 
 def stripPID(pid):
     if pid.isdigit():
@@ -21,7 +25,11 @@ def getXSec(pid):
     #strip non-integer parts off pid
     new_pid = stripPID(pid)
     if all_xsec:
-        return all_xsec[new_pid]
+        if new_pid in all_xsec.keys():
+            return all_xsec[new_pid]
+        else:
+            log.write("No xsec available for "+ new_pid)
+            return ['NONE','NONE',1,1,1,'NONE']
     f = open('2012_hcp_cross_sections.txt','r')
     for line in f:
         line_arr = line.split('|')
@@ -85,17 +93,19 @@ def readPIDs(dirIn, pid):
             # add new branch with xsec and pid
             xsec = getXSec(pid)
             new_pid = stripPID(pid)
-            varStruct = Vars()
+            varStruct = ROOT.Vars()
             outTree = mergeTree.CloneTree(0)
-            outTree.Branch('xsec', ROOT.AddressOf(varStruct, 'xsec'), 'xsec')
-            outTree.Branch('pid', ROOT.AddressOf(varStruct, 'pid'), 'pid')
+            outTree.Branch('xsec', ROOT.AddressOf(varStruct, 'xsec'), 'xsec/F')
+            outTree.Branch('pid', ROOT.AddressOf(varStruct, 'pid'), 'pid/I') #/I is very important!!!!
             # Loop through all entries and add values
-            # Need to set entries, says Rob
-            outTree.SetEntries(mergeTree.GetEntries())
-            varStruct.xsec = xsec
-            varStruct.pid = pid
-            for i in xrange(size):
+            varStruct.xsec = float(xsec[2])*float(xsec[3])
+            print new_pid
+            varStruct.pid = int(copy.deepcopy(new_pid))
+            print int(new_pid)
+            for i in xrange(mergeTree.GetEntries()):
+                mergeTree.GetEntry(i)
                 outTree.Fill()
+            outTree.SetName('Ntuple')
             outTree.Write()
             print inFile_curr
             inFile.cd(inFile_curr)
@@ -105,11 +115,6 @@ def readPIDs(dirIn, pid):
 
 if __name__ == '__main__':
     # ProcessLine for adding xsec and pid
-    gROOT.ProcessLine(\
-        "struct Vars{\
-        Float_t xsec;\
-        Int_t pid;\
-        };")
     
     readPIDs(inFile, '')
     inFile.Close()
