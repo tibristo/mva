@@ -1,38 +1,51 @@
-import ROOT,sys,copy
+import ROOT,sys,copy,argparse
 selectedFolders = ['SelectedPosMuTrig','SelectedNegMuTrig', 'SelectedPosElTrig', 'SelectedNegElTrig']
 
-log = open(sys.argv[1]+'_slimmed_log.txt','w')
-inFile = ROOT.TFile(sys.argv[1],'READ')
-inFile_curr = ''
-outFile = ROOT.TFile(str(sys.argv[1]+'_slimmed.root'),'RECREATE')
+# not very elegant, need to think of a better way to specify these options....
+parser = argparse.ArgumentParser(description='Combine TTrees from different TFiles.')
+parser.add_argument('--file', help='Single file to process')
+parser.add_argument('--sample-type', choices=['Signal','AllBkg'], help='Choose from type of sample to create')
+parser.add_argument('--output-partial',action='store_true', help='If creating full sample type, specify whether or not to create partial outputs')
+args = parser.parse_args()
+
+if vars(args)[] and vars(args)[]:
+    print 'Incorrect usage!  Need to specify an input file or at least a sample type. Press any key to exit.'
+    raw_input()
+    sys.exit(0)
+
 all_xsec = {}
+# ProcessLine for adding xsec and pid
 ROOT.gROOT.ProcessLine(\
     "struct Vars{\
     Float_t xsec;\
     Int_t pid;\
+    Long_t entries;\
     };")
 allTrees = []
 createFullSample = False
 
 def readXml(dataType):
     '''
-    Get the settings for which PIDs to combine in the combined root file.  The one to run is specified at run time and given as an arg.
+    Get the settings for which PIDs to combine in the combined root file and which root files to run over.  The one to run is specified at run time and given as an arg.
     Keyword arguments:
     dataType --- The type of sample to run, AllBkg or Signal, for eg. Set PIDs for each in settings_slimming.xml
 
-    returns a list of pids
+    returns a list of pids and files to run over
     '''
     import xml.etree.ElementTree as ET
     xmlTree = ET.parse('settings_slimming.xml')
     root = xmlTree.getroot()
 
     pids = []
+    files = []
     for child in root.findall('sampleType'):
         if child.get('name') == dataType.upper():
             for grandchild in list(child):
                 if grandchild.tag == 'pid':
                     pids.append(grandchild.get('name'))
-    return pids
+                elif grandchild.tag == 'file':
+                    files.append(grandchild.get('name'))
+    return pids, files
 
 def stripPID(pid):
     '''
@@ -81,8 +94,15 @@ def getXSec(pid):
         log.write("No xsec available for "+ new_pid)
         return ['NONE','NONE',1,1,1,'NONE']
 
-def getAllEntries(dirIn, key):
-    global log
+def getAllEntries(dirIn, key, log):
+    '''
+    Gets the full number of entries for the original sample by reading this from the cutflow Ntuple in the .root file.
+    Keyword arguments:
+    dirIn --- The current TDirectory.
+    key --- The key or object we are looking at in the current TDirectory.
+    log --- The log file.
+    '''
+    global full_log
     hist = dirIn.Get(key.GetName())
     entries = -1
     for lab in hist.GetXaxis().GetLabels():
@@ -96,9 +116,19 @@ def getAllEntries(dirIn, key):
             else:
                 entries = int(bincont)
     log.write(str(key.GetName()) + ' ' + str(entries))
-    #return entries
+    return entries
 
-def combineTrees(dirIn, pid, chain):
+def combineTrees(dirIn, pid, chain, log):
+    '''
+    Combine the TTrees together -> add them to the chain which is a TList.  Returns the total number of entries for this PID.
+    Keyword arguments:
+    dirIn --- The current directory in the current input TFile.
+    pid --- The pid we are working on.
+    chain --- TList with all TTrees in it.
+    log --- The log file.
+
+    returns the total number of entries for this pid.
+    '''
     for key in dirIn.GetListOfKeys():
         cl_name = dirIn.Get(key.GetName()).ClassName()
         if key.GetName() in selectedFolders:
@@ -110,18 +140,22 @@ def combineTrees(dirIn, pid, chain):
             chain.Add(new_dir.Get(key.GetName()+'Ntuple'))#tree)
             #get the ntuple!
         elif cl_name == 'TDirectoryFile':
-            combineTrees(dirIn.Get(key.GetName()), pid, chain)
+            return combineTrees(dirIn.Get(key.GetName()), pid, chain, log)
         elif (cl_name == 'TH1F' or cl_name == 'TH1D') and key.GetName().endswith('BaselineOneLepton'):
-            getAllEntries(dirIn, key)
+            return getAllEntries(dirIn, key, log)
 
-def readPIDs(dirIn, pids):
+def readPIDs(dirIn, pids, inFile, inFile_curr, outFile, log):
     '''
     Read all the TTrees for different PIDs, traversing through all subfolders.  Recursive method, calls on itself if the current item being viewed in the pwd is a TDirectory.
     Keyword arguments:
     dirIn --- The current TDirectory.
     pid --- A list of PIDs to read in.
+    inFile --- The input TFile.
+    inFile_curr --- The current directory in the input TFile.
+    outFile --- The output TFile.
+    log --- The log file.
     '''
-    global inFile,outFile,inFile_curr
+    #global inFile,outFile,inFile_curr
     global allTrees, createFullSample
     inFile_curr = copy.deepcopy(dirIn.GetName())
     for key in dirIn.GetListOfKeys():
@@ -135,7 +169,7 @@ def readPIDs(dirIn, pids):
                 # Add 'continue' here since we don't want to add this!
                 continue
             treelist = ROOT.TList()
-            combineTrees(dirIn.Get(key.GetName()), key.GetName(), treelist)
+            entries = combineTrees(dirIn.Get(key.GetName()), key.GetName(), treelist, log)
             outFile.cd()
             mergeTree = ROOT.TTree.MergeTrees(treelist)#.Write()
             # add new branch with xsec and pid
@@ -144,11 +178,16 @@ def readPIDs(dirIn, pids):
             outTree = mergeTree.CloneTree(0)
             outTree.Branch('xsec', ROOT.AddressOf(varStruct, 'xsec'), 'xsec/F')
             outTree.Branch('pid', ROOT.AddressOf(varStruct, 'pid'), 'pid/I') #/I is very important!!!!
+            outTree.Branch('entries', ROOT.AddressOf(varStruct, 'entries'), 'entries/L')
             # Loop through all entries and add values
             varStruct.xsec = float(xsec[2])*float(xsec[3])
             print new_pid
             varStruct.pid = int(copy.deepcopy(new_pid))
-            print int(new_pid)
+            if entries == -1:
+                entries = mergeTree.GetEntries()
+                log.write('Number of entries is probably incorrect, not set by CutFlow Histogram!!!  Set by mergeTree.GetEntries()')
+                full_log.write('Number of entries is probably incorrect, not set by CutFlow Histogram!!!  Set by mergeTree.GetEntries()')
+            varStruct.entries entries= # oh noes?!
             for i in xrange(mergeTree.GetEntries()):
                 mergeTree.GetEntry(i)
                 outTree.Fill()
@@ -159,17 +198,41 @@ def readPIDs(dirIn, pids):
             print inFile_curr
             inFile.cd(inFile_curr)
         elif cl_name == 'TDirectoryFile':
-            readPIDs(dirIn.Get(key.GetName()),pids)
+            readPIDs(dirIn.Get(key.GetName()),pids, inFile, inFile_curr, outFile, log)
 
+full_log = open('FullLog','w')
 
 if __name__ == '__main__':
-    # ProcessLine for adding xsec and pid
+
     pids = []
-    if sys.argc == 3:
-        pids = readXml(sys.argv[2])
+    files = []
+    full_log.write('sample_type: ' + vars(args)['sample_type'])
+    full_log.write('files: ' + vars(args)['file'])
+    full_log.write('output_partial: ' + vars(args)['output_partial'])
+    if vars(args)['sample_type']:
+        pids,files = readXml(vars(args)['sample_type'])
+        if vars(args)['file']:
+            files = [vars(args)['file']]
         createFullSample = True
-    readPIDs(inFile, '', pids)
-    outFile.Close()
+    elif vars(args)['file']:
+        files = [vars(args)['file']]
+    for f in files:
+        log = open(f+'_slimmed_log.txt','w')
+        full_log.write('Starting file: ' + str(f))
+        try:
+            inFile = ROOT.TFile(f,'READ') # need to put in check that file exists!!!
+            inFile_curr = ''
+            outFile = ROOT.TFile(str(f+'_slimmed.root'),'RECREATE')
+            readPIDs(inFile, pids, inFile, inFile_curr, outFile, log)
+            outFile.Close()
+            inFile.Close()
+        except:
+            log.write('Error trying to run through file ' + str(f))
+            full_log.write('Error trying to run through file ' + str(f))
+            print 'Error trying to run through file ' + str(f)
+        log.close()
+        full_log.write('Finished file: ' + str(f))
+        full_log.write('*******************************************')
 
     # do this before closing input file
     if createFullSample:
@@ -178,11 +241,10 @@ if __name__ == '__main__':
         for tree in allTrees:
             finalList.Add(tree)
         finalTree = ROOT.TTree.MergeTrees(finalList)
-        fullSampleFile = ROOT.TFile(str(sys.argv[1]+'_fullsample_'+sys.argv[2]+'.root'),'RECREATE')
+        fullSampleFile = ROOT.TFile('Fullsample_'+vars(args)['sample_type']+'.root'),'RECREATE')
         finalTree.Write()
         fullSampleFile.Close()
 
-    inFile.Close()
     log.close()
-
+    full_log.close()
 
