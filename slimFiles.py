@@ -8,7 +8,7 @@ parser.add_argument('--sample-type', choices=['Signal','AllBkg'], help='Choose f
 parser.add_argument('--output-partial',action='store_true', help='If creating full sample type, specify whether or not to create partial outputs')
 args = parser.parse_args()
 
-if vars(args)[] and vars(args)[]:
+if not vars(args)['sample_type'] and not vars(args)['file']:
     print 'Incorrect usage!  Need to specify an input file or at least a sample type. Press any key to exit.'
     raw_input()
     sys.exit(0)
@@ -39,13 +39,13 @@ def readXml(dataType):
     pids = []
     files = []
     for child in root.findall('sampleType'):
-        if child.get('name') == dataType.upper():
+        if child.get('name') == dataType:
             for grandchild in list(child):
                 if grandchild.tag == 'pid':
                     pids.append(grandchild.get('name'))
                 elif grandchild.tag == 'file':
                     files.append(grandchild.get('name'))
-    return pids, files
+    return pids,files
 
 def stripPID(pid):
     '''
@@ -144,7 +144,7 @@ def combineTrees(dirIn, pid, chain, log):
         elif (cl_name == 'TH1F' or cl_name == 'TH1D') and key.GetName().endswith('BaselineOneLepton'):
             return getAllEntries(dirIn, key, log)
 
-def readPIDs(dirIn, pids, inFile, inFile_curr, outFile, log):
+def readPIDs(dirIn, pids, inFile, inFile_curr, outFile, log, createFullSample):
     '''
     Read all the TTrees for different PIDs, traversing through all subfolders.  Recursive method, calls on itself if the current item being viewed in the pwd is a TDirectory.
     Keyword arguments:
@@ -156,7 +156,7 @@ def readPIDs(dirIn, pids, inFile, inFile_curr, outFile, log):
     log --- The log file.
     '''
     #global inFile,outFile,inFile_curr
-    global allTrees, createFullSample
+    global allTrees#, createFullSample
     inFile_curr = copy.deepcopy(dirIn.GetName())
     for key in dirIn.GetListOfKeys():
         entries = 0
@@ -187,18 +187,20 @@ def readPIDs(dirIn, pids, inFile, inFile_curr, outFile, log):
                 entries = mergeTree.GetEntries()
                 log.write('Number of entries is probably incorrect, not set by CutFlow Histogram!!!  Set by mergeTree.GetEntries()')
                 full_log.write('Number of entries is probably incorrect, not set by CutFlow Histogram!!!  Set by mergeTree.GetEntries()')
-            varStruct.entries entries= # oh noes?!
+            varStruct.entries = entries # oh noes?!
             for i in xrange(mergeTree.GetEntries()):
                 mergeTree.GetEntry(i)
                 outTree.Fill()
             outTree.SetName('Ntuple_'+str(pid))
+            print createFullSample
             if createFullSample:
                 allTrees.append(outTree.Clone())
+                print 'adding to alltrees'
             outTree.Write()
             print inFile_curr
             inFile.cd(inFile_curr)
         elif cl_name == 'TDirectoryFile':
-            readPIDs(dirIn.Get(key.GetName()),pids, inFile, inFile_curr, outFile, log)
+            readPIDs(dirIn.Get(key.GetName()),pids, inFile, inFile_curr, outFile, log, createFullSample)
 
 full_log = open('FullLog','w')
 
@@ -206,24 +208,32 @@ if __name__ == '__main__':
 
     pids = []
     files = []
-    full_log.write('sample_type: ' + vars(args)['sample_type'])
-    full_log.write('files: ' + vars(args)['file'])
-    full_log.write('output_partial: ' + vars(args)['output_partial'])
     if vars(args)['sample_type']:
         pids,files = readXml(vars(args)['sample_type'])
+        print vars(args)['sample_type']
+        print files
+        full_log.write('sample_type: ' + vars(args)['sample_type'])
         if vars(args)['file']:
             files = [vars(args)['file']]
         createFullSample = True
+        print 'setting createFUllSample'
+        print createFullSample
+        print pids
     elif vars(args)['file']:
         files = [vars(args)['file']]
+    full_log.write('files: ')
+    for f in files:
+        full_log.write(f)
+    full_log.write('output_partial: ' + str(vars(args)['output_partial']))
     for f in files:
         log = open(f+'_slimmed_log.txt','w')
         full_log.write('Starting file: ' + str(f))
+        print 'starting file: ' + str(f)
         try:
             inFile = ROOT.TFile(f,'READ') # need to put in check that file exists!!!
             inFile_curr = ''
             outFile = ROOT.TFile(str(f+'_slimmed.root'),'RECREATE')
-            readPIDs(inFile, pids, inFile, inFile_curr, outFile, log)
+            readPIDs(inFile, pids, inFile, inFile_curr, outFile, log, createFullSample)
             outFile.Close()
             inFile.Close()
         except:
@@ -241,7 +251,7 @@ if __name__ == '__main__':
         for tree in allTrees:
             finalList.Add(tree)
         finalTree = ROOT.TTree.MergeTrees(finalList)
-        fullSampleFile = ROOT.TFile('Fullsample_'+vars(args)['sample_type']+'.root'),'RECREATE')
+        fullSampleFile = ROOT.TFile(str('Fullsample_'+vars(args)['sample_type']+'.root'),'RECREATE')
         finalTree.Write()
         fullSampleFile.Close()
 
