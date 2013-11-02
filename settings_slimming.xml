@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <settings>
   <sampleType name="AllBkg">
+    <file name=''/>
     <pid name='128975'/>
     <pid name='128976'/>
     <pid name='128977'/>
