@@ -80,7 +80,7 @@ def getXSec(pid):
         else:
             log.write("No xsec available for "+ new_pid)
             return ['NONE','NONE',1,1,1,'NONE']
-    f = open('2012_hcp_cross_sections.txt','r')
+    f = open('2012_cross_sections.txt','r')
     for line in f:
         line_arr = line.split('|')
         if len(line_arr) == 7:
@@ -245,7 +245,7 @@ if __name__ == '__main__':
         full_log.write('*******************************************')
 
     # do this before closing input file
-    if createFullSample:
+    if createFullSample and allTrees:
         #loop through allTrees and add to TList
         finalList = ROOT.TList()
         for tree in allTrees:

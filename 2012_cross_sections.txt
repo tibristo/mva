@@ -1,50 +1,5 @@
 #| *Dataset id* | *Process* | *Generator* | *cross section*BR* | k-factor | filter efficiency | name 
 #
-# signals - duplicated in hcp file
-161822 | Pythia8_AU2CTEQ6L1_ZH100_llbb        | Pythia8     | 0.06160   | 1     | 1     | ZllH100
-161823 | Pythia8_AU2CTEQ6L1_ZH105_llbb        | Pythia8     | 0.05255   | 1     | 1     | ZllH105 
-161824 | Pythia8_AU2CTEQ6L1_ZH110_llbb    		| Pythia8 		| 0.04409 	| 1 		| 1 		| ZllH110
-161825 | Pythia8_AU2CTEQ6L1_ZH115_llbb    		| Pythia8 		| 0.03632 	| 1 		| 1 		| ZllH115
-161826 | Pythia8_AU2CTEQ6L1_ZH120_llbb    		| Pythia8 		| 0.02933 	| 1 		| 1 		| ZllH120
-161827 | Pythia8_AU2CTEQ6L1_ZH125_llbb    		| Pythia8 		| 0.02297 	| 1 		| 1 		| ZllH125
-161828 | Pythia8_AU2CTEQ6L1_ZH130_llbb    		| Pythia8 		| 0.01732 	| 1  		| 1  		| ZllH130
-161829 | Pythia8_AU2CTEQ6L1_ZH135_llbb    		| Pythia8 		| 0.01254 	| 1  		| 1  		| ZllH135
-161830 | Pythia8_AU2CTEQ6L1_ZH140_llbb    		| Pythia8 		| 0.00868 	| 1  		| 1  		| ZllH140
-161831 | Pythia8_AU2CTEQ6L1_ZH145_llbb        | Pythia8     | 0.00568   | 1     | 1     | ZllH145
-161832 | Pythia8_AU2CTEQ6L1_ZH150_llbb        | Pythia8     | 0.00342   | 1     | 1     | ZllH150
-#                                                                              
-161800 | Pythia8_AU2CTEQ6L1_WH100_lnubb       | Pythia8     | 0.36607 	| 1  		| 1  		| WlvH100
-161801 | Pythia8_AU2CTEQ6L1_WH105_lnubb       | Pythia8     | 0.30701 	| 1  		| 1  		| WlvH105
-161802 | Pythia8_AU2CTEQ6L1_WH110_lnubb   		| Pythia8 		| 0.25552 	| 1  		| 1  		| WlvH110
-161803 | Pythia8_AU2CTEQ6L1_WH115_lnubb   		| Pythia8 		| 0.20875 	| 1  		| 1  		| WlvH115
-161804 | Pythia8_AU2CTEQ6L1_WH120_lnubb   		| Pythia8 		| 0.16725 	| 1  		| 1  		| WlvH120
-161805 | Pythia8_AU2CTEQ6L1_WH125_lnubb   		| Pythia8 		| 0.13023 	| 1  		| 1  		| WlvH125
-161806 | Pythia8_AU2CTEQ6L1_WH130_lnubb   		| Pythia8 		| 0.09755 	| 1  		| 1  		| WlvH130
-161807 | Pythia8_AU2CTEQ6L1_WH135_lnubb   		| Pythia8 		| 0.07004 	| 1  		| 1  		| WlvH135
-161808 | Pythia8_AU2CTEQ6L1_WH140_lnubb   		| Pythia8 		| 0.04810 	| 1  		| 1  		| WlvH140
-161809 | Pythia8_AU2CTEQ6L1_WH145_lnubb       | Pythia8     | 0.03130 	| 1  		| 1  		| WlvH145
-161810 | Pythia8_AU2CTEQ6L1_WH150_lnubb       | Pythia8     | 0.01872 	| 1  		| 1  		| WlvH150
-#
-161844 | Pythia8_AU2CTEQ6L1_ZH100_nunubb      | Pythia8     | 0.1232  | 1   | 1     | ZvvH100
-161845 | Pythia8_AU2CTEQ6L1_ZH105_nunubb      | Pythia8     | 0.1041  | 1   | 1     | ZvvH105
-161846 | Pythia8_AU2CTEQ6L1_ZH110_nunubb  		| Pythia8 		| 0.0873 	| 1  	| 1  		| ZvvH110
-161847 | Pythia8_AU2CTEQ6L1_ZH115_nunubb  		| Pythia8 		| 0.0719 	| 1  	| 1  		| ZvvH115
-161848 | Pythia8_AU2CTEQ6L1_ZH120_nunubb  		| Pythia8 		| 0.0581 	| 1  	| 1  		| ZvvH120
-161849 | Pythia8_AU2CTEQ6L1_ZH125_nunubb  		| Pythia8 		| 0.0455 	| 1  	| 1  		| ZvvH125
-161850 | Pythia8_AU2CTEQ6L1_ZH130_nunubb  		| Pythia8 		| 0.0343 	| 1  	| 1  		| ZvvH130
-161851 | Pythia8_AU2CTEQ6L1_ZH135_nunubb  		| Pythia8 		| 0.0248 	| 1  	| 1  		| ZvvH135
-161852 | Pythia8_AU2CTEQ6L1_ZH140_nunubb  		| Pythia8 		| 0.0172 	| 1  	| 1  		| ZvvH140
-161853 | Pythia8_AU2CTEQ6L1_ZH145_nunubb      | Pythia8     | 0.0112  | 1   | 1     | ZvvH145
-161854 | Pythia8_AU2CTEQ6L1_ZH150_nunubb      | Pythia8     | 0.00678 | 1   | 1     | ZvvH150
-#
-# duplicated in hcp file
-167000 | Wp->enubb 								| PowHeg 		| 27.588 	| 1 	| 1 		| Wbb_backup1
-167001 | Wp->munubb 							| PowHeg 		| 27.796 	| 1 	| 1 		| Wbb_backup1
-167002 | Wp->taunubb 							| PowHeg 		| 27.467 	| 1 	| 1 		| Wbb_backup1
-167003 | Wm->enubb 								| PowHeg 		| 17.67 	| 1 	| 1 		| Wbb_backup1
-167004 | Wm->munubb 							| PowHeg 		| 17.708 	| 1 	| 1 		| Wbb_backup1
-167005 | Wm->taunubb 							| PowHeg 		| 17.529 	| 1 	| 1 		| Wbb_backup1
-#
 # k-factor is filter efficiency is most if not all cases
 # as of March 2013 this information can be found here:
 # https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/HSG5MCSamplesandRequests
@@ -166,77 +121,6 @@
 167843 | Sherpa_CT10_ZnunuMassiveCBPt500_CFilterBVeto         | SherpaHighVpTFullSim | 7.32E-02 | 1.12 |  0.397  | Zcc
 167844 | Sherpa_CT10_ZnunuMassiveCBPt500_CVetoBVeto           | SherpaHighVpTFullSim | 7.32E-02 | 1.12 |  0.485  | Zll
 #
-
-#backup samples from Alpgen (different modelling...)
-
-110817 | AlpgenPythia_Zeebb                                   | AlpgenPythia | 0.45845   | 1.18 | 1 | Zbb_backup1
-110818 | AlpgenPythia_Zeebb                                   | AlpgenPythia | 0.32998   | 1.18 | 1 | Zbb_backup1
-110819 | AlpgenPythia_Zeebb                                   | AlpgenPythia | 0.14794   | 1.18 | 1 | Zbb_backup1
-110820 | AlpgenPythia_Zeebb                                   | AlpgenPythia | 0.079524  | 1.18 | 1 | Zbb_backup1
-
-110821 | AlpgenPythia_Zmumubb                                 | AlpgenPythia | 0.45873   | 1.18 | 1 | Zbb_backup1
-110822 | AlpgenPythia_Zmumubb                                 | AlpgenPythia | 0.33020   | 1.18 | 1 | Zbb_backup1
-110823 | AlpgenPythia_Zmumubb                                 | AlpgenPythia | 0.14737   | 1.18 | 1 | Zbb_backup1
-110824 | AlpgenPythia_Zmumubb                                 | AlpgenPythia | 0.079577  | 1.18 | 1 | Zbb_backup1
-
-110825 | AlpgenPythia_Ztautaubb                               | AlpgenPythia | 0.45873   | 1.18 | 1 | Zbb_backup1
-110826 | AlpgenPythia_Ztautaubb                               | AlpgenPythia | 0.33020   | 1.18 | 1 | Zbb_backup1
-110827 | AlpgenPythia_Ztautaubb                               | AlpgenPythia | 0.14737   | 1.18 | 1 | Zbb_backup1
-110828 | AlpgenPythia_Ztautaubb                               | AlpgenPythia | 0.079577  | 1.18 | 1 | Zbb_backup1
-
-110805 | AlpgenPythia_Zeecc                                   | AlpgenPythia | 15.107 | 1.18 | 1 | Zcc_backup1
-110806 | AlpgenPythia_Zeecc                                   | AlpgenPythia | 7.2131 | 1.18 | 1 | Zcc_backup1
-110807 | AlpgenPythia_Zeecc                                   | AlpgenPythia | 3.0320 | 1.18 | 1 | Zcc_backup1
-110808 | AlpgenPythia_Zeecc                                   | AlpgenPythia | 1.1767 | 1.18 | 1 | Zcc_backup1
-
-110809 | AlpgenPythia_Zmumucc                                   | AlpgenPythia | 15.115 | 1.18 | 1 | Zcc_backup1
-110810 | AlpgenPythia_Zmumucc                                   | AlpgenPythia | 7.1980 | 1.18 | 1 | Zcc_backup1
-110811 | AlpgenPythia_Zmumucc                                   | AlpgenPythia | 3.0303 | 1.18 | 1 | Zcc_backup1
-110812 | AlpgenPythia_Zmumucc                                   | AlpgenPythia | 1.1738 | 1.18 | 1 | Zcc_backup1
-
-110813 | AlpgenPythia_Ztautaucc                                   | AlpgenPythia | 15.119 | 1.18 | 1 | Zcc_backup1
-110814 | AlpgenPythia_Ztautaucc                                   | AlpgenPythia | 7.2016 | 1.18 | 1 | Zcc_backup1
-110815 | AlpgenPythia_Ztautaucc                                   | AlpgenPythia | 3.0385 | 1.18 | 1 | Zcc_backup1
-110816 | AlpgenPythia_Ztautaucc                                   | AlpgenPythia | 1.1677 | 1.18 | 1 | Zcc_backup1
-
-117650 | AlpgenPythia_Zee                                         | AlpgenPythia | 718.89 | 1.18 | 1 | Zll_backup1
-117651 | AlpgenPythia_Zee                                         | AlpgenPythia | 175.60 | 1.18 | 1 | Zll_backup1
-117652 | AlpgenPythia_Zee                                         | AlpgenPythia | 58.849 | 1.18 | 1 | Zll_backup1
-117653 | AlpgenPythia_Zee                                         | AlpgenPythia | 15.560 | 1.18 | 1 | Zll_backup1
-117654 | AlpgenPythia_Zee                                         | AlpgenPythia | 3.9322 | 1.18 | 1 | Zll_backup1
-117655 | AlpgenPythia_Zee                                         | AlpgenPythia | 1.1994 | 1.18 | 1 | Zll_backup1
-
-117660 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 718.91 | 1.18 | 1 | Zll_backup1
-117661 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 175.81 | 1.18 | 1 | Zll_backup1
-117662 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 58.805 | 1.18 | 1 | Zll_backup1
-117663 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 15.589 | 1.18 | 1 | Zll_backup1
-117664 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 3.9072 | 1.18 | 1 | Zll_backup1
-117665 | AlpgenPythia_Zmumu                                         | AlpgenPythia | 1.1933 | 1.18 | 1 | Zll_backup1
-
-117670 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 718.80 | 1.18 | 1 | Zll_backup1
-117671 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 175.83 | 1.18 | 1 | Zll_backup1
-117672 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 58.630 | 1.18 | 1 | Zll_backup1
-117673 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 15.508 | 1.18 | 1 | Zll_backup1
-117674 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 3.9526 | 1.18 | 1 | Zll_backup1
-117675 | AlpgenPythia_Ztautau                                         | AlpgenPythia | 1.1805 | 1.18 | 1 | Zll_backup1
-
-#low mll samples
-146830 | Zee_Mll10to60                                                | AlpgenHerwig | 3477.9  | 1.1950 | 1 | Zll_backup1
-146831 | Zee_Mll10to60                                                | AlpgenHerwig | 108.88  | 1.1950 | 1 | Zll_backup1
-146832 | Zee_Mll10to60                                                | AlpgenHerwig | 52.651  | 1.1950 | 1 | Zll_backup1
-146833 | Zee_Mll10to60                                                | AlpgenHerwig | 11.309  | 1.1950 | 1 | Zll_backup1
-146834 | Zee_Mll10to60                                                | AlpgenHerwig | 2.5743  | 1.1950 | 1 | Zll_backup1
-146835 | Zee_Mll10to60                                                | AlpgenHerwig | 0.69211 | 1.1950 | 1 | Zll_backup1
-
-146840 | Zmumu_Mll10to60                                              | AlpgenHerwig | 3477.8  | 1.1950 | 1 | Zll_backup1
-146841 | Zmumu_Mll10to60                                              | AlpgenHerwig | 108.63  | 1.1950 | 1 | Zll_backup1
-146842 | Zmumu_Mll10to60                                              | AlpgenHerwig | 52.675  | 1.1950 | 1 | Zll_backup1
-146843 | Zmumu_Mll10to60                                              | AlpgenHerwig | 11.283  | 1.1950 | 1 | Zll_backup1
-146844 | Zmumu_Mll10to60                                              | AlpgenHerwig | 2.5690  | 1.1950 | 1 | Zll_backup1
-146845 | Zmumu_Mll10to60                                              | AlpgenHerwig | 0.69425 | 1.1950 | 1 | Zll_backup1
-
-#the tau tau samples are still missing
-
 #Higgs backgrounds
 161005 | PowhegPythia8_AU2CT10_ggH125_WW2lep                          | PowhegPythia | 0.4419      | 1      | 0.482 | H125WW
 161305 | Pythia8_AU2CTEQ6L1_ttH125_WWinclusive                        | Pythia8      | 0.0195      | 1      | 1     | ttH125WW
@@ -281,19 +165,4 @@
 169492 | Herwig_AUET2CTEQ6L1_ZZ_LepEF_METVeto                 | Herwig  | 7.697   | 1.0 | 0.16491 | ZZ
 169493 | Herwig_AUET2CTEQ6L1_ZZ_METEF_LepVeto                 | Herwig  | 7.697   | 1.0 | 0.23016 | ZZ
 #
-#backup diboson samples better at high jet multiplicity (but only dilepton...)
-107100 | AlpgenHerwig_WW      | AlpgenHerwig | 2.4970   | 1.2307 | 1 | WW_backup1
-107101 | AlpgenHerwig_WW      | AlpgenHerwig | 1.2491   | 1.2307 | 1 | WW_backup1
-107102 | AlpgenHerwig_WW      | AlpgenHerwig | 0.59200  | 1.2307 | 1 | WW_backup1
-107103 | AlpgenHerwig_WW      | AlpgenHerwig | 0.32847  | 1.2307 | 1 | WW_backup1
-107104 | AlpgenHerwig_WZ      | AlpgenHerwig | 0.80162  | 1.2785 | 1 | WZ_backup1
-107105 | AlpgenHerwig_WZ      | AlpgenHerwig | 0.52407  | 1.2785 | 1 | WZ_backup1
-107106 | AlpgenHerwig_WZ      | AlpgenHerwig | 0.29484  | 1.2785 | 1 | WZ_backup1
-107107 | AlpgenHerwig_WZ      | AlpgenHerwig | 0.18258  | 1.2785 | 1 | WZ_backup1
-107108 | AlpgenHerwig_ZZ      | AlpgenHerwig | 0.60660  | 1.3718 | 1 | ZZ_backup1
-107109 | AlpgenHerwig_ZZ      | AlpgenHerwig | 0.28893  | 1.3718 | 1 | ZZ_backup1
-107110 | AlpgenHerwig_ZZ      | AlpgenHerwig | 0.11853  | 1.3718 | 1 | ZZ_backup1
-107111 | AlpgenHerwig_ZZ      | AlpgenHerwig | 0.056223 | 1.3718 | 1 | ZZ_backup1
-
-
 end
