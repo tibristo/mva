@@ -1,0 +1,17 @@
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.data12_8TeV.OneLepton.Electron.FullDataset.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.data12_8TeV.OneLepton.MET.FullDataset.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.data12_8TeV.OneLepton.Muon.FullDataset.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Diboson.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Signal.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.SingleTop.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top1.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top2.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top3.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top4.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveB.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveC.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveL.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveL.SherpaVeto.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveB.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveC.root
+/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveL.root
