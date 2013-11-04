@@ -1,19 +1,24 @@
 <?xml version="1.0"?>
 <settings>
+  <sampleType name="Data">
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.data12_8TeV.OneLepton.Electron.FullDataset.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.data12_8TeV.OneLepton.Muon.FullDataset.Hists.root'/>
+    <pid name='-999'/>
+  </sampleType>
+
   <sampleType name="AllBkg">
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Diboson.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Signal.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.SingleTop.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top1.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top2.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top3.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top4.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveB.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveC.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveL.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveB.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveC.root'/>
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveL.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Diboson.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.SingleTop.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top1.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top2.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top3.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Top4.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveB.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveC.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.WjetsInclusiveL.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveB.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveC.Hists.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.ZjetsInclusiveL.Hists.root'/>
     <pid name='167740'/>
     <pid name='167741'/>
     <pid name='167742'/>
@@ -154,7 +159,7 @@
   </sampleType>
 
   <sampleType name="Signal">
-    <file name='/Disk/speyside7/atlas/Higgs/bobrien/HiggsInputs/UnboostedCERN/AnalysisManager.mc12_8TeV_p1328.OneLepton.Signal.root'/>
+    <file name='/Disk/speyside8/lhcb/atlas/tibristo/AnalysisManager.mc12_8TeV_p1328.OneLepton.Signal.Hists.root'/>
     <pid name='161805'/>
   </sampleType>
 </settings>
